@@ -55,7 +55,6 @@
 		<File RelativePath="..\..\..\prms.git\climate_hru.f90"/>
 		<File RelativePath="..\..\..\prms.git\climateflow.f90"/>
 		<File RelativePath="..\..\..\prms.git\ddsolrad.f90"/>
-		<File RelativePath="..\..\..\mfnwt_gsflow.git\MODFLOW-NWT_1.1.0\src\de47_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\de47_NWT.f"/>
 		<File RelativePath="..\..\..\prms.git\frost_date.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gmg7.f"/>
@@ -95,7 +94,6 @@
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mach_mod.f90"/>
 		<File RelativePath="..\..\..\prms.git\map_results.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mhc7.f"/>
-		<File RelativePath="..\..\..\mfnwt_gsflow.git\MODFLOW-NWT_1.1.0\src\modules.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\modules.f90"/>
 		<File RelativePath="..\..\..\prms.git\muskingum.f90"/>
 		<File RelativePath="..\..\..\prms.git\nhru_summary.f90"/>
