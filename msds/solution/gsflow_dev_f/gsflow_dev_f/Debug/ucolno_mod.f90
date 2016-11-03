@@ -1,0 +1,13 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Thu Apr 02 07:53:33 2009
+        MODULE UCOLNO_mod
+          INTERFACE 
+            SUBROUTINE UCOLNO(NLBL1,NLBL2,NSPACE,NCPL,NDIG,IOUT)
+              INTEGER(KIND=4) :: NLBL1
+              INTEGER(KIND=4) :: NLBL2
+              INTEGER(KIND=4) :: NSPACE
+              INTEGER(KIND=4) :: NCPL
+              INTEGER(KIND=4) :: NDIG
+              INTEGER(KIND=4) :: IOUT
+            END SUBROUTINE UCOLNO
+          END INTERFACE 
+        END MODULE UCOLNO_mod

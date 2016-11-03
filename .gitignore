@@ -3,27 +3,33 @@
 *.lo
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
 *.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
+*_genmod.f90
+*.htm
+*.manifest
+*.rc
+*.res
+*.ilk
+*.pdb
 *.lib
+*.res
+*.tlog
+*.idb
+*.lastbuildstate
+*.XML
+*.css
+*.xslt
+*.gif
 
 # Executables
 *.exe
 *.out
 *.app
+
+# MODFLOW output files
+*.hobs
+*.cbc
+*.hed
+
+MF_NWT/MF_NWT/Release/
+MF_NWT/MF_NWT/Debug/
