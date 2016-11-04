@@ -33,3 +33,14 @@
 
 MF_NWT/MF_NWT/Release/
 MF_NWT/MF_NWT/Debug/
+
+# msds
+*.vfproj
+*.vcxproj
+*.vcxproj.filters
+*.sdf
+*.u2d
+*.suo
+*.VC.db
+*.opendb
+*.log
