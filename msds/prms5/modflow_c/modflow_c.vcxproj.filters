@@ -18,19 +18,19 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\ccfd.c">
+    <ClCompile Include="..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\ccfd.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mf2kgmg.c">
+    <ClCompile Include="..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mf2kgmg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mf2kgmg_wrap.c">
+    <ClCompile Include="..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mf2kgmg_wrap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\r_vector.c">
+    <ClCompile Include="..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\r_vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\solvers.c">
+    <ClCompile Include="..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\solvers.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
