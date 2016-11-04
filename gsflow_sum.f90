@@ -591,7 +591,6 @@
       USE GWFBASMODULE, ONLY: DELT
       USE PRMS_MODULE, ONLY: Print_debug, KKITER, Nobs, Timestep, Dprst_flag
       USE PRMS_OBS, ONLY: Runoff, Runoff_units
-      USE PRMS_CASCADE, ONLY: Outflow_flg
       USE PRMS_BASIN, ONLY: CFS2CMS_CONV
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       USE PRMS_CLIMATEVARS, ONLY: Basin_ppt, Basin_rain, Basin_snow
@@ -600,15 +599,13 @@
      &    Basin_soil_moist, Basin_ssstor, Basin_cfs
       USE PRMS_SRUNOFF, ONLY: Basin_imperv_evap, &
      &    Basin_sroff, Basin_hortonian, Basin_hortonian_lakes, &
-     &    Basin_infil, Strm_farfield, Basin_sroff_farflow, &
-     &    Basin_dprst_evap, Basin_dprst_volop, Basin_dprst_volcl
+     &    Basin_infil, Basin_dprst_evap, Basin_dprst_volop, Basin_dprst_volcl
       USE PRMS_SNOW, ONLY: Basin_snowevap, Basin_snowmelt
       USE PRMS_INTCP, ONLY: Basin_intcp_evap
       USE PRMS_SOILZONE, ONLY: Basin_lakeprecip, Basin_dunnian, &
      &    Basin_slowflow, Basin_prefflow, Basin_lakeinsz, &
      &    Basin_cap_infil_tot, Basin_pref_flow_infil, Basin_sz2gw, &
-     &    Basin_szfarflow, Basin_sm2gvr, Basin_gvr2sm, &
-     &    Basin_gvr2pfr, Basin_dunnian,  Basin_dncascadeflow, Basin_szreject
+     &    Basin_sm2gvr, Basin_gvr2sm, Basin_gvr2pfr, Basin_dunnian,  Basin_dncascadeflow, Basin_szreject
       IMPLICIT NONE
       INTRINSIC DBLE
 ! Local variables
@@ -706,7 +703,6 @@
       CapDrainage2Sat_Q = Basin_soil_to_gw*Basin_convert
       PotGravDrn2Unsat_Q = Basin_sz2gw*Basin_convert
       UnsatDrainageExcess_Q = Basin_szreject*Basin_convert
-      Basinszfarflow = Basin_szfarflow*Basin_convert
 
       !internal soilzone flows
       Basinsm2gvr = Basin_sm2gvr*Basin_convert !> field capacity
@@ -714,13 +710,6 @@
       Basingvr2pfr = Basin_gvr2pfr*Basin_convert !>pref_flow threshold
       !cascading slow, pref, and Dunnian
       DunnInterflow2Cap_Q = Basin_dncascadeflow*Basin_convert
-
-      !flows from PRMS that go outside of basin and not to MODFLOW
-      IF ( Outflow_flg==1 ) THEN
-        Basinfarfieldflow = Strm_farfield/Mfl3t_to_cfs
-        !cascading surface runoff
-        Basinsrofffarflow = Basin_sroff_farflow*Basin_convert
-      ENDIF
 
 !  Stuff from MODFLOW
       IF ( Vbnm_index(1)==-1 ) CALL MODFLOW_VB_DECODE(Vbnm_index)
@@ -786,8 +775,7 @@
         szdstor = Last_basin_soil_moist + Last_basin_ssstor &
      &            - Basin_soil_moist - Basin_ssstor
         szout = Basin_sz2gw + Basin_ssflow + Basin_lakeinsz + &
-     &          Basin_dunnian + Basin_perv_et + Basin_szfarflow &
-     &          + Basin_soil_to_gw + Basin_swale_et
+     &          Basin_dunnian + Basin_perv_et + Basin_soil_to_gw + Basin_swale_et
         IF ( Basin_soil_moist>0.0D0 ) THEN
           IF ( ABS(szin-szout+szdstor)>ERRCHK ) THEN
             WRITE (BALUNT, 9002) Nowyear, Nowmonth, Nowday
@@ -798,9 +786,7 @@
      &                        Last_basin_ssstor, Basin_soil_moist, &
      &                        Basin_ssstor, Basin_sz2gw, Basin_ssflow, &
      &                        Basin_lakeinsz, Basin_dunnian, &
-     &                        Basin_perv_et, Basin_szfarflow, &
-     &                        Basin_soil_to_gw, Strm_farfield, &
-     &                        Basin_sroff_farflow, Basin_swale_et
+     &                        Basin_perv_et, Basin_soil_to_gw, Basin_swale_et
             WRITE (BALUNT, *) KKITER, Maxgziter
           ENDIF
         ENDIF
@@ -851,10 +837,6 @@
       Cumvol_strmot = Cumvol_strmot + Rate_strmot*DELT
       Cumvol_gwbndot = Cumvol_gwbndot + Gw_bnd_out*DELT
       Rate_gwbndot = Gw_bnd_out
-      IF ( Outflow_flg==1 ) THEN
-        Rate_farout = Basinfarfieldflow
-        Cumvol_farout = Cumvol_farout + Rate_farout*DELT
-      ENDIF
  ! RGN added specified lake inflow/outflow and storage change
       IF ( Have_lakes==1 ) THEN
 !        IF ( TOTWTHDRW_LAK>0.0 ) THEN
@@ -1043,7 +1025,6 @@
       USE GSFSUM
       USE GWFSFRMODULE, ONLY: STRMDELSTOR_RATE, STRMDELSTOR_CUM, IRTFLG
       USE PRMS_MODULE, ONLY: KKITER
-      USE PRMS_CASCADE, ONLY: Outflow_flg
       USE GSFMODFLOW, ONLY: Have_lakes
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
@@ -1128,12 +1109,6 @@
       !  CALL GSFFMTNUM(Rate_lakot, val2)
       !  WRITE (Gsf_unt, 9003) text10, val1, text10, val2
       !END IF
-!2F-----FAR FIELD
-      IF ( Outflow_flg==1 ) THEN
-        CALL GSFFMTNUM(Cumvol_farout, val1)
-        CALL GSFFMTNUM(Rate_farout, val2)
-        WRITE (Gsf_unt, 9003) text12, val1, text12, val2
-      END IF
 !
 !3------CUMULATIVE INFLOW MINUS CUMULATIVE OUTFLOW.
       cumvol_in = Cumvol_precip + Cumvol_strmin + Cumvol_gwbndin + Cumvol_wellin
