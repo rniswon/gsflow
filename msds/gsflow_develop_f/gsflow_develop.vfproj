@@ -56,6 +56,7 @@
 		<File RelativePath="..\..\..\prms.git\climateflow.f90"/>
 		<File RelativePath="..\..\..\prms.git\ddsolrad.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\de47_NWT.f"/>
+		<File RelativePath="..\..\..\prms.git\dynamic_param_read.f90"/>
 		<File RelativePath="..\..\..\prms.git\frost_date.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gmg7.f"/>
 		<File RelativePath="..\..\gsflow_budget.f90"/>
@@ -105,6 +106,7 @@
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mhc7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\modules.f90"/>
 		<File RelativePath="..\..\..\prms.git\muskingum.f90"/>
+		<File RelativePath="..\..\..\prms.git\muskingum_lake.f90"/>
 		<File RelativePath="..\..\..\prms.git\nhru_summary.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\NWT1_gmres.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\NWT1_ilupc_mod.f90"/>
@@ -129,6 +131,7 @@
 		<File RelativePath="..\..\..\prms.git\precip_dist2.f90"/>
 		<File RelativePath="..\..\..\prms.git\prms_time.f90"/>
 		<File RelativePath="..\..\..\prms.git\routing.f90"/>
+		<File RelativePath="..\..\..\prms.git\setup_param.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\sip7_NWT.f"/>
 		<File RelativePath="..\..\..\prms.git\snowcomp.f90"/>
 		<File RelativePath="..\..\..\prms.git\soilzone.f90"/>
@@ -144,6 +147,7 @@
 		<File RelativePath="..\..\..\prms.git\utils_prms.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\utl7.f"/>
 		<File RelativePath="..\..\..\prms.git\water_balance.f90"/>
+		<File RelativePath="..\..\..\prms.git\water_use_read.f90"/>
 		<File RelativePath="..\..\..\prms.git\write_climate_hru.f90"/>
 		<File RelativePath="..\..\..\prms.git\xyz_dist.f"/></Filter></Files>
 	<Globals/></VisualStudioProject>
