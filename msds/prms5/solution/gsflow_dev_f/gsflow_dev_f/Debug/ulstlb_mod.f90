@@ -1,0 +1,12 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Thu Apr 02 07:53:33 2009
+        MODULE ULSTLB_mod
+          INTERFACE 
+            SUBROUTINE ULSTLB(IOUT,LABEL,CAUX,NCAUX,NAUX)
+              INTEGER(KIND=4) :: NCAUX
+              INTEGER(KIND=4) :: IOUT
+              CHARACTER(*) :: LABEL
+              CHARACTER(LEN=16) :: CAUX(NCAUX)
+              INTEGER(KIND=4) :: NAUX
+            END SUBROUTINE ULSTLB
+          END INTERFACE 
+        END MODULE ULSTLB_mod

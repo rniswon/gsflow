@@ -67,6 +67,10 @@
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2bas7_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2bcf7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2chd7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2drn7_NWT.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2drt7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2ets7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2evt7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2fhb7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2gag7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2ghb7_NWT.f"/>
@@ -78,7 +82,11 @@
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2mnw17_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2mnw27_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2mnw2i7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2rch7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2res7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2riv7_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2sfr7_NWT.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2str7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2swi27.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2upw1.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2uzf1_NWT.f"/>
@@ -91,6 +99,7 @@
 		<File RelativePath="..\..\..\prms.git\ide_dist.f"/>
 		<File RelativePath="..\..\..\prms.git\intcp.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\Irestart.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\lmt8_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mach_mod.f90"/>
 		<File RelativePath="..\..\..\prms.git\map_results.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mhc7.f"/>

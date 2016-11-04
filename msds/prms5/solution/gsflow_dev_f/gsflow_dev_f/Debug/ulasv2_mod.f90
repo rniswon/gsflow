@@ -1,0 +1,21 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Thu Apr 02 07:53:33 2009
+        MODULE ULASV2_mod
+          INTERFACE 
+            SUBROUTINE ULASV2(BUFF,TEXT,KSTP,KPER,PERTIM,TOTIM,NCOL,NROW&
+     &,ILAY,ICHN,FMTOUT,LBLSAV,IBOUND)
+              INTEGER(KIND=4) :: NROW
+              INTEGER(KIND=4) :: NCOL
+              REAL(KIND=4) :: BUFF(NCOL,NROW)
+              CHARACTER(LEN=16) :: TEXT
+              INTEGER(KIND=4) :: KSTP
+              INTEGER(KIND=4) :: KPER
+              REAL(KIND=4) :: PERTIM
+              REAL(KIND=4) :: TOTIM
+              INTEGER(KIND=4) :: ILAY
+              INTEGER(KIND=4) :: ICHN
+              CHARACTER(LEN=20) :: FMTOUT
+              INTEGER(KIND=4) :: LBLSAV
+              INTEGER(KIND=4) :: IBOUND(NCOL,NROW)
+            END SUBROUTINE ULASV2
+          END INTERFACE 
+        END MODULE ULASV2_mod

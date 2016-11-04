@@ -1,0 +1,10 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Thu Apr 02 07:53:34 2009
+        MODULE UMESPR_mod
+          INTERFACE 
+            SUBROUTINE UMESPR(TEXT1,TEXT2,IOUT)
+              CHARACTER(*) :: TEXT1
+              CHARACTER(*) :: TEXT2
+              INTEGER(KIND=4) :: IOUT
+            END SUBROUTINE UMESPR
+          END INTERFACE 
+        END MODULE UMESPR_mod
