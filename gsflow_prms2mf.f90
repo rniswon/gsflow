@@ -37,7 +37,7 @@
       IMPLICIT NONE
 ! Functions
       INTEGER, EXTERNAL :: prms2mfdecl, prms2mfinit, prms2mfrun
-      ExTERNAL :: gsflow_prms2mf_restart
+      EXTERNAL :: gsflow_prms2mf_restart
 !***********************************************************************
       gsflow_prms2mf = 0
 
@@ -459,7 +459,7 @@
 ! Local Variables
       INTEGER :: irow, icol, ik, jk, ibndcheck, ii, ilake
       INTEGER :: j, icell, ihru, icheck, maxdiff_cell, is_draining
-      REAL :: seep, diff, diff2, maxdiff, finftemp
+      REAL :: seep, diff, diff2, maxdiff
 !***********************************************************************
       prms2mfrun = 0
 
