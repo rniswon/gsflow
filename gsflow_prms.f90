@@ -72,7 +72,7 @@
       INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta, setup
       EXTERNAL :: module_error, print_module, PRMS_open_output_file
       EXTERNAL :: call_modules_restart, check_nhru_params, water_balance
-      EXTERNAL :: nhru_summary, module_doc, read_error
+      EXTERNAL :: nhru_summary, module_doc, convert_params, read_error
       INTEGER, EXTERNAL :: gsflow_modflow, gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
 ! Local Variables
       INTEGER :: i, iret, nc
@@ -170,6 +170,7 @@
 
         Grid_flag = 0
         IF ( Nhru==Nhrucell ) Grid_flag = 1
+
         IF ( Model==0 ) THEN
           IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
      &         Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
@@ -474,9 +475,14 @@
           PRINT '(A)', EQULS(:74)
           WRITE ( PRMS_output_unit, '(A)' ) EQULS(:74)
         ENDIF
+        IF ( Model==10 ) CALL convert_params()
       ELSEIF ( Process_flag==2 ) THEN
         IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
         IF ( Parameter_check_flag==2 ) STOP
+        IF ( Model==10 ) THEN
+          CALL convert_params()
+          STOP
+        ENDIF
       ENDIF
 
  9001 FORMAT (/, 26X, 27('='), /, 26X, 'Normal completion of GSFLOW', /, 26X, 27('='), /)
@@ -496,7 +502,8 @@
 ! Functions
       INTEGER, EXTERNAL :: decldim, declfix, call_modules, control_integer_array, control_file_name
       INTEGER, EXTERNAL :: control_string, control_integer, gsflow_modflow
-      EXTERNAL read_error, PRMS_open_output_file, PRMS_open_input_file, PRMS_open_module_file, module_error
+      EXTERNAL read_error, PRMS_open_output_file, PRMS_open_input_file, check_module_names
+      EXTERNAL PRMS_open_module_file, module_error
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
