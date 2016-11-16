@@ -111,7 +111,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = 'gsflow_sum.f90 2016-09-02 10:07:00Z'
+      Version_gsflow_sum = 'gsflow_sum.f90 2016-11-16 10:49:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -964,7 +964,7 @@
         CALL GSF_HEADERS()
       ENDIF
 
- 9001 FORMAT (/, 2A)
+ 9001 FORMAT (/, 2A, /)
       END SUBROUTINE GSF_PRINT
 
 !***********************************************************************
