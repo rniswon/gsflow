@@ -85,24 +85,20 @@
         Process_flag = 0 !(0=run, 1=declare, 2=init, 3=clean, 4=setdims)
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        IF ( Model==1 ) THEN
-          CALL DATE_AND_TIME(VALUES=Elapsed_time_start)
-          Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
-     &                           Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
-        ENDIF
+        CALL DATE_AND_TIME(VALUES=Elapsed_time_start)
+        Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
+     &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2016-11-04 12:03:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2016-11-16 10:51:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
         IF ( Print_debug>-2 ) THEN
-          PRINT 10, PRMS_VERSION, PRMS_versn(18:36)
-          WRITE ( PRMS_output_unit, 10 ) PRMS_VERSION, PRMS_versn(18:36)
+          PRINT 10, PRMS_VERSION, PRMS_versn(17:36)
+          WRITE ( PRMS_output_unit, 10 ) PRMS_VERSION, PRMS_versn(17:36)
         ENDIF
-  10  FORMAT (///, 25X, 'U.S. Geological Survey', /, 15X, &
-     &        'Precipitation-Runoff Modeling System (PRMS)', /, &
-     &        12X, A, ' Tag: ', A, /)
+  10  FORMAT (/, 15X, 'Precipitation-Runoff Modeling System (PRMS)', /, 12X, A, ' Tag: ', A, /)
   15  FORMAT (/, 'The following PRMS modules are available:', //, 5X, 'Process',  19X, 'Modules', /, 67('-'), /, &
      &        '  Basin Definition: basin', /, &
      &        '    Cascading Flow: cascade', /, &
@@ -456,7 +452,7 @@
      &                         Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
           Elapsed_time = Execution_time_end - Execution_time_start
           Elapsed_time_minutes = INT(Elapsed_time/60.0)
-          PRINT '(A,I4,A,F6.2,A)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+          PRINT '(A,I5,A,F6.2,A)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                             Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         ELSEIF ( Process_flag==2 ) THEN
           IF ( Inputerror_flag==1 ) THEN
@@ -517,7 +513,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 1.2.1 10/01/2016', //, &
+     &        25X, 'Version 1.2.2 12/01/2016', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
