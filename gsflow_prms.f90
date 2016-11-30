@@ -8,7 +8,7 @@
       CHARACTER(LEN=80), PARAMETER :: &
      &  EQULS = '================================================================================'
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 10/21/2016'
+      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 4.0.3 11/30/2016'
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -90,7 +90,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2016-11-16 10:51:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2016-11-30 11:21:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -436,9 +436,9 @@
         IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
       ENDIF
 
-      IF ( NhruOutON_OFF>0 ) CALL nhru_summary()
+      IF ( NhruOutON_OFF==1 ) CALL nhru_summary()
 
-      IF ( NsubOutON_OFF>0 ) CALL nsub_summary()
+      IF ( NsubOutON_OFF==1 ) CALL nsub_summary()
 
       IF ( Subbasin_flag==1 ) THEN
         call_modules = subbasin()
@@ -962,6 +962,11 @@
       Stream_order_flag = 0
       IF ( Nsegment>0 .AND. Strmflow_flag>1 ) THEN
         Stream_order_flag = 1 ! strmflow_in_out, muskingum, muskingum_lake
+      ENDIF
+
+      IF ( NsubOutON_OFF==1 .AND. Nsub==0 ) THEN
+        NsubOutON_OFF = 0
+        PRINT *, 'nsubOutON_OFF = 1 and nsub = 0, thus nsub_summary not used'
       ENDIF
 
       IF ( Model==99 .OR. Parameter_check_flag>0 ) CALL check_dimens()
