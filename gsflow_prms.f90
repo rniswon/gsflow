@@ -35,7 +35,7 @@
 ! Control parameters
       INTEGER, SAVE :: Print_debug, MapOutON_OFF, CsvON_OFF, Dprst_flag, Subbasin_flag, Parameter_check_flag
       INTEGER, SAVE :: Init_vars_from_file, Save_vars_to_file, Orad_flag, Cascade_flag, Cascadegw_flag
-      INTEGER, SAVE :: NhruOutON_OFF, Gwr_swale_flag
+      INTEGER, SAVE :: NhruOutON_OFF, Gwr_swale_flag, NsubOutON_OFF
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Model_output_file, Var_init_file, Var_save_file
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Csv_output_file, Model_control_file, Param_file
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Temp_module, Srunoff_module, Et_module
@@ -72,7 +72,7 @@
       INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta, setup
       EXTERNAL :: module_error, print_module, PRMS_open_output_file
       EXTERNAL :: call_modules_restart, check_nhru_params, water_balance
-      EXTERNAL :: nhru_summary, module_doc, convert_params, read_error
+      EXTERNAL :: nhru_summary, module_doc, convert_params, read_error, nsub_summary
       INTEGER, EXTERNAL :: gsflow_modflow, gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
 ! Local Variables
       INTEGER :: i, iret, nc
@@ -119,7 +119,7 @@
      &        '       Groundwater: gwflow', /, &
      &        'Streamflow Routing: strmflow, strmflow_in_out, muskingum, muskingum_lake', /, &
      &        '    Output Summary: basin_sum, subbasin, map_results,', /, &
-     &        '                    nhru_summary, water_balance', /, &
+     &        '                    nhru_summary, nsub_summary, water_balance', /, &
      &        '     Preprocessing: write_climate_hru, frost_date', /, 74('-'))
   16  FORMAT (//, 'Active modules listed in the order in which they are called:', //, 8X, 'Process', 16X, &
      &        'Module (source code version)', A)
@@ -437,6 +437,8 @@
       ENDIF
 
       IF ( NhruOutON_OFF>0 ) CALL nhru_summary()
+
+      IF ( NsubOutON_OFF==1 ) CALL nsub_summary()
 
       IF ( Subbasin_flag==1 ) THEN
         call_modules = subbasin()
@@ -803,6 +805,9 @@
 ! nhru_summary
       IF ( control_integer(NhruOutON_OFF, 'nhruOutON_OFF')/=0 ) NhruOutON_OFF = 0
 
+! nsub_summary
+      IF ( control_integer(NsubOutON_OFF, 'nsubOutON_OFF')/=0 ) NsubOutON_OFF = 0
+
 ! cascade
       IF ( control_integer(Cascade_flag, 'cascade_flag')/=0 ) Cascade_flag = 1
       ! if cascadegw_flag = 2, use same cascades as HRUs
@@ -959,6 +964,11 @@
         Stream_order_flag = 1 ! strmflow_in_out, muskingum, muskingum_lake
       ENDIF
 
+      IF ( NsubOutON_OFF==1 .AND. Nsub==0 ) THEN
+        NsubOutON_OFF = 0
+        PRINT *, 'nsubOutON_OFF = 1 and nsub = 0, thus nsub_summary not used'
+      ENDIF
+
       IF ( Model==99 .OR. Parameter_check_flag>0 ) CALL check_dimens()
 
       check_dims = Inputerror_flag
@@ -1060,7 +1070,7 @@
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow, srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, strmflow_in_out
       INTEGER, EXTERNAL :: write_climate_hru, muskingum, muskingum_lake
-      EXTERNAL :: nhru_summary, water_balance
+      EXTERNAL :: nhru_summary, water_balance, nsub_summary
       INTEGER, EXTERNAL :: dynamic_param_read, water_use_read, potet_pm_sta, setup
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
 ! Local variable
@@ -1112,6 +1122,7 @@
       test = basin_sum()
       test = map_results()
       CALL nhru_summary()
+      CALL nsub_summary()
       CALL water_balance()
       test = subbasin()
 
