@@ -8,7 +8,7 @@
       CHARACTER(LEN=80), PARAMETER :: &
      &  EQULS = '================================================================================'
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 4.0.3 11/30/2016'
+      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 4.0.3 01/30/2017'
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -90,16 +90,16 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2016-11-30 11:21:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-01-30 12:15:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
         IF ( Print_debug>-2 ) THEN
-          PRINT 10, PRMS_VERSION, PRMS_versn(17:36)
-          WRITE ( PRMS_output_unit, 10 ) PRMS_VERSION, PRMS_versn(17:36)
+          PRINT 10, PRMS_VERSION
+          IF ( Print_debug>-1 ) WRITE ( PRMS_output_unit, 10 ) PRMS_VERSION
         ENDIF
-  10  FORMAT (/, 15X, 'Precipitation-Runoff Modeling System (PRMS)', /, 12X, A, ' Tag: ', A, /)
-  15  FORMAT (/, 'The following PRMS modules are available:', //, 5X, 'Process',  19X, 'Modules', /, 67('-'), /, &
+  10  FORMAT (/, 15X, 'Precipitation-Runoff Modeling System (PRMS)', /, 24X, A)
+  15  FORMAT (/, 15X, 'The following PRMS modules are available:', //, 5X, 'Process',  19X, 'Modules', /, 74('-'), /, &
      &        '  Basin Definition: basin', /, &
      &        '    Cascading Flow: cascade', /, &
      &        '  Time Series Data: obs, water_use_read, dynamic_param_read', /, &
@@ -121,8 +121,8 @@
      &        '    Output Summary: basin_sum, subbasin, map_results,', /, &
      &        '                    nhru_summary, nsub_summary, water_balance', /, &
      &        '     Preprocessing: write_climate_hru, frost_date', /, 74('-'))
-  16  FORMAT (//, 'Active modules listed in the order in which they are called:', //, 8X, 'Process', 16X, &
-     &        'Module (source code version)', A)
+  16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 16X, &
+     &        'Module (source code version)', /, A)
         IF ( Model/=1 ) THEN
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
@@ -133,13 +133,12 @@
           PRINT 9002
         ENDIF
         WRITE ( Logunt, 15 )
-        WRITE ( Logunt, 16) EQULS
+        WRITE ( Logunt, 16 ) EQULS
         IF ( Print_debug>-2 ) THEN
           PRINT 16
           PRINT '(A)', EQULS(:74)
           WRITE ( PRMS_output_unit, 15 )
-          WRITE ( PRMS_output_unit, 16 )
-          WRITE ( PRMS_output_unit, '(A)' ) EQULS(:74)
+          WRITE ( PRMS_output_unit, 16 ) EQULS(:78)
         ENDIF
         CALL print_module(PRMS_versn, 'GSFLOW Computation Order    ', 90)
 
@@ -186,24 +185,27 @@
         nc = numchars(Param_file)
         IF ( Print_debug>-1 ) PRINT 9004, 'Using Parameter File: ', Param_file(:nc)
         IF ( Print_debug>-2 ) WRITE ( PRMS_output_unit, 9004 ) 'Using Parameter File: ', Param_file(:nc)
+        WRITE ( Logunt, 9004 ) 'Using Parameter File: ', Param_file(:nc)
 
-          IF ( Init_vars_from_file==1 ) THEN
-            nc = numchars(Var_init_file)
-            IF ( Print_debug>-1 ) PRINT 9004, 'Using var_init_file: ', Var_init_file(:nc)
-            WRITE ( Logunt, 9004 ) 'Writing var_init_file: ', Var_init_file(:nc)
-          ENDIF
-          IF ( Save_vars_to_file==1 ) THEN
-            nc = numchars(Var_save_file)
-            IF ( Print_debug>-1 ) PRINT 9004, 'Using var_save_file: ', Var_save_file(:nc)
-            WRITE ( Logunt, 9004 ) 'Writing var_save_file: ', Var_save_file(:nc)
-          ENDIF
+        IF ( Init_vars_from_file==1 ) THEN
+          nc = numchars(Var_init_file)
+          IF ( Print_debug>-1 ) PRINT 9004, 'Using var_init_file: ', Var_init_file(:nc)
+          WRITE ( Logunt, 9004 ) 'Writing var_init_file: ', Var_init_file(:nc)
+        ENDIF
+        IF ( Save_vars_to_file==1 ) THEN
+          nc = numchars(Var_save_file)
+          IF ( Print_debug>-1 ) PRINT 9004, 'Using var_save_file: ', Var_save_file(:nc)
+          WRITE ( Logunt, 9004 ) 'Writing var_save_file: ', Var_save_file(:nc)
+        ENDIF
 
         IF ( Print_debug>-1 ) THEN
           IF ( Print_debug>-2 ) THEN
             nc = numchars(Model_output_file)
             PRINT 9004, 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
+            WRITE ( Logunt, 9004 ) 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
           ENDIF
           PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day
+          WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day
         ENDIF
    4    FORMAT (/, 2(A, I5, 2('/',I2.2)), /)
 
@@ -455,8 +457,12 @@
      &                         Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
           Elapsed_time = Execution_time_end - Execution_time_start
           Elapsed_time_minutes = INT(Elapsed_time/60.0)
-          PRINT '(A,I5,A,F6.2,A)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                             Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+          PRINT '(/, A,I5,A,F6.2,A, /)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                   Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+          WRITE ( PRMS_output_unit,'(/, A,I5,A,F6.2,A,/)'), 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                                      Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+        ELSEIF ( Process_flag==1 ) THEN
+          PRINT '(A, /)', EQULS(:74)
         ELSEIF ( Process_flag==2 ) THEN
           IF ( Inputerror_flag==1 ) THEN
             PRINT '(//,A,//,A,/,A,/,A)', '**Fix input errors in your Parameter File to continue**', &
@@ -473,10 +479,8 @@
         ENDIF
       ENDIF
       IF ( Process_flag==1 ) THEN
-        IF ( Print_debug>-2 ) THEN
-          PRINT '(A)', EQULS(:74)
-          WRITE ( PRMS_output_unit, '(A)' ) EQULS(:74)
-        ENDIF
+        IF ( Print_debug>-2 ) WRITE ( PRMS_output_unit, '(A)' ) EQULS(:78)
+        WRITE ( Logunt, '(A)' ) EQULS(:78)
         IF ( Model==10 ) CALL convert_params()
       ELSEIF ( Process_flag==2 ) THEN
         IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
@@ -489,7 +493,7 @@
 
  9001 FORMAT (/, 26X, 27('='), /, 26X, 'Normal completion of GSFLOW', /, 26X, 27('='), /)
  9002 FORMAT (//, 74('='), /, 'Please give careful consideration to fixing all ERROR and WARNING messages', /, 74('='))
- 9003 FORMAT ('Execution ', A, ' date and time (yyyy/mm/dd hh:mm:ss)', I5, 2('/',I2.2), I3, 2(':',I2.2), /)
+ 9003 FORMAT (/, 'Execution ', A, ' date and time (yyyy/mm/dd hh:mm:ss)', I5, 2('/',I2.2), I3, 2(':',I2.2))
  9004 FORMAT (/, 2A)
 
       END FUNCTION call_modules
@@ -522,7 +526,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 1.2.2 12/01/2016', //, &
+     &        22X, 'Version 1.2.2 01/30/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
