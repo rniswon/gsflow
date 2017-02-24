@@ -228,12 +228,12 @@
 !***********************************************************************
       INTEGER FUNCTION gsfbudrun()
       USE GSFBUDGET
-      USE GSFMODFLOW, ONLY: Mfq2inch_conv, Mfl2_to_acre, Szcheck, ICNVG, &
-     &    Mfvol2inch_conv, Mfl3t_to_cfs, Mfl_to_inch, Gwc_col, Gwc_row, Have_lakes
+      USE PRMS_MODULE, ONLY: Mfq2inch_conv, Mfl2_to_acre, Gvr_cell_id, Nhrucell, &
+     &    Mfvol2inch_conv, Mfl3t_to_cfs, Mfl_to_inch, Gwc_col, Gwc_row, Have_lakes !, Print_debug
+      USE GSFMODFLOW, ONLY: Szcheck, ICNVG
 !Warning, modifies Gw_rejected_grav, Gw_rejected_grav
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
 !Warning, modifies Gw2sm_grav
-      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id !, Print_debug
       USE GLOBAL, ONLY: IUNIT, DELR, DELC
       USE GWFBASMODULE, ONLY: VBVL, DELT
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET, UZOLSFLX, UZFLWT
@@ -747,7 +747,7 @@
       SUBROUTINE getStreamFlow()
       USE GSFBUDGET, ONLY: Reach_cfs, Reach_wse, StreamExchng2Sat_Q, &
      &    Stream_inflow, Streamflow_sfr
-      USE GSFMODFLOW, ONLY: Mfl3t_to_cfs
+      USE PRMS_MODULE, ONLY: Mfl3t_to_cfs
       USE GWFSFRMODULE, ONLY: STRM, IOTSG, NSS, SGOTFLW, SFRRATOUT, &
      &    TOTSPFLOW, NSTRM, SFRRATIN
       USE PRMS_FLOWVARS, ONLY: Basin_cfs, Basin_cms, Basin_stflow_out
@@ -791,7 +791,7 @@
 !***********************************************************************
       SUBROUTINE getPump()
       USE GSFBUDGET, ONLY: Total_pump, Total_pump_cfs, Vbnm_index
-      USE GSFMODFLOW, ONLY: Mfl3t_to_cfs
+      USE PRMS_MODULE, ONLY: Mfl3t_to_cfs
       USE GWFBASMODULE, ONLY: VBVL
       IMPLICIT NONE
 
