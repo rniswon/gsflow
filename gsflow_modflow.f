@@ -951,7 +951,7 @@ C
       REAL :: BUDPERC
 C     ************************************************************************
 C
-      IF(IUNIT(63).GT.0) ICNVG = ICNVGFLG
+! ???      IF(IUNIT(63).GT.0) ICNVG = ICNVGFLG
       KKSTP = KSTP
       KKPER = KPER
       IF ( Model>2 ) THEN
