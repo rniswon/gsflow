@@ -177,8 +177,8 @@
       USE GWFUZFMODULE, ONLY: NTRAIL, NWAV
       USE GWFSFRMODULE, ONLY: ISEG, NSS
       USE GWFLAKMODULE, ONLY: NLAKES
-      USE PRMS_MODULE, ONLY: Gwc_row, Gwc_col, Have_lakes, &
-     &    Nhru, Nsegment, Nlake, Print_debug, &
+      USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes
+      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Numlakes, Print_debug, &
      &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area, NEARZERO
@@ -210,9 +210,9 @@
       ENDIF
 
       IF ( Have_lakes==1 ) THEN
-        IF ( Nlake/=NLAKES ) THEN
-          PRINT *, 'ERROR, PRMS dimension nlake must equal Lake Package NLAKES'
-          PRINT *, '       nlake=', Nlake, ' NLAKES=', NLAKES
+        IF ( Numlakes/=NLAKES ) THEN
+          PRINT *, 'ERROR, PRMS dimension numlakes must equal Lake Package NLAKES'
+          PRINT *, '       nlake=', Numlakes, ' NLAKES=', NLAKES
           ierr = 1
         ENDIF
       ENDIF
@@ -440,13 +440,13 @@
 !***********************************************************************
       INTEGER FUNCTION prms2mfrun()
       USE GSFPRMS2MF
-      USE GSFMODFLOW, ONLY: Szcheck, Stopcount
+      USE GSFMODFLOW, ONLY: Gvr2cell_conv, Acre_inches_to_mfl3, &
+     &    Inch_to_mfl_t, Gwc_row, Gwc_col, Szcheck, Have_lakes, Stopcount, Mft_to_days
       USE GLOBAL, ONLY: IBOUND
 !     USE GLOBAL, ONLY: IOUT
       USE GWFUZFMODULE, ONLY: IUZFBND, NWAVST, PETRATE, IGSFLOW, FINF
       USE GWFLAKMODULE, ONLY: RNF, EVAPLK, PRCPLK, NLAKES
-      USE PRMS_MODULE, ONLY: KKITER, Nhrucell, Gvr_cell_id, Logunt, Gvr2cell_conv, &
-     &    Gwc_row, Gwc_col, Acre_inches_to_mfl3, Inch_to_mfl_t, Mft_to_days, Have_lakes
+      USE PRMS_MODULE, ONLY: KKITER, Nhrucell, Gvr_cell_id, Logunt
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
       USE PRMS_FLOWVARS, ONLY: Hru_actet
@@ -615,8 +615,9 @@
       INTEGER FUNCTION toStream()
       USE GSFPRMS2MF, ONLY: Numreach_segment, Segment_pct_area, Basin_reach_latflow
 !     USE GSFPRMS2MF, ONLY: Reach_latflow, Reach_id
+      USE GSFMODFLOW, ONLY: Sfr_conv
       USE GWFSFRMODULE, ONLY: STRM
-      USE PRMS_MODULE, ONLY: Nsegment, Sfr_conv
+      USE PRMS_MODULE, ONLY: Nsegment
       USE PRMS_SRUNOFF, ONLY: Strm_seg_in
       IMPLICIT NONE
       INTRINSIC SNGL
@@ -660,9 +661,10 @@
 !***********************************************************************
       SUBROUTINE Bin_percolation()
       USE GSFPRMS2MF, ONLY: Excess, Cell_drain_rate, Net_sz2gw
+      USE GSFMODFLOW, ONLY: Cellarea, Gwc_row, Gwc_col !, Mft_to_days
       USE GWFUZFMODULE, ONLY: FINF, VKS, FBINS, IUZFBND, NUZTOP, SURFDEP
       USE GLOBAL, ONLY: HNEW, BOTM
-      USE PRMS_MODULE, ONLY: Ngwcell, Cellarea, Gwc_row, Gwc_col !, Mft_to_days
+      USE PRMS_MODULE, ONLY: Ngwcell
       IMPLICIT NONE
       INTRINSIC ABS
 ! Local Variables

@@ -423,10 +423,11 @@
 !***********************************************************************
       INTEGER FUNCTION gsfsuminit()
       USE GSFSUM
+      USE GSFMODFLOW, ONLY: Acre_inches_to_mfl3, Mft_to_days
       USE GWFLAKMODULE, ONLY: TOTSTOR_LAK
       USE GWFSFRMODULE, ONLY: IRTFLG
       USE GLOBAL, ONLY: IUNIT
-      USE PRMS_MODULE, ONLY: Init_vars_from_file, Acre_inches_to_mfl3, Mft_to_days
+      USE PRMS_MODULE, ONLY: Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_area
       USE PRMS_FLOWVARS, ONLY: Basin_soil_moist, Basin_ssstor
       USE PRMS_SRUNOFF, ONLY: Basin_dprst_volop, Basin_dprst_volcl
@@ -576,7 +577,7 @@
 !***********************************************************************
       INTEGER FUNCTION gsfsumrun()
       USE GSFSUM
-      USE GSFMODFLOW, ONLY: KKSTP, KKPER, Maxgziter
+      USE GSFMODFLOW, ONLY: Mfl3t_to_cfs, KKSTP, KKPER, Have_lakes, Maxgziter
 !      USE GSFPRMS2MF, ONLY: Net_sz2gw
       USE GSFBUDGET, ONLY: NetBoundaryFlow2Sat_Q, Gw_bnd_in, Gw_bnd_out, Well_in, &
      &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S
@@ -588,7 +589,7 @@
      &    TOTSTOR_LAK, TOTWTHDRW_LAK, TOTRUNF_LAK, TOTSURFIN_LAK, &
      &    TOTSURFOT_LAK, TOTEVAP_LAK, TOTPPT_LAK
       USE GWFBASMODULE, ONLY: DELT
-      USE PRMS_MODULE, ONLY: Print_debug, KKITER, Nobs, Timestep, Dprst_flag, Mfl3t_to_cfs, Have_lakes
+      USE PRMS_MODULE, ONLY: Print_debug, KKITER, Nobs, Timestep, Dprst_flag
       USE PRMS_OBS, ONLY: Runoff, Runoff_units
       USE PRMS_BASIN, ONLY: CFS2CMS_CONV
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
@@ -1023,7 +1024,8 @@
 !***********************************************************************
       USE GSFSUM
       USE GWFSFRMODULE, ONLY: STRMDELSTOR_RATE, STRMDELSTOR_CUM, IRTFLG
-      USE PRMS_MODULE, ONLY: KKITER, Have_lakes
+      USE PRMS_MODULE, ONLY: KKITER
+      USE GSFMODFLOW, ONLY: Have_lakes
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
       INTRINSIC ABS

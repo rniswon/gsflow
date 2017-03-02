@@ -7,9 +7,10 @@
 !     gvr_hru_id, gvr_cell_id
 !     ******************************************************************
       INTEGER FUNCTION gsflow_mf2prms()
+      USE GSFMODFLOW, ONLY: Mfq2inch_conv, Gwc_col, Gwc_row
       USE PRMS_SOILZONE, ONLY: Hrucheck, Gvr_hru_id, Gw2sm_grav, Gw2sm_grav_save
       USE GWFUZFMODULE, ONLY: SEEPOUT
-      USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id, Mfq2inch_conv, Gwc_col, Gwc_row
+      USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id
       IMPLICIT NONE
 ! Functions
       EXTERNAL print_module
