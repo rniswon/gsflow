@@ -111,7 +111,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = 'gsflow_sum.f90 2016-11-16 10:49:00Z'
+      Version_gsflow_sum = 'gsflow_sum.f90 2017-03-02 15:59:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -750,7 +750,7 @@
       Rate_wellin = Well_in
       Cumvol_wellot = Cumvol_wellot + Well_out
       Rate_wellot = Well_out
-      NetWellFlow_Q = Cumvol_wellin - Cumvol_wellot
+      NetWellFlow_Q = Rate_wellin - Rate_wellot
 
       IF ( Print_debug==1 ) THEN
         et = Basin_perv_et + Basin_snowevap + Basin_imperv_evap + &
