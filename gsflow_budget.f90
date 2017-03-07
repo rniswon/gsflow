@@ -470,17 +470,17 @@
       ENDIF
 
       IF ( Vbnm_index(5)/=-1 ) THEN ! wells
-        modflow_in = modflow_in + VBVL(3, Vbnm_index(5))
+!        modflow_in = modflow_in + VBVL(3, Vbnm_index(5))
         Well_in = Well_in + VBVL(3, Vbnm_index(5))
       ENDIF
 
       IF ( Vbnm_index(6)/=-1 ) THEN ! multi node wells (MNW1)
-        modflow_in = modflow_in + VBVL(3, Vbnm_index(6))
+!        modflow_in = modflow_in + VBVL(3, Vbnm_index(6))
         Well_in = Well_in + VBVL(3, Vbnm_index(6))
       ENDIF
 
       IF ( Vbnm_index(14)/=-1 ) THEN ! multi node wells (MNW2)
-        modflow_in = modflow_in + VBVL(3, Vbnm_index(14))
+!        modflow_in = modflow_in + VBVL(3, Vbnm_index(14))
         Well_in = Well_in + VBVL(3, Vbnm_index(14))
       ENDIF
 
@@ -508,17 +508,17 @@
       ENDIF
 
       IF ( Vbnm_index(5)/=-1 ) THEN ! wells
-        modflow_out = modflow_out + VBVL(4, Vbnm_index(5))
+!        modflow_out = modflow_out + VBVL(4, Vbnm_index(5))
         Well_out = Well_out + VBVL(4, Vbnm_index(5))
       ENDIF
 
       IF ( Vbnm_index(6)/=-1 ) THEN ! multi node wells (MNW1)
-        modflow_out = modflow_out + VBVL(4, Vbnm_index(6))
+!        modflow_out = modflow_out + VBVL(4, Vbnm_index(6))
         Well_out = Well_out + VBVL(4, Vbnm_index(6))
       ENDIF
 
        IF ( Vbnm_index(14)/=-1 ) THEN ! multi node wells (MNW2)
-        modflow_out = modflow_out + VBVL(4, Vbnm_index(14))
+!        modflow_out = modflow_out + VBVL(4, Vbnm_index(14))
         Well_out = Well_out + VBVL(4, Vbnm_index(14))
       ENDIF
 
@@ -530,7 +530,7 @@
 
 !     CALL getHeads()
 
-      IF ( IUNIT(2)>0 ) CALL getPump()
+      CALL getPump()
 
       END FUNCTION gsfbudrun
 
