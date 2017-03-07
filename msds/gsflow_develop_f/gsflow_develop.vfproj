@@ -61,7 +61,9 @@
 		<File RelativePath="..\..\..\prms.git\frost_date.f90"/>
 		<File RelativePath="..\..\gsflow_budget.f90"/>
 		<File RelativePath="..\..\gsflow_mf2prms.f90"/>
+		<File RelativePath="..\..\gsflow_modflow.f"/>
 		<File RelativePath="..\..\gsflow_module.f90"/>
+		<File RelativePath="..\..\gsflow_prms.f90"/>
 		<File RelativePath="..\..\gsflow_prms2mf.f90"/>
 		<File RelativePath="..\..\gsflow_sum.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2bas7_NWT.f"/>
@@ -76,6 +78,7 @@
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2ghb7_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2hfb7_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2huf7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2hydmod7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2ibs7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2lak7_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2lpf7.f"/>
@@ -87,7 +90,11 @@
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2riv7_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2sfr7_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2str7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2sub7_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2swi27.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2swr7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2swr7util.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2swt7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2upw1.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2uzf1_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gwf2wel7_NWT.f"/>
@@ -118,7 +125,10 @@
 		<File RelativePath="..\..\..\prms.git\obs.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\obs2bas7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\obs2chd7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\obs2drn7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\obs2ghb7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\obs2riv7.f"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\obs2str7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\parutl7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\pcg7_NWT.f"/>
 		<File RelativePath="..\..\..\prms.git\potet_hamon.f90"/>
@@ -130,6 +140,8 @@
 		<File RelativePath="..\..\..\prms.git\potet_pt.f90"/>
 		<File RelativePath="..\..\..\prms.git\precip_1sta_laps.f90"/>
 		<File RelativePath="..\..\..\prms.git\precip_dist2.f90"/>
+		<File RelativePath="..\..\..\prms.git\precip_temp_grid.f90"/>
+		<File RelativePath="..\..\..\prms.git\prms_summary.f90"/>
 		<File RelativePath="..\..\..\prms.git\prms_time.f90"/>
 		<File RelativePath="..\..\..\prms.git\routing.f90"/>
 		<File RelativePath="..\..\..\prms.git\setup_param.f90"/>
@@ -138,6 +150,7 @@
 		<File RelativePath="..\..\..\prms.git\soilzone.f90"/>
 		<File RelativePath="..\..\..\prms.git\soltab.f90"/>
 		<File RelativePath="..\..\..\prms.git\srunoff.f90"/>
+		<File RelativePath="..\..\..\prms.git\stream_temp.f90"/>
 		<File RelativePath="..\..\..\prms.git\strmflow.f90"/>
 		<File RelativePath="..\..\..\prms.git\strmflow_in_out.f90"/>
 		<File RelativePath="..\..\..\prms.git\subbasin.f90"/>
