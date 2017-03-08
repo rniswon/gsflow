@@ -1,7 +1,7 @@
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      INTEGER FUNCTION call_modules(Arg)
+      INTEGER FUNCTION call_modules(Arg) ! probably need AFR
       USE PRMS_MODULE
       USE MF_DLL, ONLY: gsflow_modflow
       IMPLICIT NONE
@@ -47,9 +47,10 @@
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
         ENDIF
-    
+
+        AFR = .TRUE.
         IF ( Model/=1 ) THEN
-          call_modules = gsflow_modflow()
+          call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
 
@@ -131,7 +132,7 @@
         IF ( Model==0 ) THEN
           IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
      &         Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
-          call_modules = gsflow_modflow()
+          call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
         nc = numchars(Model_control_file)
@@ -181,7 +182,7 @@
           CALL call_modules_restart(0)
         ENDIF
         IF ( Model==0 ) THEN
-          call_modules = gsflow_modflow()
+          call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
       ENDIF
@@ -216,6 +217,15 @@
         call_modules = setup()
         IF ( call_modules/=0 ) CALL module_error('setup', Arg, call_modules)
       ENDIF
+
+!    IF ( AFR ) THEN
+!      endofdata = read_line ()
+!      IF ( endofdata==1 ) PRINT *, 'end of data flag = 1'
+!      ret = single_run_pre_run ();
+!      IF (ret) THEN
+!        PRINT *, 'Return code from single_run_pre_run = 1'
+!        STOP
+!      ENDIF 
 
       call_modules = prms_time()
       IF ( call_modules/=0 ) CALL module_error('prms_time', Arg, call_modules)
@@ -333,6 +343,8 @@
       call_modules = srunoff()
       IF ( call_modules/=0 ) CALL module_error(Srunoff_module, Arg, call_modules)
 
+!    ENDIF ! AFR = TRUE
+
 ! for PRMS-only simulations
       IF ( PRMS_flag==1 ) THEN
         call_modules = soilzone()
@@ -376,7 +388,7 @@
       ELSEIF ( Model==0 ) THEN
 
         IF ( Process_flag==0 ) THEN
-          call_modules = gsflow_modflow()
+          call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
 
 ! The following modules are in the MODFLOW iteration loop
@@ -575,21 +587,21 @@
         Kper_mfo = 1
         mf_timestep = 1
         Process_flag = 1
-        test = gsflow_modflow()
+        test = gsflow_modflow(AFR)
         IF ( test/=0 ) CALL module_error(MODNAME, 'declare', test)
         Process_flag = 2
-        test = gsflow_modflow()
+        test = gsflow_modflow(AFR)
         IF ( test/=0 ) CALL module_error(MODNAME, 'initialize', test)
         PRINT *, ' '
         Process_flag = 0
         DO WHILE ( Kper_mfo<=Nper )
-          test = gsflow_modflow()
+          test = gsflow_modflow(AFR)
           IF ( test/=0 ) CALL module_error(MODNAME, 'run', test)
           IF ( mf_timestep==NSTP(Kper_mfo) ) Kper_mfo = Kper_mfo + 1
           mf_timestep = mf_timestep + 1
         ENDDO
         Process_flag = 3
-        test = gsflow_modflow()
+        test = gsflow_modflow(AFR)
         IF ( test/=0 ) CALL module_error(MODNAME, 'clean', test)
         STOP
       ENDIF
