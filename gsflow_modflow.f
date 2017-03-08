@@ -9,9 +9,10 @@ C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
 !rgn------NEW VERSION NUMBER 1.1.2, 9/15/2016
 C     ******************************************************************
 C
-      INTEGER FUNCTION gsflow_modflow()
-      USE PRMS_MODULE, ONLY: Process_flag, KSTP, KPER, DIVS, AFR
+      INTEGER FUNCTION gsflow_modflow(AFR)
+      USE PRMS_MODULE, ONLY: Process_flag, KSTP, KPER, DIVS
       IMPLICIT NONE
+      LOGICAL :: AFR
 ! Functions
 !      INTEGER, EXTERNAL:: gsfdecl
 !***********************************************************************
@@ -45,7 +46,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-02-23 15:00:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-03-08 10:22:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       WRITE (*,1) MFVNAM,VERSION(:17),VERSION2(:17),VERSION3(:17)
@@ -615,6 +616,9 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
 C--EDM
 C--Overwrite MODFLOW's diversions with those passed by MODSIM
           IF ( Model>2 ) THEN
+!              do i = 1, ndiversion
+!                seg(2,diversion_segment(i) = DIVS(diversion_index(i))
+!              enddo
 C            SEG(2,3) = DIVS(5)   !Reservoir Release 
             SEG(2,4) = DIVS(1)   !Command Area #1
             SEG(2,14) = DIVS(2)  !Command Area #2
@@ -695,9 +699,7 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
             IF ( IUNIT(62).EQ.0 ) THEN
               IF(IUNIT(21).GT.0) CALL GWF2HFB7FM(IGRID)
             END IF
-            IF ( Model<3 ) THEN
             IF(IUNIT(2).GT.0) CALL GWF2WEL7FM(IUNIT(63),IGRID)
-            ENDIF
             IF(IUNIT(3).GT.0) CALL GWF2DRN7FM(IGRID)
             IF(IUNIT(4).GT.0) CALL GWF2RIV7FM(IGRID)
             IF(IUNIT(5).GT.0) THEN
@@ -739,23 +741,14 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Sziters = Sziters + 1
               Maxgziter = KKITER
             ENDIF
-            IF(IUNIT(55).GT.0) THEN
-              IF ( Model<3 ) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,               !Look here
+            IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,               !Look here
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
      2                           IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
-            ENDIF
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
      1                              IUNIT(22),IUNIT(63),IUNIT(8), 
      2                              IUNIT(55),IGRID)   !cjm (added IUNIT(8))
             IF(IUNIT(22).GT.0) CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
      1                                     IUNIT(44),IUNIT(55),IGRID)
-            IF ( Model>2 ) THEN
-! need above for GSFLOW, here for MODSIM
-              IF(IUNIT(2).GT.0) CALL GWF2WEL7FM(IUNIT(63),IGRID)         !Moved Down 3/19/15
-              IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
-     1                           IUNIT(44),IUNIT(22),IUNIT(63),
-     2                           IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
-            ENDIF
             IF(IUNIT(50).GT.0) THEN
               IF (IUNIT(1).GT.0) THEN
                 CALL GWF2MNW27BCF(KPER,IGRID)
