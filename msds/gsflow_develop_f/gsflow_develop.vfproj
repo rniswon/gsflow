@@ -58,7 +58,6 @@
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\de47_NWT.f"/>
 		<File RelativePath="..\..\..\prms.git\dynamic_param_read.f90"/>
 		<File RelativePath="..\..\..\prms.git\frost_date.f90"/>
-		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\gmg7.f"/>
 		<File RelativePath="..\..\gsflow_budget.f90"/>
 		<File RelativePath="..\..\gsflow_mf2prms.f90"/>
 		<File RelativePath="..\..\gsflow_modflow.f"/>
@@ -108,6 +107,7 @@
 		<File RelativePath="..\..\..\prms.git\muskingum.f90"/>
 		<File RelativePath="..\..\..\prms.git\muskingum_lake.f90"/>
 		<File RelativePath="..\..\..\prms.git\nhru_summary.f90"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\nogmg.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\NWT1_gmres.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\NWT1_ilupc_mod.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\NWT1_module.f"/>
