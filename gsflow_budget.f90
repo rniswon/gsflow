@@ -440,12 +440,13 @@
         Basin_gvr2sm = Basin_gvr2sm*Basin_area_inv
       ENDIF
 
-      IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()
-      IF ( IUNIT(23)>0 ) CALL MODFLOW_GET_STORAGE_LPF()
-      IF ( IUNIT(62)>0 ) CALL MODFLOW_GET_STORAGE_UPW()
-
+      !IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()
+      !IF ( IUNIT(23)>0 ) CALL MODFLOW_GET_STORAGE_LPF()
+      !IF ( IUNIT(62)>0 ) CALL MODFLOW_GET_STORAGE_UPW()
+!
       IF ( Vbnm_index(1)==-1 ) CALL MODFLOW_VB_DECODE(Vbnm_index)
       Sat_dS = VBVL(4,Vbnm_index(12)) - VBVL(3,Vbnm_index(12))
+      Sat_S = Sat_S + Sat_dS
 
       Unsat_S = UZTSRAT(6)
 
@@ -550,7 +551,6 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
-      Sat_S = 0.0D0
 
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
@@ -605,11 +605,10 @@
       USE GWFLPFMODULE, ONLY: LAYTYP, SC1, SC2
       IMPLICIT NONE
 ! Local Variables
-      INTEGER :: i, j, k, kt, lc
+      INTEGER :: i, j, k, kt, lc, msum
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
-      Sat_S = 0.0D0
 
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
@@ -672,8 +671,6 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
-      Sat_S = 0.0D0
-
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
       DO k = 1, NLAY
