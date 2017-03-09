@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2016-06-08 14:13:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2017-03-09 11:17:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -551,6 +551,7 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
+      Sat_S = 0.0D0
 
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
@@ -609,6 +610,7 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
+      Sat_S = 0.0D0
 
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
@@ -671,6 +673,8 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
+      Sat_S = 0.0D0
+
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
       DO k = 1, NLAY
