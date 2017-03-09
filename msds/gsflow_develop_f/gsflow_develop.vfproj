@@ -5,7 +5,7 @@
 		<Platform Name="x64"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" EnableRecursion="true" F77IntegerConstants="true" WarnUnusedVariables="true" ExternalNameInterpretation="extNameLowerCase" ExternalNameUnderscore="true" Traceback="true" RuntimeChecks="rtChecksAll" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" RuntimeLibrary="rtMultiThreadedDebug" ImproveFloatingPointConsistency="true"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" EnableRecursion="true" F77IntegerConstants="true" WarnUnusedVariables="true" ExternalNameInterpretation="extNameLowerCase" ExternalNameUnderscore="true" Traceback="true" RuntimeChecks="rtChecksAll" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL" ImproveFloatingPointConsistency="true"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalYes" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -106,6 +106,7 @@
 		<File RelativePath="..\..\..\prms.git\ide_dist.f"/>
 		<File RelativePath="..\..\..\prms.git\intcp.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\Irestart.f"/>
+		<File RelativePath="..\..\..\prms.git\lis_api_prms.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\lmt8_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mach_mod.f90"/>
 		<File RelativePath="..\..\..\prms.git\map_results.f90"/>
@@ -141,15 +142,21 @@
 		<File RelativePath="..\..\..\prms.git\precip_1sta_laps.f90"/>
 		<File RelativePath="..\..\..\prms.git\precip_dist2.f90"/>
 		<File RelativePath="..\..\..\prms.git\precip_temp_grid.f90"/>
+		<File RelativePath="..\..\..\prms.git\prms.f90"/>
 		<File RelativePath="..\..\..\prms.git\prms_summary.f90"/>
 		<File RelativePath="..\..\..\prms.git\prms_time.f90"/>
+		<File RelativePath="..\..\..\prms.git\read_control_file.f90"/>
+		<File RelativePath="..\..\..\prms.git\read_data_file.f90"/>
+		<File RelativePath="..\..\..\prms.git\read_parameter_file.f90"/>
 		<File RelativePath="..\..\..\prms.git\routing.f90"/>
+		<File RelativePath="..\..\..\prms.git\runtime_out.f90"/>
 		<File RelativePath="..\..\..\prms.git\setup_param.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\sip7_NWT.f"/>
 		<File RelativePath="..\..\..\prms.git\snowcomp.f90"/>
 		<File RelativePath="..\..\..\prms.git\soilzone.f90"/>
 		<File RelativePath="..\..\..\prms.git\soltab.f90"/>
 		<File RelativePath="..\..\..\prms.git\srunoff.f90"/>
+		<File RelativePath="..\..\..\prms.git\statvar_out.f90"/>
 		<File RelativePath="..\..\..\prms.git\stream_temp.f90"/>
 		<File RelativePath="..\..\..\prms.git\strmflow.f90"/>
 		<File RelativePath="..\..\..\prms.git\strmflow_in_out.f90"/>
