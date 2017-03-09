@@ -8,19 +8,19 @@
       CHARACTER(LEN=80), PARAMETER :: &
      &  EQULS = '================================================================================'
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 02/22/2017'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 03/09/2017'
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
-      INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
-      INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Numlakes
+      INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw, One, Nmonths, Ndays
+      INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Numlakes, Nlapse
       INTEGER, SAVE :: Ntemp, Nrain, Nsol, Nsegment, Ndepl, Nobs, Nevap, Ndeplval
-      INTEGER, SAVE :: Starttime(6), Endtime(6)
+      INTEGER, SAVE :: Starttime(6), Endtime(6), Modflow_time_zero(6)
       INTEGER, SAVE :: Start_year, Start_month, Start_day, End_year, End_month, End_day
       INTEGER, SAVE :: Transp_flag, Sroff_flag, Solrad_flag, Et_flag
       INTEGER, SAVE :: Climate_temp_flag, Climate_precip_flag, Climate_potet_flag, Climate_transp_flag
       INTEGER, SAVE :: Lake_route_flag, Nratetbl, Strmflow_flag, Stream_order_flag
       INTEGER, SAVE :: Temp_flag, Precip_flag, Climate_hru_flag, Climate_swrad_flag
-      INTEGER, SAVE :: Precip_combined_flag, Temp_combined_flag
+      INTEGER, SAVE :: Precip_combined_flag, Temp_combined_flag, statsON_OFF
       INTEGER, SAVE :: Inputerror_flag, Timestep
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
       INTEGER, SAVE :: Grid_flag, Logunt, First_timestep

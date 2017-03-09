@@ -46,7 +46,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-03-08 10:22:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-03-09 11:00:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       WRITE (*,1) MFVNAM,VERSION(:17),VERSION2(:17),VERSION3(:17)
@@ -1689,21 +1689,23 @@ C
       USE GSFMODFLOW, ONLY: Stress_dates
       USE PRMS_MODULE, ONLY: Starttime, Start_year, Start_month,
      &                       Start_day, KPER
+      USE PRMS_SET_TIME, ONLY: Jday, Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
       INTRINSIC DBLE
-      DOUBLE PRECISION, EXTERNAL :: nowjt, getjulday
+!      DOUBLE PRECISION, EXTERNAL :: nowjt
+      INTEGER, EXTERNAL :: compute_julday
 ! Local Variables
       DOUBLE PRECISION :: now, seconds
 !     ------------------------------------------------------------------
       GET_KPER = -1
-      now = nowjt()
+!      now = nowjt()
+      now = compute_julday(Nowyear, Nowmonth, Nowday)
 !
 !     If called from init, then "now" isn't set yet.
 !     Set "now" to model start date.
       IF ( now.LE.1.0D0 ) THEN
         seconds = DBLE(Starttime(6))
-        now = getjulday(Start_month, Start_day, Start_year,
-     &                  Starttime(4), Starttime(5), seconds)
+        now = compute_julday(Start_year, Start_month, Start_day)
       ENDIF
       IF ( now.LT.Stress_dates(KPER) )
      &     STOP 'ERROR, now<stress period time'
@@ -1731,47 +1733,42 @@ C
       USE GWFBASMODULE, ONLY: TOTIM
       IMPLICIT NONE
       EXTERNAL :: RESTART1READ
-      INTEGER, EXTERNAL :: control_integer_array
-      DOUBLE PRECISION, EXTERNAL :: getjulday
+      INTEGER, EXTERNAL :: compute_julday !, control_integer_array
+!      DOUBLE PRECISION, EXTERNAL :: compute_julday
 ! Local Variables
       INTEGER :: i, j
       DOUBLE PRECISION :: seconds, start_jul, mfstrt_jul, plen, time
       DOUBLE PRECISION :: kstpskip
 !***********************************************************************
       ! get modflow_time_zero and determine julian day
-      DO j = 1, 6
-        IF ( control_integer_array(Modflow_time_zero(j),
-     &       j, 'modflow_time_zero')/=0 ) THEN
-          PRINT *, 'ERROR, modflow_time_zero, index:', j,
-     &             'value: ', Modflow_time_zero(j)
-          STOP
-        ENDIF
-        IF ( j==1 ) THEN
-          IF ( Modflow_time_zero(1)<0 ) THEN
+!      DO j = 1, 6
+!        IF ( control_integer_array(Modflow_time_zero(j),
+!     &       j, 'modflow_time_zero')/=0 ) THEN
+!          PRINT *, 'ERROR, modflow_time_zero, index:', j,
+!     &             'value: ', Modflow_time_zero(j)
+!          STOP
+!        ENDIF
+!        IF ( j==1 ) THEN
+          IF ( Modflow_time_zero(1)<1 ) THEN
       !     STOP
       !&    'ERROR, control parameter modflow_time_zero must be specified'
             Modflow_time_zero = Starttime
             PRINT '(A, /)',
      &     'WARNING, modflow_time_zero not specified, set to start_time'
-            EXIT
+!            EXIT
           ENDIF
-        ENDIF
-      ENDDO
+!        ENDIF
+!      ENDDO
       PRINT ( '(A, I5,2("/",I2.2))' ), 'modflow_time_zero:',
      &  Modflow_time_zero(1), Modflow_time_zero(2), Modflow_time_zero(3)
-      seconds = Modflow_time_zero(6)
       ALLOCATE ( Stress_dates(NPER+1) )
       Stress_dates = 0.0D0
-      Stress_dates(1) =
-     &          getjulday(Modflow_time_zero(2), Modflow_time_zero(3),
-     &                    Modflow_time_zero(1), Modflow_time_zero(4),
-     &                    Modflow_time_zero(5), seconds)
+      Stress_dates(1) = compute_julday(Modflow_time_zero(1),
+     &                  Modflow_time_zero(2), Modflow_time_zero(3))
       mfstrt_jul = Stress_dates(1)
 
       ! determine julian day
-      seconds = Starttime(6)
-      start_jul = getjulday(Start_month, Start_day, Start_year,
-     &                      Starttime(4), Starttime(5), seconds)
+      start_jul = compute_julday(Start_year, Start_month, Start_day)
 
       IF ( mfstrt_jul>start_jul ) THEN
         PRINT *, 'ERROR, modflow_time_zero > start_time',

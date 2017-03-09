@@ -42,7 +42,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-03-02 11:15:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-03-09 10:59:00Z'
 
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -218,14 +218,7 @@
         IF ( call_modules/=0 ) CALL module_error('setup', Arg, call_modules)
       ENDIF
 
-!    IF ( AFR ) THEN
-!      endofdata = read_line ()
-!      IF ( endofdata==1 ) PRINT *, 'end of data flag = 1'
-!      ret = single_run_pre_run ();
-!      IF (ret) THEN
-!        PRINT *, 'Return code from single_run_pre_run = 1'
-!        STOP
-!      ENDIF 
+    IF ( AFR ) THEN
 
       call_modules = prms_time()
       IF ( call_modules/=0 ) CALL module_error('prms_time', Arg, call_modules)
@@ -343,7 +336,7 @@
       call_modules = srunoff()
       IF ( call_modules/=0 ) CALL module_error(Srunoff_module, Arg, call_modules)
 
-!    ENDIF ! AFR = TRUE
+    ENDIF ! AFR = TRUE
 
 ! for PRMS-only simulations
       IF ( PRMS_flag==1 ) THEN
@@ -415,6 +408,7 @@
         IF ( call_modules/=0 ) CALL module_error('gsflow_sum', Arg, call_modules)
       ENDIF
 
+    !  do not write output until MODSIM converges with GSFLOW
       IF ( MapOutON_OFF>0 ) THEN
         call_modules = map_results()
         IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
@@ -488,11 +482,12 @@
 !***********************************************************************
       INTEGER FUNCTION setdims()
       USE PRMS_MODULE
+      USE PRMS_CONTROL_FILE, ONLY: Control_file
       USE GLOBAL, ONLY: NSTP, NPER
       USE MF_DLL, ONLY: gsflow_modflow
       IMPLICIT NONE
 ! Functions
-      INTEGER, EXTERNAL :: decldim, declfix, call_modules, control_integer_array, control_file_name
+      INTEGER, EXTERNAL :: decldim, declfix, call_modules !, control_integer_array, control_file_name
       INTEGER, EXTERNAL :: control_string, control_integer
       EXTERNAL read_error, PRMS_open_output_file, PRMS_open_input_file, check_module_names
       EXTERNAL PRMS_open_module_file, module_error
@@ -556,24 +551,24 @@
       ENDIF
 
       ! get simulation start_time and end_time
-      Starttime = -1
-      DO j = 1, 6
-        IF ( control_integer_array(Starttime(j), j, 'start_time')/=0 ) THEN
-          PRINT *, 'ERROR, start_time, index:', j, 'value: ', Starttime(j)
-          STOP
-        ENDIF
-      ENDDO
+!      Starttime = -1
+!      DO j = 1, 6
+!        IF ( control_integer_array(Starttime(j), j, 'start_time')/=0 ) THEN
+!          PRINT *, 'ERROR, start_time, index:', j, 'value: ', Starttime(j)
+!          STOP
+!        ENDIF
+!      ENDDO
       Start_year = Starttime(1)
       IF ( Start_year<0 ) STOP 'ERROR, control parameter start_time must be specified'
       Start_month = Starttime(2)
       Start_day = Starttime(3)
-      Endtime = -1
-      DO j = 1, 6
-        IF ( control_integer_array(Endtime(j), j, 'end_time')/=0 ) THEN
-          PRINT *, 'ERROR, end_time, index:', j, 'value: ', Endtime(j)
-          STOP
-        ENDIF
-      ENDDO
+!      Endtime = -1
+!      DO j = 1, 6
+!        IF ( control_integer_array(Endtime(j), j, 'end_time')/=0 ) THEN
+!          PRINT *, 'ERROR, end_time, index:', j, 'value: ', Endtime(j)
+!          STOP
+!        ENDIF
+!      ENDDO
       End_year = Endtime(1)
       IF ( End_year<0 ) STOP 'ERROR, control parameter start_time must be specified'
       End_month = Endtime(2)
@@ -607,12 +602,13 @@
       ENDIF
 
       ! Open PRMS module output file
-      IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'prms.out')
-      IF ( Print_debug>-2 ) THEN
-        CALL PRMS_open_output_file(PRMS_output_unit, Model_output_file, 'model_output_file', 0, iret)
-        IF ( iret/=0 ) STOP
-      ENDIF
-      IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
+!      IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'prms.out')
+!      IF ( Print_debug>-2 ) THEN
+!        CALL PRMS_open_output_file(PRMS_output_unit, Model_output_file, 'model_output_file', 0, iret)
+!        IF ( iret/=0 ) STOP
+!      ENDIF
+!      IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
+      Model_control_file = Control_file
       IF ( control_string(Param_file, 'param_file')/=0 ) CALL read_error(5, 'param_file')
 
       ! Check for restart files
@@ -776,32 +772,32 @@
       IF ( Stream_temp_flag==1 ) Stream_order_flag = Stream_order_flag + 1
 
       IF ( control_integer(Frozen_flag, 'frozen_flag')/=0 ) Frozen_flag = 0
-      IF ( control_integer(Dyn_imperv_flag, 'dyn_imperv_flag')/=0 ) Dyn_imperv_flag = 0
-      IF ( control_integer(Dyn_intcp_flag, 'dyn_intcp_flag')/=0 ) Dyn_intcp_flag = 0
-      IF ( control_integer(Dyn_covden_flag, 'dyn_covden_flag')/=0 ) Dyn_covden_flag = 0
-      IF ( control_integer(Dyn_dprst_flag, 'dyn_dprst_flag')/=0 ) Dyn_dprst_flag = 0
-      IF ( control_integer(Dyn_potet_flag, 'dyn_potet_flag')/=0 ) Dyn_potet_flag = 0
-      IF ( control_integer(Dyn_covtype_flag, 'dyn_covtype_flag')/=0 ) Dyn_covtype_flag = 0
-      IF ( control_integer(Dyn_transp_flag, 'dyn_transp_flag')/=0 ) Dyn_transp_flag = 0
-      IF ( control_integer(Dyn_soil_flag, 'dyn_soil_flag')/=0 ) Dyn_soil_flag = 0
-      IF ( control_integer(Dyn_radtrncf_flag, 'dyn_radtrncf_flag')/=0 ) Dyn_radtrncf_flag = 0
-      IF ( control_integer(Dyn_sro2dprst_perv_flag, 'dyn_sro2dprst_perv_flag')/=0 ) Dyn_sro2dprst_perv_flag = 0
-      IF ( control_integer(Dyn_sro2dprst_imperv_flag, 'dyn_sro2dprst_imperv_flag')/=0 ) Dyn_sro2dprst_imperv_flag = 0
-      IF ( control_integer(Dyn_fallfrost_flag, 'dyn_fallfrost_flag')/=0 ) Dyn_fallfrost_flag = 0
-      IF ( control_integer(Dyn_springfrost_flag, 'dyn_springfrost_flag')/=0 ) Dyn_springfrost_flag = 0
-      IF ( control_integer(Dyn_snareathresh_flag, 'dyn_snareathresh_flag')/=0 ) Dyn_snareathresh_flag = 0
-      IF ( control_integer(Dyn_transp_on_flag, 'dyn_transp_on_flag')/=0 ) Dyn_transp_on_flag = 0
+!      IF ( control_integer(Dyn_imperv_flag, 'dyn_imperv_flag')/=0 ) Dyn_imperv_flag = 0
+!      IF ( control_integer(Dyn_intcp_flag, 'dyn_intcp_flag')/=0 ) Dyn_intcp_flag = 0
+!      IF ( control_integer(Dyn_covden_flag, 'dyn_covden_flag')/=0 ) Dyn_covden_flag = 0
+!      IF ( control_integer(Dyn_dprst_flag, 'dyn_dprst_flag')/=0 ) Dyn_dprst_flag = 0
+!      IF ( control_integer(Dyn_potet_flag, 'dyn_potet_flag')/=0 ) Dyn_potet_flag = 0
+!      IF ( control_integer(Dyn_covtype_flag, 'dyn_covtype_flag')/=0 ) Dyn_covtype_flag = 0
+!      IF ( control_integer(Dyn_transp_flag, 'dyn_transp_flag')/=0 ) Dyn_transp_flag = 0
+!      IF ( control_integer(Dyn_soil_flag, 'dyn_soil_flag')/=0 ) Dyn_soil_flag = 0
+!      IF ( control_integer(Dyn_radtrncf_flag, 'dyn_radtrncf_flag')/=0 ) Dyn_radtrncf_flag = 0
+!      IF ( control_integer(Dyn_sro2dprst_perv_flag, 'dyn_sro2dprst_perv_flag')/=0 ) Dyn_sro2dprst_perv_flag = 0
+!      IF ( control_integer(Dyn_sro2dprst_imperv_flag, 'dyn_sro2dprst_imperv_flag')/=0 ) Dyn_sro2dprst_imperv_flag = 0
+!      IF ( control_integer(Dyn_fallfrost_flag, 'dyn_fallfrost_flag')/=0 ) Dyn_fallfrost_flag = 0
+!      IF ( control_integer(Dyn_springfrost_flag, 'dyn_springfrost_flag')/=0 ) Dyn_springfrost_flag = 0
+!      IF ( control_integer(Dyn_snareathresh_flag, 'dyn_snareathresh_flag')/=0 ) Dyn_snareathresh_flag = 0
+!      IF ( control_integer(Dyn_transp_on_flag, 'dyn_transp_on_flag')/=0 ) Dyn_transp_on_flag = 0
       Dynamic_flag = 0
-      IF ( Dyn_imperv_flag/=0 .OR. Dyn_intcp_flag/=0 .OR. Dyn_covden_flag/=0 .OR. Dyn_dprst_flag/=0 .OR. &
-     &     Dyn_potet_flag/=0 .OR. Dyn_covtype_flag/=0 .OR. Dyn_transp_flag/=0 .OR. Dyn_soil_flag /=0 .OR. &
-     &     Dyn_radtrncf_flag/=0 .OR. Dyn_sro2dprst_perv_flag/=0 .OR. Dyn_sro2dprst_imperv_flag/=0 .OR. &
-     &     Dyn_fallfrost_flag/=0 .OR. Dyn_springfrost_flag/=0 .OR. Dyn_snareathresh_flag/=0 .OR. &
-     &     Dyn_transp_on_flag/=0 ) Dynamic_flag = 1
-      IF ( control_integer(Gwr_transferON_OFF, 'gwr_transferON_OFF')/=0) Gwr_transferON_OFF = 0
-      IF ( control_integer(External_transferON_OFF, 'external_transferON_OFF')/=0 ) External_transferON_OFF = 0
-      IF ( control_integer(Dprst_transferON_OFF, 'dprst_transferON_OFF')/=0 ) Dprst_transferON_OFF = 0
-      IF ( control_integer(Segment_transferON_OFF, 'segment_transferON_OFF')/=0 ) Segment_transferON_OFF = 0
-      IF ( control_integer(Lake_transferON_OFF, 'lake_transferON_OFF')/=0 ) Lake_transferON_OFF = 0
+!      IF ( Dyn_imperv_flag/=0 .OR. Dyn_intcp_flag/=0 .OR. Dyn_covden_flag/=0 .OR. Dyn_dprst_flag/=0 .OR. &
+!     &     Dyn_potet_flag/=0 .OR. Dyn_covtype_flag/=0 .OR. Dyn_transp_flag/=0 .OR. Dyn_soil_flag /=0 .OR. &
+!     &     Dyn_radtrncf_flag/=0 .OR. Dyn_sro2dprst_perv_flag/=0 .OR. Dyn_sro2dprst_imperv_flag/=0 .OR. &
+!     &     Dyn_fallfrost_flag/=0 .OR. Dyn_springfrost_flag/=0 .OR. Dyn_snareathresh_flag/=0 .OR. &
+!     &     Dyn_transp_on_flag/=0 ) Dynamic_flag = 1
+!      IF ( control_integer(Gwr_transferON_OFF, 'gwr_transferON_OFF')/=0) Gwr_transferON_OFF = 0
+!      IF ( control_integer(External_transferON_OFF, 'external_transferON_OFF')/=0 ) External_transferON_OFF = 0
+!      IF ( control_integer(Dprst_transferON_OFF, 'dprst_transferON_OFF')/=0 ) Dprst_transferON_OFF = 0
+!      IF ( control_integer(Segment_transferON_OFF, 'segment_transferON_OFF')/=0 ) Segment_transferON_OFF = 0
+!      IF ( control_integer(Lake_transferON_OFF, 'lake_transferON_OFF')/=0 ) Lake_transferON_OFF = 0
       IF ( control_integer(Gwr_swale_flag, 'gwr_swale_flag')/=0 ) Gwr_swale_flag = 0
 
 ! nhru_summary
@@ -838,10 +834,10 @@
      &     CALL read_error(7, 'ndelplval')
 
 ! water-use
-      IF ( decldim('nwateruse', 0, MAXDIM, 'Number of water-use data sets')/=0 ) CALL read_error(7, 'nwateruse')
-      IF ( decldim('nexternal', 0, MAXDIM, &
-     &      'Number of external water-use sources or destinations')/=0 ) CALL read_error(7, 'nexternal')
-      IF ( decldim('nconsumed', 0, MAXDIM, 'Number of consumptive water-use destinations')/=0 ) CALL read_error(7, 'nconsumed')
+!      IF ( decldim('nwateruse', 0, MAXDIM, 'Number of water-use data sets')/=0 ) CALL read_error(7, 'nwateruse')
+!      IF ( decldim('nexternal', 0, MAXDIM, &
+!     &      'Number of external water-use sources or destinations')/=0 ) CALL read_error(7, 'nexternal')
+!      IF ( decldim('nconsumed', 0, MAXDIM, 'Number of consumptive water-use destinations')/=0 ) CALL read_error(7, 'nconsumed')
 
 ! fixed dimensions
       IF ( declfix('ndays', 366, 366, 'Maximum number of days in a year ')/=0 ) CALL read_error(7, 'ndays')
@@ -912,14 +908,17 @@
         ENDIF
       ENDIF
 
-      Nwateruse = getdim('nwateruse')
-      IF ( Nwateruse==-1 ) CALL read_error(7, 'nwateruse')
+      !Nwateruse = getdim('nwateruse')
+      !IF ( Nwateruse==-1 ) CALL read_error(7, 'nwateruse')
 
-      Nexternal = getdim('nexternal')
-      IF ( Nexternal==-1 ) CALL read_error(6, 'nexternal')
+      !Nexternal = getdim('nexternal')
+      !IF ( Nexternal==-1 ) CALL read_error(6, 'nexternal')
+      Nwateruse = 0
+      Nexternal = 0
 
-      Nconsumed = getdim('nconsumed')
-      IF ( Nconsumed==-1 ) CALL read_error(6, 'nconsumed')
+!      Nconsumed = getdim('nconsumed')
+!      IF ( Nconsumed==-1 ) CALL read_error(6, 'nconsumed')
+      Nconsumed = 0
 
       Npoigages = getdim('npoigages')
       IF ( Npoigages==-1 ) CALL read_error(6, 'npoigages')
