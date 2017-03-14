@@ -413,7 +413,7 @@
       WRITE ( Logunt, '(A,D15.7)' ) &
      &        'Percent difference between GVR mapping and active model domain:', (Totalarea-1.0D0)*100.0D0
       IF ( Print_debug>-1 ) &
-      &    PRINT '(/,A,D15.7)', 'Percent difference between GVR mapping and active model domain:', (Totalarea-1.0D0)*100.0D0
+      &    PRINT '(A,D15.7)', 'Percent difference between GVR mapping and active model domain:', (Totalarea-1.0D0)*100.0D0
 
       IF ( Nhru/=Nhrucell ) DEALLOCATE ( hru_pct, newpct, temp_pct )
       !DEALLOCATE ( nseg_rch, seg_area )
