@@ -109,7 +109,7 @@ C1------USE package modules.
       INCLUDE 'openspec.inc'
 ! Functions
       INTRINSIC DBLE, TRIM
-      INTEGER, EXTERNAL :: numchars, getparam
+      INTEGER, EXTERNAL :: numchars, getparam, control_string
       EXTERNAL :: read_error, print_module, PRMS_open_module_file
 ! Local Variables
       INTEGER :: MAXUNIT, NC
