@@ -108,8 +108,8 @@ C1------USE package modules.
       INTEGER :: I
       INCLUDE 'openspec.inc'
 ! Functions
-      INTRINSIC DBLE
-      INTEGER, EXTERNAL :: numchars, getparam, control_string
+      INTRINSIC DBLE, TRIM
+      INTEGER, EXTERNAL :: numchars, getparam
       EXTERNAL :: read_error, print_module, PRMS_open_module_file
 ! Local Variables
       INTEGER :: MAXUNIT, NC
@@ -189,8 +189,7 @@ C4------OPEN NAME FILE.
         FNAME="modsim.mfn"                              !# Hardwire
       ENDIF
       OPEN (UNIT=INUNIT,FILE=FNAME,STATUS='OLD',ACTION=ACTION(1))
-      NC=INDEX(FNAME,' ')
-      IF ( Model>2 ) WRITE(*,490)' Using NAME file: ',FNAME(1:NC)
+!      WRITE(*,490) ' Using NAME file: ',TRIM(FNAME)
   490 FORMAT(A,A)
 C
 C5------Get current date and time, assign to IBDT, and write to screen
@@ -420,7 +419,6 @@ C  Observation allocate and read
       !END IF
 C
 C7------SIMULATE EACH STRESS PERIOD.
-      IF ( Model<3 ) THEN
       CALL print_module(Version_gsflow_modflow,
      &                  'GSFLOW MODFLOW main         ', 77)
       PRINT '(A,/A,/A)', EQULS, 'MODFLOW Packages', EQULS
@@ -435,14 +433,8 @@ C7------SIMULATE EACH STRESS PERIOD.
       PRINT '(A,/)', EQULS
       WRITE ( Logunt, '(A,/)') EQULS
 
-      IF ( NC.GT.1 ) THEN
-        WRITE(*, 490) FNAME(1:NC)
-        WRITE(Logunt, 490) FNAME(1:NC)
-      ELSE
-        WRITE(*, 490) FNAME
-        WRITE( Logunt, 490 ) FNAME
-      ENDIF
-      ENDIF
+      WRITE(*,490) 'Using NAME file: ', TRIM(FNAME)
+      WRITE(Logunt,490) 'Using NAME file: ',TRIM(FNAME)
 
       IF ( IUNIT(63)>0 ) THEN
         PRINT 14, 'NWT'
@@ -486,7 +478,7 @@ C7------SIMULATE EACH STRESS PERIOD.
         WRITE (Logunt, '(A,D14.7)')
      &         'Percent difference between cell mapping:',
      &         Totalarea_mf/DBLE(Ncells)*100.0D0
-        WRITE (Logunt, '(/,A,I8,/)') 'Number of active cells:', Ncells
+        WRITE (Logunt, '(/,A,I8)') 'Number of active cells:', Ncells
       ENDIF
 
       ! run SS if needed, read to current stress period, read restart if needed
@@ -507,7 +499,7 @@ C
         Kper_mfo = Kkper_new
       ENDIF
 C
-    4 FORMAT (/, 2(A, I5, 2('/',I2.2)), /)
+    4 FORMAT (/, 2(A, I5, 2('/',I2.2)))
 C
       RETURN
       END SUBROUTINE MFNWT_INIT
@@ -875,7 +867,8 @@ C7C2C---IF CONVERGENCE CRITERION HAS BEEN MET STOP ITERATING.
           END DO
           KITER = MXITER
 C
-   33     CONTINUE
+   33 CONTINUE
+      !move above and executed when AFR = TRUE
           IF(IUNIT(62).GT.0 ) CALL GWF2UPWUPDATE(2,Igrid)
 C
 C7C3----DETERMINE WHICH OUTPUT IS NEEDED.
@@ -1689,7 +1682,7 @@ C
       USE GSFMODFLOW, ONLY: Stress_dates
       USE PRMS_MODULE, ONLY: Starttime, Start_year, Start_month,
      &                       Start_day, KPER
-      USE PRMS_SET_TIME, ONLY: Jday, Nowyear, Nowmonth, Nowday
+      USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
       INTRINSIC DBLE
 !      DOUBLE PRECISION, EXTERNAL :: nowjt
@@ -1736,7 +1729,7 @@ C
       INTEGER, EXTERNAL :: compute_julday !, control_integer_array
 !      DOUBLE PRECISION, EXTERNAL :: compute_julday
 ! Local Variables
-      INTEGER :: i, j
+      INTEGER :: i
       DOUBLE PRECISION :: seconds, start_jul, mfstrt_jul, plen, time
       DOUBLE PRECISION :: kstpskip
 !***********************************************************************
@@ -1806,8 +1799,8 @@ C
         Stress_dates(i+1) = Stress_dates(i) + plen
 !        print *, 'PERLEN', PERLEN(i), plen, Mft_to_days
       ENDDO
- 222  FORMAT ( /, 'Steady state simulation did not converge', I6)
- 223  FORMAT ( /, 'Steady state simulation successful, used:', I6,
+ 222  FORMAT ( 'Steady state simulation did not converge', I6)
+ 223  FORMAT ( 'Steady state simulation successful, used:', I6,
      &         ' iterations')
 !      print *, 'stress dates:', Stress_dates
 
