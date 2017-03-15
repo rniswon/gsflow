@@ -234,7 +234,7 @@
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
 !Warning, modifies Gw2sm_grav
       USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id !, Print_debug
-      USE GLOBAL, ONLY: IUNIT, DELR, DELC
+      USE GLOBAL, ONLY: DELR, DELC
       USE GWFBASMODULE, ONLY: VBVL, DELT
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET, UZOLSFLX, UZFLWT
       USE GWFLAKMODULE, ONLY: EVAP, SURFA
@@ -606,7 +606,7 @@
       USE GWFLPFMODULE, ONLY: LAYTYP, SC1, SC2
       IMPLICIT NONE
 ! Local Variables
-      INTEGER :: i, j, k, kt, lc, msum
+      INTEGER :: i, j, k, kt, lc
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
