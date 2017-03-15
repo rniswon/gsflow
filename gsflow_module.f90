@@ -3,18 +3,18 @@
 !***********************************************************************
       MODULE PRMS_MODULE
       IMPLICIT NONE
-      INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 20
+      INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 32
       INTEGER, PARAMETER :: MAXDIM = 500
-      CHARACTER(LEN=80), PARAMETER :: &
-     &  EQULS = '================================================================================'
+      CHARACTER(LEN=78), PARAMETER :: &
+     &  EQULS = '=============================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 03/09/2017'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 03/14/2017'
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw, One, Nmonths, Ndays
       INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Numlakes, Nlapse
       INTEGER, SAVE :: Ntemp, Nrain, Nsol, Nsegment, Ndepl, Nobs, Nevap, Ndeplval
-      INTEGER, SAVE :: Starttime(6), Endtime(6), Modflow_time_zero(6)
+      INTEGER, SAVE :: Starttime(6), Endtime(6)
       INTEGER, SAVE :: Start_year, Start_month, Start_day, End_year, End_month, End_day
       INTEGER, SAVE :: Transp_flag, Sroff_flag, Solrad_flag, Et_flag
       INTEGER, SAVE :: Climate_temp_flag, Climate_precip_flag, Climate_potet_flag, Climate_transp_flag
@@ -28,6 +28,9 @@
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
       INTEGER, SAVE :: Dynamic_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Kkiter
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
+      INTEGER, SAVE :: Prms_warmup
+      CHARACTER(LEN=80), SAVE :: Version_read_control_file, Version_read_parameter_file
+      CHARACTER(LEN=80), SAVE :: Version_read_data_file
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
       DOUBLE PRECISION, SAVE :: Totalarea_mf
       REAL(8), DIMENSION(5) :: DIVS
@@ -58,6 +61,7 @@
 !     GSFLOW module
 !***********************************************************************
       MODULE GSFMODFLOW
+      USE PRMS_MODULE, ONLY: MAXFILE_LENGTH
 !   Local Variables
       INTEGER, PARAMETER :: ITDIM = 80
       INTEGER, SAVE :: Convfail_cnt, Steady_state, Ncells, Gsflag
@@ -70,7 +74,7 @@
       REAL, SAVE :: Delt_save
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Stress_dates(:)
       INTEGER, SAVE :: Modflow_skip_stress, Kkper_new
-      DOUBLE PRECISION, SAVE :: Modflow_time_in_stress,Modflow_skip_time
+      DOUBLE PRECISION, SAVE :: Modflow_time_in_stress, Modflow_skip_time
       DOUBLE PRECISION, SAVE :: Mft_to_sec, Totalarea_mf
       DOUBLE PRECISION, SAVE :: Mfl2_to_acre, Mfl3_to_ft3, Sfr_conv
       DOUBLE PRECISION, SAVE :: Acre_inches_to_mfl3, Mfl3t_to_cfs
@@ -93,5 +97,5 @@
       REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
 !   Control Parameters
       INTEGER, SAVE :: Modflow_time_zero(6)
-      CHARACTER(LEN=200), SAVE :: Modflow_name
+      CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Modflow_name
     END MODULE GSFMODFLOW
