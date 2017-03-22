@@ -3,8 +3,7 @@
 !***********************************************************************
       MODULE PRMS_MODULE
       IMPLICIT NONE
-      INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 32
-      INTEGER, PARAMETER :: MAXDIM = 500
+      INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 32, MAXDIM = 500
       CHARACTER(LEN=78), PARAMETER :: &
      &  EQULS = '=============================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
@@ -30,7 +29,6 @@
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
       INTEGER, SAVE :: Prms_warmup
       CHARACTER(LEN=80), SAVE :: Version_read_control_file, Version_read_parameter_file
-      CHARACTER(LEN=80), SAVE :: Version_read_data_file
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
       DOUBLE PRECISION, SAVE :: Totalarea_mf
       REAL(8), DIMENSION(5) :: DIVS

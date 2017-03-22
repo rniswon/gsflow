@@ -50,7 +50,7 @@ C
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       WRITE (*,1) MFVNAM,VERSION(:17),VERSION2(:17),VERSION3(:17)
-    1 FORMAT (/,29X,'MODFLOW',A,/,
+    1 FORMAT (///,29X,'MODFLOW',A,/,
      &1X,'U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
      &' GROUNDWATER-FLOW MODEL',/,26X,'WITH NEWTON FORMULATION',
      &  /,25X,'Version ',A/,15X,'BASED ON MODFLOW-2005 Version ',A,
@@ -150,7 +150,7 @@ C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       IF ( Model>2 ) THEN
       WRITE (*,1) MFVNAM,VERSION(:16),VERSION2(:17),VERSION3(:17)
-    1 FORMAT (/,34X,'MODFLOW',A,/,
+    1 FORMAT (///,34X,'MODFLOW',A,/,
      &4X,'U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
      &' GROUNDWATER-FLOW MODEL',/,29X,'WITH NEWTON FORMULATION',
      &  /,29X,'Version ',A/,20X,'BASED ON MODFLOW-2005 Version ',A/,
@@ -195,7 +195,7 @@ C
 C5------Get current date and time, assign to IBDT, and write to screen
       CALL DATE_AND_TIME(VALUES=IBDT)
       IF ( Model>2 ) WRITE(*,2) (IBDT(I),I=1,3),(IBDT(I),I=5,7)
-    2 FORMAT(1X,'Run start date and time (yyyy/mm/dd hh:mm:ss): ',
+    2 FORMAT('Run start date and time (yyyy/mm/dd hh:mm:ss): ',
      &I4,'/',I2.2,'/',I2.2,1X,I2,':',I2.2,':',I2.2,/)
 C
 C6------ALLOCATE AND READ (AR) PROCEDURE
@@ -1330,8 +1330,8 @@ C10-----END OF PROGRAM.
         WRITE (Logunt, *) 'FAILED TO MEET SOLVER CONVERGENCE CRITERIA ',
      1          NCVGERR,' TIME(S)'
       ELSE
-        WRITE(*,*) ' Normal termination of simulation'
-        WRITE (Logunt, *) ' Normal termination of simulation'
+        WRITE(*,*) 'Normal termination of simulation'
+        WRITE (Logunt, *) 'Normal termination of simulation'
       END IF
       CLOSE (Logunt)
 
@@ -1726,22 +1726,22 @@ C
       USE GWFBASMODULE, ONLY: TOTIM
       IMPLICIT NONE
       EXTERNAL :: RESTART1READ
-      INTEGER, EXTERNAL :: compute_julday !, control_integer_array
+      INTEGER, EXTERNAL :: compute_julday, control_integer_array
 !      DOUBLE PRECISION, EXTERNAL :: compute_julday
 ! Local Variables
-      INTEGER :: i
+      INTEGER :: i, j
       DOUBLE PRECISION :: seconds, start_jul, mfstrt_jul, plen, time
       DOUBLE PRECISION :: kstpskip
 !***********************************************************************
       ! get modflow_time_zero and determine julian day
-!      DO j = 1, 6
-!        IF ( control_integer_array(Modflow_time_zero(j),
-!     &       j, 'modflow_time_zero')/=0 ) THEN
-!          PRINT *, 'ERROR, modflow_time_zero, index:', j,
-!     &             'value: ', Modflow_time_zero(j)
-!          STOP
-!        ENDIF
-!        IF ( j==1 ) THEN
+      DO j = 1, 6
+        IF ( control_integer_array(Modflow_time_zero(j),
+     &       j, 'modflow_time_zero')/=0 ) THEN
+          PRINT *, 'ERROR, modflow_time_zero, index:', j,
+     &             'value: ', Modflow_time_zero(j)
+          STOP
+        ENDIF
+        IF ( j==1 ) THEN
           IF ( Modflow_time_zero(1)<1 ) THEN
       !     STOP
       !&    'ERROR, control parameter modflow_time_zero must be specified'
@@ -1750,8 +1750,8 @@ C
      &     'WARNING, modflow_time_zero not specified, set to start_time'
 !            EXIT
           ENDIF
-!        ENDIF
-!      ENDDO
+        ENDIF
+      ENDDO
       PRINT ( '(A, I5,2("/",I2.2))' ), 'modflow_time_zero:',
      &  Modflow_time_zero(1), Modflow_time_zero(2), Modflow_time_zero(3)
       ALLOCATE ( Stress_dates(NPER+1) )

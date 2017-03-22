@@ -34,6 +34,7 @@
       call_modules = 1
 
       Process = Arg
+      AFR = .TRUE.
 
       IF ( Process(:3)=='run' ) THEN
         Process_flag = 0 !(0=run, 1=declare, 2=init, 3=clean, 4=setdims)
@@ -103,8 +104,6 @@
           ENDIF
           CALL print_module(PRMS_versn, 'GSFLOW Computation Order    ', 90)
           CALL print_module(Version_read_control_file, 'Read Control File           ', 90)
-          CALL print_module(Version_read_parameter_file, 'Read Parameter File         ', 90)
-          CALL print_module(Version_read_data_file, 'Read Data File              ', 90)
 
           IF ( Model==0 .OR. Model==99 ) THEN
             IF ( declvar(MODNAME, 'KKITER', 'one', 1, 'integer', &
@@ -131,15 +130,22 @@
 
         Grid_flag = 0
         IF ( Nhru==Nhrucell ) Grid_flag = 1
-
         IF ( Model==0 ) THEN
           IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
      &         Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
           iret = gsflow_modflow(AFR)
         ENDIF
+
         nc = numchars(Model_control_file)
-        IF ( Print_debug>-1 ) PRINT 9004, 'Using Control File: ', Model_control_file(:nc)
-        IF ( Print_debug>-2 ) WRITE ( PRMS_output_unit, 9004 ) 'Using Control File: ', Model_control_file(:nc)
+        IF ( Print_debug>-1 ) THEN
+          PRINT '(A, /)', EQULS
+          PRINT 9004, 'Using Control File: ', Model_control_file(:nc)
+        ENDIF
+        IF ( Print_debug>-2 ) THEN
+          WRITE ( PRMS_output_unit, '(A)' ) EQULS
+          WRITE ( PRMS_output_unit, 9004 ) 'Using Control File: ', Model_control_file(:nc)
+        ENDIF
+        WRITE ( Logunt, '(A)' ) EQULS
         WRITE ( Logunt, 9004 ) 'Using Control File: ', Model_control_file(:nc)
 
         IF ( Model/=2 ) THEN
@@ -162,8 +168,7 @@
 
         IF ( Print_debug>-1 ) THEN
           IF ( Print_debug>-2 ) THEN
-            nc = numchars(Model_output_file)
-            PRINT 9004, 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
+            PRINT 9004, 'Writing PRMS Water Budget File: ', TRIM(Model_output_file)
             WRITE ( Logunt, 9004 ) 'Writing PRMS Water Budget File: ', TRIM(Model_output_file)
           ENDIF
           PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day
@@ -448,10 +453,10 @@
         ENDIF
       ENDIF
       IF ( Process_flag==1 ) THEN
-        IF ( Print_debug>-2 ) THEN
-          PRINT '(A)', EQULS
-          WRITE ( PRMS_output_unit, '(A)' ) EQULS
-        ENDIF
+!        IF ( Print_debug>-2 ) THEN
+!          PRINT '(A)', EQULS
+!          WRITE ( PRMS_output_unit, '(A)' ) EQULS
+!        ENDIF
         WRITE ( Logunt, '(A)' ) EQULS
         IF ( Model==10 ) CALL convert_params()
       ELSEIF ( Process_flag==2 ) THEN
@@ -480,14 +485,14 @@
       USE MF_DLL, ONLY: gsflow_modflow
       IMPLICIT NONE
 ! Functions
-      INTEGER, EXTERNAL :: decldim, declfix !, control_integer_array, control_file_name
+      INTEGER, EXTERNAL :: decldim, declfix, control_integer_array !, control_file_name
       INTEGER, EXTERNAL :: control_string, control_integer
       EXTERNAL read_error, PRMS_open_output_file, PRMS_open_input_file, check_module_names
       EXTERNAL PRMS_open_module_file, module_error
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
-      INTEGER :: idim, iret
+      INTEGER :: idim, iret, j
       INTEGER :: test, mf_timestep
 !***********************************************************************
       setdims = 1
@@ -503,11 +508,9 @@
 
       IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
 
-      IF ( control_integer(Prms_warmup, 'prms_warmup')/=0 ) Prms_warmup = 1
-
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
-!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW)
+!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 3=MODSIM; 4:=GSFLOW-MODSIM; 5=PRMS-MODSIM; 6=MODFLOW-MODSIM)
       IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:4)=='    ') THEN
         Model = 0
         PRMS_flag = 0
@@ -535,11 +538,25 @@
         STOP
       ENDIF
 
+      ! get simulation start_time and end_time
+      Starttime = -1
+      DO j = 1, 6
+        IF ( control_integer_array(Starttime(j), j, 'start_time')/=0 ) THEN
+          PRINT *, 'ERROR, start_time, index:', j, 'value: ', Starttime(j)
+          STOP
+        ENDIF
+      ENDDO
       Start_year = Starttime(1)
       IF ( Start_year<0 ) STOP 'ERROR, control parameter start_time must be specified'
       Start_month = Starttime(2)
       Start_day = Starttime(3)
-
+      Endtime = -1
+      DO j = 1, 6
+        IF ( control_integer_array(Endtime(j), j, 'end_time')/=0 ) THEN
+          PRINT *, 'ERROR, end_time, index:', j, 'value: ', Endtime(j)
+          STOP
+        ENDIF
+      ENDDO
       End_year = Endtime(1)
       IF ( End_year<0 ) STOP 'ERROR, control parameter start_time must be specified'
       End_month = Endtime(2)
@@ -568,15 +585,9 @@
         STOP
       ENDIF
 
-      ! Open PRMS module output file
-!      IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'prms.out')
-!      IF ( Print_debug>-2 ) THEN
-!        CALL PRMS_open_output_file(PRMS_output_unit, Model_output_file, 'model_output_file', 0, iret)
-!        IF ( iret/=0 ) STOP
-!      ENDIF
 !      IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
       Model_control_file = Control_file
-!      IF ( control_string(Param_file, 'param_file')/=0 ) CALL read_error(5, 'param_file')
+      IF ( control_string(Param_file, 'param_file')/=0 ) CALL read_error(5, 'param_file')
 
       ! Check for restart files
       IF ( Init_vars_from_file==1 ) THEN
@@ -708,6 +719,23 @@
         Strmflow_flag = 4
       ENDIF
 
+! spatial units
+      IF ( decldim('nhru', 1, MAXDIM, 'Number of HRUs')/=0 ) CALL read_error(7, 'nhru')
+      IF ( decldim('ngw', 1, MAXDIM, 'Number of GWRs')/=0 ) CALL read_error(7, 'ngw')
+      IF ( decldim('nssr', 1, MAXDIM, 'Number of subsurface reservoirs')/=0 ) CALL read_error(7, 'nssr')
+      IF ( decldim('nlake', 0, MAXDIM, 'Number of lake HRUs')/=0 ) CALL read_error(7, 'nlake')
+      IF ( decldim('numlakes', 0, MAXDIM, 'Number of lakes')/=0 ) CALL read_error(7, 'numlakes')
+      IF ( decldim('npoigages', 0, MAXDIM, 'Number of POI gages')/=0 ) CALL read_error(7, 'npoigages')
+
+! Time-series data stations, need to know if in Data File
+      IF ( decldim('nrain', 0, MAXDIM, 'Number of precipitation-measurement stations')/=0 ) CALL read_error(7, 'nrain')
+      IF ( decldim('nsol', 0, MAXDIM, 'Number of solar-radiation measurement stations')/=0 ) CALL read_error(7, 'nsol')
+      IF ( decldim('ntemp', 0, MAXDIM, 'Number of air-temperature-measurement stations')/=0 ) CALL read_error(7, 'ntemp')
+      IF ( decldim('nobs', 0, MAXDIM, 'Number of streamflow-measurement stations')/=0 ) CALL read_error(7, 'nobs')
+      IF ( decldim('nevap', 0, MAXDIM, 'Number of pan-evaporation data sets')/=0 ) CALL read_error(7, 'nevap')
+      IF ( decldim('nratetbl', 0, MAXDIM, 'Number of rating-table data sets for lake elevations') &
+     &     /=0 ) CALL read_error(7, 'nratetbl')
+
 ! cascade dimensions
       IF ( decldim('ncascade', 0, MAXDIM, &
      &     'Number of HRU links for cascading flow')/=0 ) CALL read_error(7, 'ncascade')
@@ -778,23 +806,6 @@
       ! if cascadegw_flag = 2, use same cascades as HRUs
       IF ( control_integer(Cascadegw_flag, 'cascadegw_flag')/=0 ) Cascadegw_flag = 1
 
-! spatial units
-      IF ( decldim('ngw', 1, MAXDIM, 'Number of GWRs')/=0 ) CALL read_error(7, 'ngw')
-      IF ( decldim('nhru', 1, MAXDIM, 'Number of HRUs')/=0 ) CALL read_error(7, 'nhru')
-      IF ( decldim('nssr', 1, MAXDIM, 'Number of subsurface reservoirs')/=0 ) CALL read_error(7, 'nssr')
-      IF ( decldim('nlake', 0, MAXDIM, 'Number of lake HRUs')/=0 ) CALL read_error(7, 'nlake')
-      IF ( decldim('numlakes', 0, MAXDIM, 'Number of lakes')/=0 ) CALL read_error(7, 'numlakes')
-      IF ( decldim('npoigages', 0, MAXDIM, 'Number of POI gages')/=0 ) CALL read_error(7, 'npoigages')
-
-! Time-series data stations, need to know if in Data File
-      IF ( decldim('nrain', 0, MAXDIM, 'Number of precipitation-measurement stations')/=0 ) CALL read_error(7, 'nrain')
-      IF ( decldim('nsol', 0, MAXDIM, 'Number of solar-radiation measurement stations')/=0 ) CALL read_error(7, 'nsol')
-      IF ( decldim('ntemp', 0, MAXDIM, 'Number of air-temperature-measurement stations')/=0 ) CALL read_error(7, 'ntemp')
-      IF ( decldim('nobs', 0, MAXDIM, 'Number of streamflow-measurement stations')/=0 ) CALL read_error(7, 'nobs')
-      IF ( decldim('nevap', 0, MAXDIM, 'Number of pan-evaporation data sets')/=0 ) CALL read_error(7, 'nevap')
-      IF ( decldim('nratetbl', 0, MAXDIM, 'Number of rating-table data sets for lake elevations') &
-     &     /=0 ) CALL read_error(7, 'nratetbl')
-
 ! depletion curves
       IF ( decldim('ndepl', 1, MAXDIM, 'Number of snow-depletion curves')/=0 ) CALL read_error(7, 'ndelp')
       IF ( decldim('ndeplval', 11, MAXDIM, 'Number of values in all snow-depletion curves (set to ndepl*11)')/=0 ) &
@@ -809,6 +820,7 @@
 ! fixed dimensions
       IF ( declfix('ndays', 366, 366, 'Maximum number of days in a year ')/=0 ) CALL read_error(7, 'ndays')
       IF ( declfix('nmonths', 12, 12, 'Number of months in a year')/=0 ) CALL read_error(7, 'nmonths')
+      IF ( declfix('one', 1, 1, 'Number of values for scaler array')/=0 ) CALL read_error(7, 'one')
 
       CALL gsflow_prms('setdims')
 
@@ -1046,7 +1058,7 @@
       test = cascade()
       test = climateflow()
       test = soltab()
-      test = setup()
+!      test = setup()
       test = prms_time()
       test = obs()
       test = water_use_read()
