@@ -106,11 +106,11 @@
 		<File RelativePath="..\..\..\prms.git\ide_dist.f"/>
 		<File RelativePath="..\..\..\prms.git\intcp.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\Irestart.f"/>
-		<File RelativePath="..\..\..\prms.git\lis_api_prms.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\lmt8_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mach_mod.f90"/>
 		<File RelativePath="..\..\..\prms.git\map_results.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\mhc7.f"/>
+		<File RelativePath="..\..\..\prms.git\mmf_utils.f90"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.2\src\modules.f90"/>
 		<File RelativePath="..\..\..\prms.git\muskingum.f90"/>
 		<File RelativePath="..\..\..\prms.git\muskingum_lake.f90"/>
