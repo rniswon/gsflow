@@ -43,3 +43,5 @@ MF_NWT/MF_NWT/Debug/
 *.log
 
 gsflow.git/msds/gsflow_develop_f/
+msds/gsflow_develop_f/gsflow_develop.opensdf
+msds/gsflow_develop_f/x64/Release/gsflow_develop.exp
