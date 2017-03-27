@@ -109,7 +109,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = 'gsflow_sum.f90 2017-03-14 16:05:00Z'
+      Version_gsflow_sum = 'gsflow_sum.f90 2017-03-27 14:24:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -928,7 +928,7 @@
 ! Open the GSF volumetric balance report file
 
       IF ( control_integer(Rpt_days, 'rpt_days')/=0 ) CALL read_error(5, 'rpt_days')
-      IF ( Print_debug>-1 ) PRINT '(/,A,I4,/)', 'Water Budget print frequency is:', Rpt_days
+      IF ( Print_debug>-1 ) PRINT '(/,A,I4)', 'Water Budget print frequency is:', Rpt_days
       WRITE (Logunt, '(/,A,I4)') 'Water Budget print frequency is:', Rpt_days
       IF ( control_string(Gsflow_output_file, 'gsflow_output_file')/=0 ) CALL read_error(5, 'gsflow_output_file')
       IF ( Gsflow_output_file(:1)==' ' .OR. Gsflow_output_file(:1)==CHAR(0) ) Gsflow_output_file = 'gsflow.out'
@@ -943,7 +943,7 @@
         CALL GSF_HEADERS()
       ENDIF
 
- 9001 FORMAT (/, 2A, /)
+ 9001 FORMAT (/, 2A)
       END SUBROUTINE GSF_PRINT
 
 !***********************************************************************

@@ -7,13 +7,13 @@
       CHARACTER(LEN=78), PARAMETER :: &
      &  EQULS = '=============================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 03/14/2017'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 03/27/2017'
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw, One, Nmonths, Ndays
       INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Numlakes, Nlapse
       INTEGER, SAVE :: Ntemp, Nrain, Nsol, Nsegment, Ndepl, Nobs, Nevap, Ndeplval
-      INTEGER, SAVE :: Starttime(6), Endtime(6)
+      INTEGER, SAVE :: Starttime(6), Endtime(6), Number_timesteps
       INTEGER, SAVE :: Start_year, Start_month, Start_day, End_year, End_month, End_day
       INTEGER, SAVE :: Transp_flag, Sroff_flag, Solrad_flag, Et_flag
       INTEGER, SAVE :: Climate_temp_flag, Climate_precip_flag, Climate_potet_flag, Climate_transp_flag
@@ -28,7 +28,7 @@
       INTEGER, SAVE :: Dynamic_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Kkiter
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
       INTEGER, SAVE :: Prms_warmup
-      CHARACTER(LEN=80), SAVE :: Version_read_control_file, Version_read_parameter_file
+      CHARACTER(LEN=80), SAVE :: Version_read_control_file
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
       DOUBLE PRECISION, SAVE :: Totalarea_mf
       REAL(8), DIMENSION(5) :: DIVS

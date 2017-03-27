@@ -10,7 +10,8 @@ C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
 C     ******************************************************************
 C
       INTEGER FUNCTION gsflow_modflow(AFR)
-      USE PRMS_MODULE, ONLY: Process_flag, KSTP, KPER, DIVS
+      USE PRMS_MODULE, ONLY: Process_flag, KSTP, KPER, DIVS, Logunt
+      USE GSFMODFLOW
       IMPLICIT NONE
       LOGICAL :: AFR
 ! Functions
@@ -25,7 +26,22 @@ C
       ELSEIF ( Process_flag==2 ) THEN
         CALL MFNWT_INIT()
       ELSEIF ( Process_flag==3 ) THEN
+        WRITE ( Logunt, 1 ) MFVNAM,VERSION,VERSION2,VERSION3
+        WRITE ( Logunt, 8 )
         CALL MFNWT_CLEAN()
+      ELSEIF ( Process_flag==4 ) THEN
+C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
+      WRITE (*,1) MFVNAM,VERSION(:17),VERSION2(:17),VERSION3(:17)
+    1 FORMAT (///,29X,'MODFLOW',A,/,
+     &1X,'U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
+     &' GROUNDWATER-FLOW MODEL',/,26X,'WITH NEWTON FORMULATION',
+     &  /,25X,'Version ',A/,15X,'BASED ON MODFLOW-2005 Version ',A,
+     &  /,22X,'SWR1 Version ',A/)
+      WRITE ( *, 8 )
+    8 FORMAT (14X, 'PROCESSES: GWF and OBS', /, 14X,
+     &        'PACKAGES:  BAS, BCF, CHD, DE4, FHB, GAG, GHB,',
+     &        /, 25X, 'HFB, HUF, LAK LPF, MNW1, MNW2, NWT,',
+     &        /, 25X, 'PCG, GMG, SFR, SIP, UPW, UZF, WEL, SWI', //)
       ENDIF
 
       END FUNCTION gsflow_modflow
@@ -39,31 +55,18 @@ C
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
       ! Model (0=integrated; 1=PRMS-only; 2=MODFLOW-only, 3=MODSIM-MODFLOW, 4=MODSIM-GSFLOW)
-      USE PRMS_MODULE, ONLY: Nhru, Nhrucell, Ngwcell, Model, Logunt
+      USE PRMS_MODULE, ONLY: Nhru, Nhrucell, Ngwcell, Model
       IMPLICIT NONE
       INTEGER, EXTERNAL :: declparam
-      EXTERNAL :: read_error
+      EXTERNAL :: read_error, print_module
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-03-09 11:00:00Z'
-C
-C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
-      WRITE (*,1) MFVNAM,VERSION(:17),VERSION2(:17),VERSION3(:17)
-    1 FORMAT (///,29X,'MODFLOW',A,/,
-     &1X,'U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
-     &' GROUNDWATER-FLOW MODEL',/,26X,'WITH NEWTON FORMULATION',
-     &  /,25X,'Version ',A/,15X,'BASED ON MODFLOW-2005 Version ',A,
-     &  /,22X,'SWR1 Version ',A/)
-      WRITE ( *, 8 )
-    8 FORMAT (14X, 'PROCESSES: GWF and OBS', /, 14X,
-     &        'PACKAGES:  BAS, BCF, CHD, DE4, FHB, GAG, GHB,',
-     &        /, 25X, 'HFB, HUF, LAK LPF, MNW1, MNW2, NWT,',
-     &        /, 25X, 'PCG, GMG, SFR, SIP, UPW, UZF, WEL, SWI', /)
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-03-27 14:25:00Z'
+      CALL print_module(Version_gsflow_modflow,
+     &                  'GSFLOW MODFLOW main         ', 77)
 
       IF ( Model==0 ) THEN
-        WRITE ( Logunt, 1 ) MFVNAM,VERSION,VERSION2,VERSION3
-        WRITE ( Logunt, 8 )
         ! Allocate local module variables
         ALLOCATE ( Mfq2inch_conv(Nhrucell) )
         ALLOCATE ( Gvr2cell_conv(Nhrucell), Cellarea(Ngwcell) )
@@ -419,8 +422,6 @@ C  Observation allocate and read
       !END IF
 C
 C7------SIMULATE EACH STRESS PERIOD.
-      CALL print_module(Version_gsflow_modflow,
-     &                  'GSFLOW MODFLOW main         ', 77)
       PRINT '(A,/A,/A)', EQULS, 'MODFLOW Packages', EQULS
       WRITE ( Logunt, '(A,/A,/A)') EQULS, 'MODFLOW Packages', EQULS
       CALL print_module(Version_uzf,
@@ -475,7 +476,7 @@ C7------SIMULATE EACH STRESS PERIOD.
      &         Gvr_cell_pct)/=0 ) CALL read_error(2, 'gvr_cell_pct')
         ENDIF
         CALL check_gvr_cell_pct()
-        WRITE (Logunt, '(A,D14.7)')
+        WRITE (Logunt, '(/, A,D14.7)')
      &         'Percent difference between cell mapping:',
      &         Totalarea_mf/DBLE(Ncells)*100.0D0
         WRITE (Logunt, '(/,A,I8)') 'Number of active cells:', Ncells
@@ -1746,7 +1747,7 @@ C
       !     STOP
       !&    'ERROR, control parameter modflow_time_zero must be specified'
             Modflow_time_zero = Starttime
-            PRINT '(A, /)',
+            PRINT '(/, A)',
      &     'WARNING, modflow_time_zero not specified, set to start_time'
 !            EXIT
           ENDIF
@@ -1786,7 +1787,6 @@ C
             CALL MFNWT_RUN(KSTP,KPER,DIVS,AFR)
 !     &           STOP 'ERROR, steady state failed'
             Steady_state = 0
-            PRINT *, ' '
             IF ( ICNVG==0 ) THEN
               PRINT 222, KKITER
               WRITE ( Logunt, 222 ) KKITER
@@ -1799,8 +1799,8 @@ C
         Stress_dates(i+1) = Stress_dates(i) + plen
 !        print *, 'PERLEN', PERLEN(i), plen, Mft_to_days
       ENDDO
- 222  FORMAT ( 'Steady state simulation did not converge', I6)
- 223  FORMAT ( 'Steady state simulation successful, used:', I6,
+ 222  FORMAT ( /, 'Steady state simulation did not converge', I6)
+ 223  FORMAT ( /, 'Steady state simulation successful, used:', I6,
      &         ' iterations')
 !      print *, 'stress dates:', Stress_dates
 
