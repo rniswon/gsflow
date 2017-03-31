@@ -582,7 +582,7 @@
         IF ( test/=0 ) CALL module_error(MODNAME, 'initialize', test)
         PRINT *, ' '
         Process_flag = 0
-        DO WHILE ( Kper_mfo<Nper )   !DO WHILE ( Kper_mfo<=Nper )
+        DO WHILE ( Kper_mfo<Nper )   !DO WHILE ( Kper_mfo<=Nper )  RGN chaged this to allow single SS MODFLOW stress periods
           test = gsflow_modflow()
           IF ( test/=0 ) CALL module_error(MODNAME, 'run', test)
           IF ( mf_timestep==NSTP(Kper_mfo) ) Kper_mfo = Kper_mfo + 1
