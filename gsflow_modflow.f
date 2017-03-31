@@ -829,22 +829,22 @@ C--EDM 1/25/16: The code that follows is for forcing the heads to be printed eac
 C  MODSIM-MODFLOW iteration as part of a dugging effort.  It can be deleted once 
 C  the bug has been resolved.
 C  First, set up BUFF
-          IF ( Model>2 ) THEN
-            IF (KPER.GE.7986) THEN
-              DO 60 K=1,NLAY
-                DO 59 I=1,NROW
-                  DO 58 J=1,NCOL
-                    BUFF(J,I,K)=HNEW(J,I,K)
-   58             CONTINUE
-   59           CONTINUE
-   60         CONTINUE
-              CRADFM='(133F9.2)'
-              DO 79 K=1,NLAY
-               CALL ULASV2(BUFF(:,:,K),TEXT,KSTP,KPER,PERTIM,TOTIM,NCOL,
-     &                     NROW,K,996,CRADFM,1,IBOUND(:,:,K))
-   79         CONTINUE
-            END IF
-          END IF
+   !       IF ( Model>2 ) THEN
+   !         IF (KPER.GE.7986) THEN
+   !           DO 60 K=1,NLAY
+   !             DO 59 I=1,NROW
+   !               DO 58 J=1,NCOL
+   !                 BUFF(J,I,K)=HNEW(J,I,K)
+   !58             CONTINUE
+   !59           CONTINUE
+   !60         CONTINUE
+   !           CRADFM='(133F9.2)'
+   !           DO 79 K=1,NLAY
+   !            CALL ULASV2(BUFF(:,:,K),TEXT,KSTP,KPER,PERTIM,TOTIM,NCOL,
+   !  &                     NROW,K,996,CRADFM,1,IBOUND(:,:,K))
+   !79         CONTINUE
+   !         END IF
+   !       END IF
 C--EDM 1/25/16: End delete section.
 C
           IF ( IUNIT(63).GT.0 )ITREAL2 = ITREAL
