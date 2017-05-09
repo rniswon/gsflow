@@ -26,6 +26,7 @@
       DOUBLE PRECISION, SAVE :: Basin_gsfstor, Last_Pref_S
       DOUBLE PRECISION, SAVE :: Last_Dprst_S, Rate_Dprst_S
       DOUBLE PRECISION, SAVE :: Lake2Unsat_Q, LakeExchng2Sat_Q, Stream2Unsat_Q
+      DOUBLE PRECISION, SAVE :: Rate_specifiedunsatin, Cumvol_specifiedunsatin
       CHARACTER(LEN=10), SAVE :: MODNAME
 !      DOUBLE PRECISION, SAVE :: Cumvol_lakeppt, Cumvol_lakeevap, Cumvol_uzfet
 ! Added lake variables
@@ -47,6 +48,7 @@
       DOUBLE PRECISION, SAVE :: Obs_strmflow, UnsatDrainageExcess_Q
       DOUBLE PRECISION, SAVE :: UnsatET_Q, SatET_Q, Uzf_et, RechargeUnsat2Sat_Q
       DOUBLE PRECISION, SAVE :: Basinseepout, SoilDrainage2Unsat_Q, Unsat_dS
+      DOUBLE PRECISION, SAVE :: Specified2Unsat_Q
       DOUBLE PRECISION, SAVE :: Basinrain, Basinsnow, Basinslowflow
       DOUBLE PRECISION, SAVE :: Basingvr2pfr, SnowEvap_Q
       DOUBLE PRECISION, SAVE :: HortSroff2Stream_Q, HortSroff2Lake_Q
@@ -279,6 +281,10 @@
       IF ( declvar(MODNAME, 'SoilDrainage2Unsat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of gravity drainage to the unsaturated and saturated zones', &
      &     'L3/T', SoilDrainage2Unsat_Q)/=0 ) CALL read_error(3, 'SoilDrainage2Unsat_Q')
+      
+      IF ( declvar(MODNAME, 'SpecifiedUnsat_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of applied infiltration to the unsaturated and saturated zones', &
+     &     'L3/T', Specified2Unsat_Q)/=0 ) CALL read_error(3, 'Specified2Unsat_Q')
 
       IF ( declvar(MODNAME, 'Stream2Sat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of stream leakage to the unsaturated and saturated zones', &
@@ -512,6 +518,7 @@
       Rate_pweqv = 0.0D0
       Rate_farout = 0.0D0
       SoilDrainage2Unsat_Q = 0.0D0
+      Specified2Unsat_Q = 0.0D0
       Ave_SoilDrainage2Unsat_Q = 0.0D0
       Lake2Sat_Q = 0.0D0
       Lake_dS = 0.0D0
@@ -718,6 +725,7 @@
       !?? doesn't match basin_gw2sm from budget
       Basinseepout = UZTSRAT(5)
       SoilDrainage2Unsat_Q = UZTSRAT(1)
+      Specified2Unsat_Q = UZTSRAT(8)
       Unsat_dS = UZTSRAT(4)
 
       Stream2Sat_Q = SFRRATIN
@@ -819,7 +827,7 @@
      &          Precip_Q, NetBoundaryFlow2Sat_Q, NetWellFlow_Q, BoundaryStreamFlow_Q, &
      &          CanopyEvap_Q, SnowEvap_Q, ImpervEvap_Q, DprstEvap_Q, CapET_Q, SwaleEvap_Q, UnsatET_Q, SatET_Q, LakeEvap_Q, &
      &          DunnInterflow2Lake_Q, HortSroff2Lake_Q, Lake2Unsat_Q, LakeExchng2Sat_Q, &
-     &          SoilDrainage2Unsat_Q, Sat2Grav_Q, RechargeUnsat2Sat_Q, Infil2Soil_Q, KKITER
+     &          SoilDrainage2Unsat_Q, Sat2Grav_Q, RechargeUnsat2Sat_Q, Infil2Soil_Q, Specified2Unsat_Q, KKITER
       ENDIF
 
 !     DANGER strmin set to zero
@@ -828,6 +836,8 @@
       Rate_precip = Precip_Q
 ! RGN change Cumvol_strmin to include specified inflows
       Rate_strmin = Stream_inflow
+      Rate_specifiedunsatin = Specified2unsat_Q
+      Cumvol_specifiedunsatin = Cumvol_specifiedunsatin + Rate_specifiedunsatin*DELT
       Cumvol_strmin = Cumvol_strmin + Rate_strmin*DELT
       Cumvol_gwbndin = Cumvol_gwbndin + Gw_bnd_in*DELT
       Rate_gwbndin = Gw_bnd_in
@@ -982,7 +992,7 @@
      &       ',Precip_Q,NetBoundaryFlow2Sat_Q,NetWellFlow_Q,BoundaryStreamFlow_Q', &
      &       ',CanopyEvap_Q,SnowEvap_Q,ImpervEvap_Q,DprstEvap_Q,CapET_Q,SwaleEvap_Q,UnsatET_Q,SatET_Q,LakeEvap_Q', &
      &       ',DunnInterflow2Lake_Q,HortSroff2Lake_Q,Lake2Unsat_Q,LakeExchng2Sat_Q', &
-     &       ',SoilDrainage2Unsat_Q,Sat2Grav_Q,RechargeUnsat2Sat_Q,Infil2Soil_Q,KKITER')
+     &       ',SoilDrainage2Unsat_Q,Sat2Grav_Q,RechargeUnsat2Sat_Q,Infil2Soil_Q,Specified2Unsat_Q,KKITER')
       END SUBROUTINE GSF_HEADERS
 
 !***********************************************************************
@@ -1038,7 +1048,7 @@
       DOUBLE PRECISION :: rate_out, rate_percent, temp
       CHARACTER(LEN=18) :: text1, text2, text3, text4, text5, text6
       CHARACTER(LEN=18) :: text7, text8, text9, text10, text11, text12
-      CHARACTER(LEN=18) :: val1, val2
+      CHARACTER(LEN=18) :: val1, val2, text13
 !***********************************************************************
       text1 = '     PRECIPITATION'
       text2 = '        STREAMFLOW'
@@ -1052,6 +1062,7 @@
       text10 ='             LAKES'
       text11 ='           STREAMS'
       text12 =' FAR-FIELD OUTFLOW'
+      text13 =' SPECIFIED UZF INF'
       WRITE (Gsf_unt, 9001) Nowmonth, Nowday, Nowyear, Nstep, Kkper, Kkstp, KKITER
 !
 !1------PRINT CUMULATIVE VOLUMES AND RATES FOR INFLOW.
@@ -1075,6 +1086,10 @@
         CALL GSFFMTNUM(Rate_wellin, val2)
         WRITE (Gsf_unt, 9003) text4, val1, text4, val2
       ENDIF
+!1E-----SPECIFIED UZF INFILTRATION.
+      CALL GSFFMTNUM(Cumvol_specifiedunsatin, val1)
+      CALL GSFFMTNUM(Rate_specifiedunsatin, val2)
+      WRITE (Gsf_unt, 9003) text13, val1, text13, val2
 !1E-----LAKES.
       !IF ( Have_lakes==1 ) THEN
       !  CALL GSFFMTNUM(Cumvol_lakin, val1)
@@ -1125,7 +1140,7 @@
 !      rate_out = Rate_et + Rate_strmot + Rate_gwbndot + Rate_wellot +
 !     &           Rate_lakot + Rate_farout
 
-      rate_in = Rate_precip + Rate_strmin + Rate_gwbndin + Rate_wellin
+      rate_in = Rate_precip + Rate_strmin + Rate_gwbndin + Rate_wellin + Rate_specifiedunsatin
       rate_out = Rate_et + Rate_strmot + Rate_gwbndot + Rate_wellot + Rate_farout
       ratediff = rate_in - rate_out
 !

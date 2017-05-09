@@ -1890,7 +1890,7 @@ C
       TESTLAK = 0.0
       IF ( Iunitsfr.GT.0 ) THEN
         DO i =1, NSTRM
-          DO j=12,14
+          DO j=13,14
             TESTSFR = TESTSFR + ABS(STRM(j,i))
             STRM(j,i) = ZERO
           END DO
