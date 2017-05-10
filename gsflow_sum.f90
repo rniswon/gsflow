@@ -912,7 +912,7 @@
       Last_Pref_S = Pref_S
       Last_Dprst_S = Dprst_S
 
- 9001 FORMAT (2(I2.2, '/'), I4, 38(',', E15.7), ',', I5)
+ 9001 FORMAT (2(I2.2, '/'), I4, 39(',', E15.7), ',', I5)
  9002 FORMAT (I5, 2('/', I2.2), F12.3, 27(F11.0))
       END FUNCTION gsfsumrun
 
