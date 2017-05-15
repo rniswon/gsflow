@@ -71,7 +71,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2016-07-19 10:53:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-03-27 14:24:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -178,7 +178,7 @@
       USE GWFSFRMODULE, ONLY: ISEG, NSS
       USE GWFLAKMODULE, ONLY: NLAKES
       USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes
-      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Nlake, Print_debug, &
+      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Numlakes, Print_debug, &
      &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area, NEARZERO
@@ -210,9 +210,9 @@
       ENDIF
 
       IF ( Have_lakes==1 ) THEN
-        IF ( Nlake/=NLAKES ) THEN
-          PRINT *, 'ERROR, PRMS dimension nlake must equal Lake Package NLAKES'
-          PRINT *, '       nlake=', Nlake, ' NLAKES=', NLAKES
+        IF ( Numlakes/=NLAKES ) THEN
+          PRINT *, 'ERROR, PRMS dimension numlakes must equal Lake Package NLAKES'
+          PRINT *, '       nlake=', Numlakes, ' NLAKES=', NLAKES
           ierr = 1
         ENDIF
       ENDIF
@@ -235,7 +235,7 @@
       IF ( Mnsziter<1 ) Mnsziter = MXITER
       IF ( Mnsziter<3 ) Mnsziter = 3
       IF ( Mnsziter>Mxsziter ) Mxsziter = Mnsziter
-      WRITE (Logunt, '(A,F10.7,A,I4,A,I4,/)') 'szconverge =', Szconverge, ', mxsziter =', Mxsziter, ', mnsziter =', Mnsziter
+      WRITE (Logunt, '(/, A,F10.7,A,I4,A,I4,/)') 'szconverge =', Szconverge, ', mxsziter =', Mxsziter, ', mnsziter =', Mnsziter
       WRITE (Logunt, '(A,D15.7,/)') 'Tolerance check for gvr_hru_pct:', PCT_CHK
 
       IF ( Nhru/=Nhrucell ) THEN
@@ -410,10 +410,8 @@
       IF ( ierr==1 ) STOP
 
       Totalarea = Totalarea*Basin_area_inv
-      WRITE ( Logunt, '(A,D15.7)' ) &
-     &        'Percent difference between GVR mapping and active model domain:', (Totalarea-1.0D0)*100.0D0
-      IF ( Print_debug>-1 ) &
-      &    PRINT '(/,A,D15.7)', 'Percent difference between GVR mapping and active model domain:', (Totalarea-1.0D0)*100.0D0
+      WRITE ( Logunt, 9003 ) (Totalarea-1.0D0)*100.0D0
+      IF ( Print_debug>-1 ) PRINT 9003, (Totalarea-1.0D0)*100.0D0
 
       IF ( Nhru/=Nhrucell ) DEALLOCATE ( hru_pct, newpct, temp_pct )
       !DEALLOCATE ( nseg_rch, seg_area )
@@ -430,6 +428,7 @@
  9001 FORMAT ('ERROR, HRU:', I7, ' is specified as a lake (hru_type=2) and lake_hru_id is specified as 0', /, &
      &        'The associated MODFLOW lake must be specified as the value of lake_hru_id for this HRU')
 ! 9002 FORMAT ('####', /, A, /, '1', /, A, /, I10)
+ 9003 FORMAT (/, 'Percent difference between GVR mapping and active model domain:', D15.7)
 
       END FUNCTION prms2mfinit
 

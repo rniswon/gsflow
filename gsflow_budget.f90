@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2016-06-08 14:13:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2017-03-09 11:17:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -530,7 +530,7 @@
 
 !     CALL getHeads()
 
-      IF ( IUNIT(2)>0 ) CALL getPump()
+      CALL getPump()
 
       END FUNCTION gsfbudrun
 

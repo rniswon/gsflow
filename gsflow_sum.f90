@@ -57,9 +57,7 @@
       DOUBLE PRECISION, SAVE :: UnsatStream_dS, UnsatStream_S
       DOUBLE PRECISION, SAVE :: SatDisch2Lake_Q, DunnSroff2Stream_Q
       DOUBLE PRECISION, SAVE :: Infil2CapTotal_Q, Infil2Pref_Q
-      DOUBLE PRECISION, SAVE :: ActualET_Q, SnowMelt_Q
-      DOUBLE PRECISION, SAVE :: Basinfarfieldflow, Basinszfarflow
-      DOUBLE PRECISION, SAVE :: Basinsrofffarflow, CanopyEvap_Q
+      DOUBLE PRECISION, SAVE :: ActualET_Q, SnowMelt_Q, CanopyEvap_Q
       DOUBLE PRECISION, SAVE :: DunnInterflow2Cap_Q, NetWellFlow_Q, BoundaryStreamFlow_Q
 !   Declared Parameters
       INTEGER, SAVE :: Id_obsrunoff
@@ -111,7 +109,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = 'gsflow_sum.f90 2016-11-16 10:49:00Z'
+      Version_gsflow_sum = 'gsflow_sum.f90 2017-05-15 10:13:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -119,20 +117,6 @@
         CALL PRMS_open_module_file(BALUNT, 'gsflow_sum.wbal')
         WRITE ( BALUNT, 9001 )
       ENDIF
-
-      IF ( declvar(MODNAME, 'basinsrofffarflow', 'one', 1, 'double', &
-     &     'Volumetric flow rate of PRMS surface runoff leaving land surface as far-field flow', &
-     &     'L3/T', Basinsrofffarflow)/=0 ) CALL read_error(3, 'basinsrofffarflow')
-
-      IF ( declvar(MODNAME, 'basinszfarflow', 'one', 1, 'double', &
-     &     'Volumetric flow rate of PRMS interflow and surface runoff'// &
-     &     ' leaving soilzone modeled region as far-field flow', &
-     &     'L3/T', Basinszfarflow)/=0 ) CALL read_error(3, 'basinszfarflow')
-
-      IF ( declvar(MODNAME, 'basinfarfieldflow', 'one', 1, 'double', &
-     &     'Volumetric flow rate of PRMS interflow and surface runoff'// &
-     &     ' leaving modeled region as far-field flow', &
-     &     'L3/T', Basinfarfieldflow)/=0 ) CALL read_error(3, 'basinfarfieldflow')
 
       IF ( declvar(MODNAME, 'CapDrainage2Sat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of direct gravity drainage from excess capillary water to the unsaturated zone', &
@@ -414,7 +398,7 @@
 9001  FORMAT('    Date      Water Bal    capstor   last_cap   gravstor  last_grav   snowstor   lastsnow', &
      &       '  intcpstor  lastintcp   impervst  lastimperv     dprst  lastdprst      gw2sz     precip', &
      &       '  interflow      sroff   lakeinsz  lakesroff   drainage      capET   impervET   canopyET', &
-     &       '     snowET    swaleET    dprstET    farflow')
+     &       '     snowET    swaleET    dprstET')
       END FUNCTION gsfsumdecl
 
 !***********************************************************************
@@ -563,11 +547,8 @@
       Basingvr2pfr = 0.0D0
       Infil2CapTotal_Q = 0.0D0
       Infil2Pref_Q = 0.0D0
-      Basinfarfieldflow = 0.0D0
-      Basinszfarflow = 0.0D0
       CapDrainage2Sat_Q = 0.0D0
       ActualET_Q = 0.0D0
-      Basinsrofffarflow = 0.0D0
       Stream_S = 0.0D0
 
       END FUNCTION gsfsuminit
@@ -750,7 +731,7 @@
       Rate_wellin = Well_in
       Cumvol_wellot = Cumvol_wellot + Well_out
       Rate_wellot = Well_out
-      NetWellFlow_Q = Cumvol_wellin - Cumvol_wellot
+      NetWellFlow_Q = Rate_wellin - Rate_wellot
 
       IF ( Print_debug==1 ) THEN
         et = Basin_perv_et + Basin_snowevap + Basin_imperv_evap + &
@@ -796,20 +777,20 @@
         sz_bal = Cap_S - Last_Cap_S + Grav_S - Last_Grav_S &
      &           - Sat2Grav_Q - Infil2Soil_Q &
      &           + Interflow2Stream_Q + DunnSroff2Stream_Q + DunnInterflow2Lake_Q &
-     &           + SoilDrainage2Unsat_Q + CapET_Q + SwaleEvap_Q + Basinszfarflow
+     &           + SoilDrainage2Unsat_Q + CapET_Q + SwaleEvap_Q
         IF ( ABS(sz_bal)/Cap_S>ERRCHK ) WRITE (BALUNT, *) 'Possible soil zone water balance problem', sz_bal
 
         hru_bal = Cap_S - Last_Cap_S + Grav_S - Last_Grav_S  + SnowPweqv_S - Last_SnowPweqv_S &
      &            + Canopy_S - Last_Canopy_S + Imperv_S - Last_Imperv_S + Dprst_S - Last_Dprst_S &
      &            - Sat2Grav_Q - Precip_Q &
      &            + Interflow2Stream_Q + Sroff2Stream_Q + DunnInterflow2Lake_Q + HortSroff2Lake_Q + SoilDrainage2Unsat_Q &
-     &            + CapET_Q + ImpervEvap_Q + CanopyEvap_Q + SnowEvap_Q + SwaleEvap_Q + DprstEvap_Q + Basinfarfieldflow
+     &            + CapET_Q + ImpervEvap_Q + CanopyEvap_Q + SnowEvap_Q + SwaleEvap_Q + DprstEvap_Q
         IF ( ABS(hru_bal)/Cap_S>ERRCHK ) WRITE (BALUNT, *) 'Possible HRU water balance problem', hru_bal
         WRITE (BALUNT, 9002) Nowyear, Nowmonth, Nowday, hru_bal, Cap_S, Last_Cap_S, Grav_S, Last_Grav_S, SnowPweqv_S, &
      &                       Last_SnowPweqv_S, Canopy_S, Last_Canopy_S, Imperv_S, Last_Imperv_S, Dprst_S, Last_Dprst_S, &
      &                       Sat2Grav_Q, Precip_Q, &
      &                       Interflow2Stream_Q, Sroff2Stream_Q, DunnInterflow2Lake_Q, HortSroff2Lake_Q, SoilDrainage2Unsat_Q, &
-     &                       CapET_Q, ImpervEvap_Q, CanopyEvap_Q, SnowEvap_Q, SwaleEvap_Q, DprstEvap_Q, Basinfarfieldflow
+     &                       CapET_Q, ImpervEvap_Q, CanopyEvap_Q, SnowEvap_Q, SwaleEvap_Q, DprstEvap_Q
       ENDIF
 
       IF ( Gsf_rpt==1 ) THEN
@@ -947,7 +928,7 @@
 ! Open the GSF volumetric balance report file
 
       IF ( control_integer(Rpt_days, 'rpt_days')/=0 ) CALL read_error(5, 'rpt_days')
-      IF ( Print_debug>-1 ) PRINT '(/,A,I4,/)', 'Water Budget print frequency is:', Rpt_days
+      IF ( Print_debug>-1 ) PRINT '(/,A,I4)', 'Water Budget print frequency is:', Rpt_days
       WRITE (Logunt, '(/,A,I4)') 'Water Budget print frequency is:', Rpt_days
       IF ( control_string(Gsflow_output_file, 'gsflow_output_file')/=0 ) CALL read_error(5, 'gsflow_output_file')
       IF ( Gsflow_output_file(:1)==' ' .OR. Gsflow_output_file(:1)==CHAR(0) ) Gsflow_output_file = 'gsflow.out'
@@ -964,7 +945,7 @@
         CALL GSF_HEADERS()
       ENDIF
 
- 9001 FORMAT (/, 2A, /)
+ 9001 FORMAT (/, 2A)
       END SUBROUTINE GSF_PRINT
 
 !***********************************************************************
