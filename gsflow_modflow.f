@@ -100,7 +100,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
     8 FORMAT (14X, 'PROCESSES: GWF and OBS', /, 14X,
      &        'PACKAGES:  BAS, BCF, CHD, DE4, FHB, GAG, GHB,',
      &        /, 25X, 'HFB, HUF, LAK LPF, MNW1, MNW2, NWT,',
-     &        /, 25X, 'PCG, GMG, SFR, SIP, UPW, UZF, WEL, SWI', /)
+     &        /, 25X, 'PCG, SFR, SIP, UPW, UZF, WEL, SWI, SWT, LMT', /)
 
       IF ( Model/=2 ) THEN
         ! Allocate local module variables
@@ -292,10 +292,10 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
         PRINT *, 'DRT Package not supported'
         ierr = 1
       ENDIF
-!      IF ( IUNIT(42)>0 ) THEN
-!        PRINT *, 'GMG Package not supported'
-!        ierr = 1
-!      ENDIF
+      IF ( IUNIT(42)>0 ) THEN
+        PRINT *, 'GMG Package not supported'
+        ierr = 1
+      ENDIF
       IF ( IUNIT(43)>0 ) THEN
         PRINT *, 'HYD Package not supported'
         ierr = 1
@@ -380,7 +380,7 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
       IF(IUNIT(10).GT.0) CALL DE47AR(IUNIT(10),MXITER,IGRID)
       IF(IUNIT(13).GT.0) CALL PCG7AR(IUNIT(13),MXITER,IGRID)
 c      IF(IUNIT(14).GT.0) CALL LMG7AR(IUNIT(14),MXITER,IGRID)
-      IF(IUNIT(42).GT.0) CALL GMG7AR(IUNIT(42),MXITER,IGRID)
+!gsf  IF(IUNIT(42).GT.0) CALL GMG7AR(IUNIT(42),MXITER,IGRID)
 !      IF(IUNIT(59).GT.0) CALL PCGN2AR(IUNIT(59),IFREFM,MXITER,IGRID)
       IF(IUNIT(50).GT.0) CALL GWF2MNW27AR(IUNIT(50),IGRID)
       IF(IUNIT(51).GT.0) CALL GWF2MNW2I7AR(IUNIT(51),IUNIT(50),IGRID)
@@ -460,9 +460,9 @@ C7------SIMULATE EACH STRESS PERIOD.
       ELSEIF ( IUNIT(10)>0 ) THEN
         PRINT 14, 'DE47'
         WRITE ( Logunt, 14 ) 'DE47'
-      ELSEIF ( IUNIT(42)>0 ) THEN
-        PRINT 14, 'GMG'
-        WRITE ( Logunt, 14 ) 'GMG'
+!      ELSEIF ( IUNIT(42)>0 ) THEN
+!        PRINT 14, 'GMG'
+!        WRITE ( Logunt, 14 ) 'GMG'
       ENDIF
    14 FORMAT (/, 'Using Solver Package: ', A, /)
 
@@ -539,7 +539,7 @@ C1------USE package modules.
       USE PCGMODULE
       USE SIPMODULE
       USE DE4MODULE
-      USE GMGMODULE
+!gsf  USE GMGMODULE
 !gsf  USE PCGN
       USE GWFNWTMODULE, ONLY:ITREAL
       IMPLICIT NONE
@@ -751,6 +751,7 @@ C-------------SWI2 FORMULATE (GWF2SWI2FM) NEEDS TO BE THE LAST PACKAGE
 C             ENTRY SINCE SWI2 SAVES THE RHS (RHSFRESH) PRIOR TO ADDING SWI TERMS
 C             RHSFRESH IS USED TO CALCULATE BOUNDARY CONDITION FLUXES
             IF(IUNIT(65).GT.0) CALL GWF2SWI2FM(KKSTP,KKPER,KKITER,IGRID)  !SWI2 - JDH
+C
 C7C2B---MAKE ONE CUT AT AN APPROXIMATE SOLUTION.
             IERR=0
             IF (IUNIT(9).GT.0) THEN
@@ -781,16 +782,16 @@ C7C2B---MAKE ONE CUT AT AN APPROXIMATE SOLUTION.
      5               HCSV,IERR,HPCG,DAMPPCGT,ISSFLG(KKPER),HDRY,
      6               IHCOFADD)
             END IF
-            IF (IUNIT(42).GT.0) THEN
-                   CALL GMG7PNT(IGRID)
-                   CALL GMG7AP(HNEW,RHS,CR,CC,CV,HCOF,HNOFLO,IBOUND,
-     1                         IITER,MXITER,RCLOSEGMG,HCLOSEGMG,
-     2                         KKITER,KKSTP,KKPER,NCOL,NROW,NLAY,ICNVG,
-     3                         SITER,TSITER,DAMPGMG,IADAMPGMG,IOUTGMG,
-     4                         IOUT,GMGID,
-     5                         IUNITMHC,DUP,DLOW,CHGLIMIT,
-     6                         BIGHEADCHG,HNEWLAST)
-            ENDIF
+!            IF (IUNIT(42).GT.0) THEN
+!                   CALL GMG7PNT(IGRID)
+!                   CALL GMG7AP(HNEW,RHS,CR,CC,CV,HCOF,HNOFLO,IBOUND,
+!     1                         IITER,MXITER,RCLOSEGMG,HCLOSEGMG,
+!     2                         KKITER,KKSTP,KKPER,NCOL,NROW,NLAY,ICNVG,
+!     3                         SITER,TSITER,DAMPGMG,IADAMPGMG,IOUTGMG,
+!     4                         IOUT,GMGID,
+!     5                         IUNITMHC,DUP,DLOW,CHGLIMIT,
+!     6                         BIGHEADCHG,HNEWLAST)
+!            ENDIF
 !            IF (IUNIT(59).GT.0) THEN
 !              CALL PCGN2AP(HNEW,RHS,CR,CC,CV,HCOF,IBOUND,
 !     1              KKITER,KKSTP,KKPER,ICNVG,HNOFLO,IGRID)
@@ -1116,7 +1117,7 @@ C9------LAST BECAUSE IT DEALLOCATES IUNIT.
       IF(IUNIT(37).GT.0) CALL GWF2HUF7DA(IGRID)
 !gsf  IF(IUNIT(39).GT.0) CALL GWF2ETS7DA(IGRID)
 !gsf  IF(IUNIT(40).GT.0) CALL GWF2DRT7DA(IGRID)
-      IF(IUNIT(42).GT.0) CALL GMG7DA(IGRID)
+!      IF(IUNIT(42).GT.0) CALL GMG7DA(IGRID)
       IF(IUNIT(44).GT.0) CALL GWF2SFR7DA(IGRID)
       IF(IUNIT(46).GT.0) CALL GWF2GAG7DA(IGRID)
       IF(IUNIT(50).GT.0) CALL GWF2MNW27DA(IGRID)
