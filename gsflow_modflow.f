@@ -13,7 +13,7 @@ C
       USE PRMS_MODULE, ONLY: Process_flag, KSTP, KPER, DIVS, Logunt
       USE GSFMODFLOW
       IMPLICIT NONE
-      LOGICAL :: AFR
+      LOGICAL, INTENT(IN) :: AFR
 ! Functions
 !      INTEGER, EXTERNAL:: gsfdecl
 !***********************************************************************
@@ -24,7 +24,7 @@ C
       ELSEIF ( Process_flag==1 ) THEN
         gsflow_modflow = gsfdecl()
       ELSEIF ( Process_flag==2 ) THEN
-        CALL MFNWT_INIT()
+        CALL MFNWT_INIT(AFR)
       ELSEIF ( Process_flag==3 ) THEN
         WRITE ( Logunt, 1 ) MFVNAM,VERSION,VERSION2,VERSION3
         WRITE ( Logunt, 8 )
@@ -88,7 +88,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !     MFNWT_INIT - Initialize MODFLOW module - get parameter values
 !***********************************************************************
 C
-      SUBROUTINE MFNWT_INIT() BIND(C,NAME="MFNWT_INIT")
+      SUBROUTINE MFNWT_INIT(AFR) BIND(C,NAME="MFNWT_INIT")
 C      
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_INIT
 C
@@ -98,7 +98,7 @@ C     ------------------------------------------------------------------
       USE GSFMODFLOW
       USE PRMS_MODULE, ONLY: Model, Nhru, Nhrucell,
      &    Start_year, Start_month, EQULS, Start_day, End_year,
-     &    End_month, End_day, Logunt, Kper_mfo, KPER, AFR
+     &    End_month, End_day, Logunt, Kper_mfo, KPER
 C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
@@ -110,6 +110,8 @@ C1------USE package modules.
       IMPLICIT NONE
       INTEGER :: I
       INCLUDE 'openspec.inc'
+! Arguments
+      LOGICAL, INTENT(IN) :: AFR
 ! Functions
       INTRINSIC DBLE, TRIM
       INTEGER, EXTERNAL :: numchars, getparam, control_string
@@ -168,7 +170,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       INUNIT = 99
       NCVGERR=0
       ICNVG=1
-      AFR = .TRUE. !rsr, CAUTION
+      !AFR = .TRUE. !rsr, CAUTION
 C
 C3------GET THE NAME OF THE NAME FILE
 !gsf  CALL GETNAMFIL(FNAME)
@@ -483,7 +485,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       ENDIF
 
       ! run SS if needed, read to current stress period, read restart if needed
-      CALL SET_STRESS_DATES()
+      CALL SET_STRESS_DATES(AFR)
       CALL SETCONVFACTORS()
 
       Delt_save = DELT
@@ -538,7 +540,7 @@ c     USE LMGMODULE
       INTEGER I
       INTEGER, INTENT(inout) :: KPER, KSTP
       REAL(8), DIMENSION(5), INTENT(in) :: DIVS
-      LOGICAL, INTENT(in) :: AFR
+      LOGICAL, INTENT(IN) :: AFR
       CHARACTER*16 TEXT
       DATA TEXT /'            HEAD'/
       CHARACTER*20 FMTOUT, CRADFM
@@ -1716,16 +1718,18 @@ C
 !***********************************************************************
 !     READ AND PREPARE INFORMATION FOR STRESS PERIOD.
 !***********************************************************************
-      SUBROUTINE SET_STRESS_DATES()
+      SUBROUTINE SET_STRESS_DATES(AFR)
       USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
      &    Steady_state, ICNVG, Mft_to_days
       USE PRMS_MODULE, ONLY: Init_vars_from_file, Kkiter,
      &    Starttime, Start_year, Start_month, Start_day, Logunt,
-     &    KPER, KSTP, DIVS, AFR
+     &    KPER, KSTP, DIVS
       USE GWFBASMODULE, ONLY: TOTIM
       IMPLICIT NONE
+      ! Arguments
+      LOGICAL, INTENT(IN) :: AFR
       EXTERNAL :: RESTART1READ
       INTEGER, EXTERNAL :: compute_julday, control_integer_array
 !      DOUBLE PRECISION, EXTERNAL :: compute_julday

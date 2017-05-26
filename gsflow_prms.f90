@@ -1,13 +1,17 @@
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      SUBROUTINE gsflow_prms(Arg) ! need AFR and vectors
+      SUBROUTINE gsflow_prms(Arg, AFR, numts, MODSIM_ON_OFF) BIND(C,NAME="gsflow_prms")  ! need vectors
+      
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
+      
       USE PRMS_MODULE
       USE MF_DLL, ONLY: gsflow_modflow
       IMPLICIT NONE
 ! Arguments
       CHARACTER(LEN=*), INTENT(IN) :: Arg
+      LOGICAL, INTENT(INOUT) :: AFR, MODSIM_ON_OFF
+      INTEGER, INTENT(OUT) :: Numts
 ! Functions
       INTRINSIC :: DATE_AND_TIME, INT, DBLE, TRIM
       INTEGER, EXTERNAL :: check_dims, basin, climateflow, prms_time
@@ -34,9 +38,9 @@
       INTEGER :: i, iret, nc, call_modules, dmy
 !***********************************************************************
       call_modules = 1
-
+      
       Process = Arg
-      AFR = .TRUE.
+      !AFR = .TRUE.
 
       IF ( Process(:3)=='run' ) THEN
         Process_flag = 0 !(0=run, 1=declare, 2=init, 3=clean, 4=setdims)
@@ -140,6 +144,7 @@
           call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
+        Model_control_file = "D:\EDM_LT\GitHub\gsflow.git\gsflow_examples.git\sagehen_3lay_modsim\windows\gsflow_prms.control"
         nc = numchars(Model_control_file)
         IF ( Print_debug>-1 ) PRINT 9004, 'Using Control File: ', Model_control_file(:nc)
         IF ( Print_debug>-2 ) THEN
@@ -190,7 +195,7 @@
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
         CALL read_control_file()
         CALL setup_dimens()
-        dmy = setdims()
+        dmy = setdims(AFR, MODSIM_ON_OFF)
         ! over write start time with MODSIM start time, check to make sure it's valid with data
         ! start date and modflow_time_zero
         !CALL read_var_name_file
@@ -495,6 +500,7 @@
           CALL convert_params()
           STOP
         ENDIF
+        Numts = Number_timesteps
       ENDIF
 
  9001 FORMAT (/, 26X, 26('='), /, 26X, 'Normal completion of GSFLOW', /, 26X, 26('='), /)
@@ -507,12 +513,15 @@
 !***********************************************************************
 !     declare the dimensions
 !***********************************************************************
-      INTEGER FUNCTION setdims()
+      INTEGER FUNCTION setdims(AFR, MODSIM_ON_OFF)
       USE PRMS_MODULE
       USE PRMS_CONTROL_FILE, ONLY: Control_file
       USE GLOBAL, ONLY: NSTP, NPER
       USE MF_DLL, ONLY: gsflow_modflow
       IMPLICIT NONE
+! Arguments
+      LOGICAL, INTENT(IN) :: AFR
+      LOGICAL, INTENT(INOUT) :: MODSIM_ON_OFF
 ! Functions
       INTEGER, EXTERNAL :: decldim, declfix, control_integer_array, control_file_name
       INTEGER, EXTERNAL :: control_string, control_integer
@@ -538,7 +547,8 @@
       IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
 
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
-      PRMS_flag = 1
+      PRMS_flag = 1            
+      MODSIM_ON_OFF = .FALSE. ! set based on mode
 !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 3=MODSIM; 4:=GSFLOW-MODSIM; 5=PRMS-MODSIM; 6=MODFLOW-MODSIM)
       IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:4)=='    ') THEN
         Model = 0

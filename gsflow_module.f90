@@ -32,7 +32,6 @@
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
       DOUBLE PRECISION, SAVE :: Totalarea_mf
       REAL(8), DIMENSION(5) :: DIVS
-      LOGICAL :: AFR
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
 ! Precip_flag (1=precip_1sta; 2=precip_laps; 3=precip_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
