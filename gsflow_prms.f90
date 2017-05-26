@@ -419,6 +419,9 @@
           call_modules = soilzone()
           IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
+!          call_modules = gsflow_modflow(AFR)
+!          IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
+
           call_modules = gsflow_prms2mf()
           IF ( call_modules/=0 ) CALL module_error('gsflow_prms2mf', Arg, call_modules)
 
@@ -514,7 +517,7 @@
       INTEGER, EXTERNAL :: decldim, declfix, control_integer_array, control_file_name
       INTEGER, EXTERNAL :: control_string, control_integer
       EXTERNAL read_error, PRMS_open_output_file, PRMS_open_input_file, check_module_names
-      EXTERNAL PRMS_open_module_file, module_error, gsflow_prms
+      EXTERNAL PRMS_open_module_file, module_error
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
@@ -851,8 +854,6 @@
       IF ( declfix('ndays', 366, 366, 'Maximum number of days in a year ')/=0 ) CALL read_error(7, 'ndays')
       IF ( declfix('nmonths', 12, 12, 'Number of months in a year')/=0 ) CALL read_error(7, 'nmonths')
       IF ( declfix('one', 1, 1, 'Number of values for scaler array')/=0 ) CALL read_error(7, 'one')
-
-!      CALL gsflow_prms('setdims')
 
       IF ( Inputerror_flag==1 ) THEN
         PRINT '(//,A,/,A)', '**FIX input errors in your Control File to continue**', &
