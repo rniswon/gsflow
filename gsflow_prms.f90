@@ -1,7 +1,7 @@
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      INTEGER FUNCTION call_modules(Arg)
+      SUBROUTINE gsflow_prms(Arg)
       USE PRMS_MODULE
       USE MF_DLL, ONLY: gsflow_modflow
       IMPLICIT NONE
@@ -21,13 +21,13 @@
       INTEGER, EXTERNAL :: srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, write_climate_hru
       INTEGER, EXTERNAL :: strmflow_in_out, muskingum, muskingum_lake, numchars, declvar, declparam, getparam
-      INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta, setup, stream_temp
+      INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta, setup, stream_temp, setdims
       EXTERNAL :: module_error, print_module, PRMS_open_output_file
       EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, precip_temp_grid
       EXTERNAL :: prms_summary, nhru_summary, module_doc, convert_params, read_error, nsub_summary
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
 ! Local Variables
-      INTEGER :: i, iret, nc
+      INTEGER :: i, iret, nc, call_modules
 !***********************************************************************
       call_modules = 1
 
@@ -42,14 +42,14 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-03-02 11:15:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-05-25 09:52:00Z'
 
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
         ENDIF
     
         IF ( Model/=1 ) THEN
-          call_modules = gsflow_modflow()
+          call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
 
@@ -131,7 +131,7 @@
         IF ( Model==0 ) THEN
           IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
      &         Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
-          call_modules = gsflow_modflow()
+          call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
         nc = numchars(Model_control_file)
@@ -169,6 +169,9 @@
    4    FORMAT (/, 2(A, I5, 2('/',I2.2)), /)
 
       ELSEIF ( Process(:7)=='setdims' ) THEN
+        CALL setup_dimens()
+        CALL read_control_file()
+        i = setdims()
         Process_flag = 4
 
       ELSE  !IF ( Process(:5)=='clean' ) THEN
@@ -181,7 +184,7 @@
           CALL call_modules_restart(0)
         ENDIF
         IF ( Model==0 ) THEN
-          call_modules = gsflow_modflow()
+          call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
       ENDIF
@@ -376,7 +379,7 @@
       ELSEIF ( Model==0 ) THEN
 
         IF ( Process_flag==0 ) THEN
-          call_modules = gsflow_modflow()
+          call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
 
 ! The following modules are in the MODFLOW iteration loop
@@ -469,7 +472,7 @@
  9003 FORMAT ('Execution ', A, ' date and time (yyyy/mm/dd hh:mm:ss)', I5, 2('/',I2.2), I3, 2(':',I2.2), /)
  9004 FORMAT (/, 2A)
 
-      END FUNCTION call_modules
+      END SUBROUTINE gsflow_prms
 
 !***********************************************************************
 !     declare the dimensions
@@ -480,10 +483,10 @@
       USE MF_DLL, ONLY: gsflow_modflow
       IMPLICIT NONE
 ! Functions
-      INTEGER, EXTERNAL :: decldim, declfix, call_modules, control_integer_array, control_file_name
+      INTEGER, EXTERNAL :: decldim, declfix, control_integer_array, control_file_name
       INTEGER, EXTERNAL :: control_string, control_integer
       EXTERNAL read_error, PRMS_open_output_file, PRMS_open_input_file, check_module_names
-      EXTERNAL PRMS_open_module_file, module_error
+      EXTERNAL PRMS_open_module_file, module_error, gsflow_prms
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
@@ -500,7 +503,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 02/23/2017', //, &
+     &        22X, 'Version 1.2 MODSIM 05/25/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -575,32 +578,33 @@
         Kper_mfo = 1
         mf_timestep = 1
         Process_flag = 1
-        test = gsflow_modflow()
+        test = gsflow_modflow(AFR)
         IF ( test/=0 ) CALL module_error(MODNAME, 'declare', test)
         Process_flag = 2
-        test = gsflow_modflow()
+        test = gsflow_modflow(AFR)
         IF ( test/=0 ) CALL module_error(MODNAME, 'initialize', test)
         PRINT *, ' '
         Process_flag = 0
         DO WHILE ( Kper_mfo<Nper )   !DO WHILE ( Kper_mfo<=Nper )
-          test = gsflow_modflow()
+          test = gsflow_modflow(AFR)
           IF ( test/=0 ) CALL module_error(MODNAME, 'run', test)
           IF ( mf_timestep==NSTP(Kper_mfo) ) Kper_mfo = Kper_mfo + 1
           mf_timestep = mf_timestep + 1
         ENDDO
         Process_flag = 3
-        test = gsflow_modflow()
+        test = gsflow_modflow(AFR)
         IF ( test/=0 ) CALL module_error(MODNAME, 'clean', test)
         STOP
       ENDIF
 
       ! Open PRMS module output file
-      IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'prms.out')
-      IF ( Print_debug>-2 ) THEN
-        CALL PRMS_open_output_file(PRMS_output_unit, Model_output_file, 'model_output_file', 0, iret)
-        IF ( iret/=0 ) STOP
-      ENDIF
-      IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
+!      IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'prms.out')
+!      IF ( Print_debug>-2 ) THEN
+!        CALL PRMS_open_output_file(PRMS_output_unit, Model_output_file, 'model_output_file', 0, iret)
+!        IF ( iret/=0 ) STOP
+!      ENDIF
+!      IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
+      IF ( control_string(Model_control_file, 'model_control_file')/=0 ) CALL read_error(5, 'model_control_file')
       IF ( control_string(Param_file, 'param_file')/=0 ) CALL read_error(5, 'param_file')
 
       ! Check for restart files
@@ -835,7 +839,7 @@
       IF ( declfix('ndays', 366, 366, 'Maximum number of days in a year ')/=0 ) CALL read_error(7, 'ndays')
       IF ( declfix('nmonths', 12, 12, 'Number of months in a year')/=0 ) CALL read_error(7, 'nmonths')
 
-      IF ( call_modules('setdims')/=0 ) STOP 'ERROR, in setdims'
+      CALL gsflow_prms('setdims')
 
       IF ( Inputerror_flag==1 ) THEN
         PRINT '(//,A,/,A)', '**FIX input errors in your Control File to continue**', &
