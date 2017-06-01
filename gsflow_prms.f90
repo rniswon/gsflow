@@ -49,7 +49,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-01 14:16:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-06-01 17:00:00Z'
 
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -522,16 +522,6 @@
       CALL read_control_file()
 !      IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
       Model_control_file = Control_file
-      IF ( control_string(Param_file, 'param_file')/=0 ) CALL read_error(5, 'param_file')
-      ! debug print flag:
-      ! -1=quiet - reduced screen output
-      ! 0=none; 1=water balances; 2=basin;
-      ! 4=basin_sum; 5=soltab; 7=soil zone;
-      ! 9=snowcomp; 13=cascade; 14=subbasin tree
-      IF ( control_integer(Print_debug, 'print_debug')/=0 ) Print_debug = 0
-      IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
-
-      CALL setup_dimens()
 
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
@@ -614,6 +604,17 @@
         IF ( test/=0 ) CALL module_error(MODNAME, 'clean', test)
         STOP
       ENDIF
+
+      IF ( control_string(Param_file, 'param_file')/=0 ) CALL read_error(5, 'param_file')
+      ! debug print flag:
+      ! -1=quiet - reduced screen output
+      ! 0=none; 1=water balances; 2=basin;
+      ! 4=basin_sum; 5=soltab; 7=soil zone;
+      ! 9=snowcomp; 13=cascade; 14=subbasin tree
+      IF ( control_integer(Print_debug, 'print_debug')/=0 ) Print_debug = 0
+      IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
+
+      CALL setup_dimens()
 
       ! Open PRMS module output file
       IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'prms.out')
@@ -778,6 +779,7 @@
       IF ( decldim('ngwcell', 0, MAXDIM, &
      &     'Number of spatial units in the target map for mapped results')/=0 ) CALL read_error(7, 'ngwcell')
       IF ( decldim('nreach', idim, MAXDIM, 'Number of reaches on all stream segments')/=0 ) CALL read_error(7, 'nreach')
+      IF ( decldim('ncol', idim, MAXDIM, 'Number of columns in mapped results output')/=0 ) CALL read_error(7, 'ncol')
 
       IF ( control_integer(Stream_temp_flag, 'stream_temp_flag')/=0 ) Stream_temp_flag = 0
       IF ( Stream_temp_flag==1 ) Stream_order_flag = Stream_order_flag + 1
