@@ -49,7 +49,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-01 17:00:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-06-05 16:11:00Z'
 
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -491,6 +491,7 @@
       USE PRMS_CONTROL_FILE, ONLY: Control_file
       USE GLOBAL, ONLY: NSTP, NPER
       USE MF_DLL, ONLY: gsflow_modflow
+      USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
@@ -566,6 +567,9 @@
       IF ( Start_year<0 ) STOP 'ERROR, control parameter start_time must be specified'
       Start_month = Starttime(2)
       Start_day = Starttime(3)
+      Nowyear = Start_year
+      Nowmonth = Start_month
+      Nowday = Start_day
       Endtime = -1
       DO j = 1, 6
         IF ( control_integer_array(Endtime(j), j, 'end_time')/=0 ) THEN
