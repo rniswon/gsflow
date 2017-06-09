@@ -49,7 +49,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-05 16:11:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-06-09 17:00:00Z'
 
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -174,7 +174,7 @@
         ENDIF
         WRITE ( Logunt, 9004 ) 'Writing PRMS Water Budget File: ', TRIM( Model_output_file )
         WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day
-   4    FORMAT (/, 2(A, I5, 2('/',I2.2)), /)
+   4    FORMAT (/, 2(A, I5, 2('/',I2.2)))
 
       ELSEIF ( Process(:7)=='setdims' ) THEN
         Process_flag = 4
@@ -459,7 +459,6 @@
       ENDIF
       IF ( Process_flag==1 ) THEN
         CALL read_parameter_file_params()
-!        CALL read_prms_data_file()
         IF ( Print_debug>-2 ) THEN
           PRINT '(A)', EQULS
           WRITE ( PRMS_output_unit, '(A)' ) EQULS
@@ -474,6 +473,7 @@
           STOP
         ENDIF
         Numts = Number_timesteps
+        PRINT '(A, /)', EQULS
       ENDIF
 
  9001 FORMAT (/, 26X, 26('='), /, 26X, 'Normal completion of GSFLOW', /, 26X, 26('='), /)
@@ -488,7 +488,7 @@
 !***********************************************************************
       INTEGER FUNCTION setdims(AFR, MODSIM_ON_OFF)
       USE PRMS_MODULE
-      USE PRMS_CONTROL_FILE, ONLY: Control_file
+      USE PRMS_CONTROL_FILE, ONLY: Model_control_file
       USE GLOBAL, ONLY: NSTP, NPER
       USE MF_DLL, ONLY: gsflow_modflow
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
@@ -497,10 +497,10 @@
       LOGICAL, INTENT(IN) :: AFR
       LOGICAL, INTENT(INOUT) :: MODSIM_ON_OFF
 ! Functions
-      INTEGER, EXTERNAL :: decldim, declfix, gsflow_prms, control_integer_array !, control_file_name
+      INTEGER, EXTERNAL :: decldim, declfix, gsflow_prms, control_integer_array
       INTEGER, EXTERNAL :: control_string, control_integer
       EXTERNAL read_error, PRMS_open_output_file, PRMS_open_input_file, module_error, check_module_names
-      EXTERNAL read_control_file, setup_dimens, setup_params, read_parameter_file_dimens
+      EXTERNAL read_control_file, setup_dimens, setup_params, read_parameter_file_dimens, get_control_arguments
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
@@ -520,9 +520,9 @@
      &        22X, 'Version 1.2 MODSIM 06/01/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
+
       CALL read_control_file()
-!      IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
-      Model_control_file = Control_file
+      CALL get_control_arguments()
 
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
@@ -1258,6 +1258,8 @@
       ! Argument
       INTEGER, INTENT(IN) :: In_out
       EXTERNAL check_restart, check_restart_dimen
+      ! Functions
+      INTRINSIC TRIM
       ! Local Variables
       INTEGER :: nhru_test, dprst_test, nsegment_test, temp_test, et_test, ierr
       INTEGER :: cascade_test, cascdgw_test, nhrucell_test, nlake_test
@@ -1274,9 +1276,11 @@
         CALL check_restart(MODNAME, module_name)
         READ ( Restart_inunit ) Timestep, nhru_test, dprst_test, nsegment_test, temp_test, et_test, &
      &         cascade_test, cascdgw_test, nhrucell_test, nlake_test, model_test
-        IF ( Model_mode/=model_test ) THEN
-          PRINT *, 'ERROR, Initial Conditions File saved for model_model=', model_test
-          PRINT *, '       Current model has model_model=', Model_mode, ' they must be equal'
+        print *, TRIM(model_test)
+        print *, TRIM(Model_mode)
+        IF ( TRIM(Model_mode)/=TRIM(model_test) ) THEN
+          PRINT *, 'ERROR, Initial Conditions File saved for model_mode=', model_test
+          PRINT *, '       Current model has model_mode=', Model_mode, ' they must be equal'
           ierr = 1
         ENDIF
         CALL check_restart_dimen('nhru', nhru_test, Nhru, ierr)
