@@ -1,7 +1,7 @@
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      SUBROUTINE gsflow_prms(Arg, AFR, numts, MODSIM_ON_OFF) !BIND(C,NAME="gsflow_prms")  ! need vectors
+      SUBROUTINE gsflow_prms(Arg, AFR, numts, MODSIM_ON_OFF) BIND(C,NAME="gsflow_prms")  ! need vectors
       
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
       
@@ -49,7 +49,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-09 17:00:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-06-20 09:25:00Z'
 
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -517,7 +517,7 @@
       WRITE ( Logunt, 3 )
 3     FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 06/01/2017', //, &
+     &        22X, 'Version 1.2 MODSIM 06/20/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -597,7 +597,7 @@
         IF ( test/=0 ) CALL module_error(MODNAME, 'initialize', test)
         PRINT *, ' '
         Process_flag = 0
-        DO WHILE ( Kper_mfo<Nper )   !DO WHILE ( Kper_mfo<=Nper )
+        DO WHILE ( Kper_mfo<=Nper )
           test = gsflow_modflow(AFR)
           IF ( test/=0 ) CALL module_error(MODNAME, 'run', test)
           IF ( mf_timestep==NSTP(Kper_mfo) ) Kper_mfo = Kper_mfo + 1
