@@ -24,8 +24,8 @@ C
       ELSEIF ( Process_flag==1 ) THEN
         gsflow_modflow = gsfdecl()
       ELSEIF ( Process_flag==2 ) THEN
-      CALL print_module(Version_gsflow_modflow,
-     &                  'GSFLOW MODFLOW main         ', 77)
+        CALL print_module(Version_gsflow_modflow,
+     &                    'GSFLOW MODFLOW main         ', 77)
         CALL MFNWT_INIT(AFR)
       ELSEIF ( Process_flag==3 ) THEN
         WRITE ( Logunt, 1 ) MFVNAM,VERSION,VERSION2,VERSION3
@@ -64,7 +64,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-06-01 14:14:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-06-20 09:23:00Z'
 
       IF ( Model==0 ) THEN
         ! Allocate local module variables
@@ -153,7 +153,7 @@ C--Try stepping into C# here
 !      call IdlAppInit() !rsr, need to uncomment
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
-      IF ( Model>2 ) THEN
+      IF ( Model>1 ) THEN
       WRITE (*,1) MFVNAM,VERSION(:16),VERSION2(:17),VERSION3(:17)
     1 FORMAT (///,34X,'MODFLOW',A,/,
      &4X,'U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
@@ -198,7 +198,7 @@ C4------OPEN NAME FILE.
 C
 C5------Get current date and time, assign to IBDT, and write to screen
       CALL DATE_AND_TIME(VALUES=IBDT)
-      IF ( Model>2 ) WRITE(*,2) (IBDT(I),I=1,3),(IBDT(I),I=5,7)
+      IF ( Model>1 ) WRITE(*,2) (IBDT(I),I=1,3),(IBDT(I),I=5,7)
     2 FORMAT('Run start date and time (yyyy/mm/dd hh:mm:ss): ',
      &I4,'/',I2.2,'/',I2.2,1X,I2,':',I2.2,':',I2.2,/)
 C
