@@ -85,7 +85,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-01 12:08:32Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-06-01 10:45:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -95,7 +95,7 @@
   10  FORMAT (//, 15X, &
      &        'Precipitation-Runoff Modeling System (PRMS)', /, &
      &        20X, 'Based on ', A, /)
-  15  FORMAT (/, 'The following PRMS modules are available:', //, 5X, 'Process',  19X, 'Modules', /, 67('-'), /, &
+  15  FORMAT (/, 18X, 'The following modules are available', //, 5X, 'Process',  19X, 'Modules', /, 74('-'), /, &
      &        '  Basin Definition: basin', /, &
      &        '    Cascading Flow: cascade', /, &
      &        '  Time Series Data: obs', /, &
@@ -116,25 +116,24 @@
      &        'Streamflow Routing: strmflow, strmflow_in_out, muskingum', /, &
      &        '    Output Summary: basin_sum, subbasin, map_results, nhru_summary', /, &
      &        '                    nsub_summary, water_balance', /, &
-     &        '     Preprocessing: write_climate_hru, frost_date', /, 67('-'))
-  16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 18X, &
-     &        'Module (source code version)', /, A)
+     &        '     Preprocessing: write_climate_hru, frost_date', /, 74('-'))
+  16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 23X, &
+     &        'Module', 12X, 'Version Date')
 
-        IF ( Model/=1 ) THEN
+        IF ( Model==0 .OR. Model==99 ) THEN
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
 
-        IF ( Print_debug>-1 ) THEN
+        IF ( Print_debug>-1 )  THEN
           PRINT 15
           PRINT 9002
         ENDIF
         WRITE ( PRMS_output_unit, 15 )
-        WRITE ( PRMS_output_unit, 16 ) EQULS(:78)
-        WRITE ( Logunt, 15 )
-        WRITE ( Logunt, 16 ) EQULS
         PRINT 16
-        PRINT '(A)', EQULS(:74)
+        WRITE ( PRMS_output_unit, 16 )
+        PRINT '(A)', EQULS(:68)
+        WRITE ( PRMS_output_unit, '(A)' ) EQULS(:68)
         CALL print_module(PRMS_versn, 'GSFLOW Computation Order    ', 90)
 
         IF ( Model==0 .OR. Model==99 ) THEN
@@ -149,6 +148,9 @@
         ENDIF
 
         Kkiter = 1 ! set for PRMS-only mode
+
+        WRITE ( Logunt, 15 )
+        WRITE ( Logunt, 16)
 
         IF ( Init_vars_from_file==0 ) THEN
           Timestep = 0
@@ -195,8 +197,9 @@
           PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day
         ENDIF
         WRITE ( Logunt, 9004 ) 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
-        WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day
-   4    FORMAT (/, 2(A, I5, 2('/',I2.2)), /)
+        WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', &
+     &                      End_year, End_month, End_day
+   4    FORMAT (/, 2(A, I5, 2('/',I2.2)))
 
       ELSEIF ( Process(:7)=='setdims' ) THEN
         Process_flag = 4
@@ -277,6 +280,10 @@
         IF ( call_modules/=0 ) CALL module_error(Precip_module, Arg, call_modules)
       ENDIF
 
+      IF ( Model==6 ) THEN
+        IF ( Process_flag==0 ) RETURN
+      ENDIF
+
 ! frost_date is a pre-process module
       IF ( Model==9 ) THEN
         call_modules = frost_date()
@@ -301,6 +308,10 @@
       ENDIF
       IF ( call_modules/=0 ) CALL module_error(Transp_module, Arg, call_modules)
 
+      IF ( Model==8 ) THEN
+        IF ( Process_flag==0 ) RETURN
+      ENDIF
+
       IF ( Climate_potet_flag==0 ) THEN
         IF ( Et_flag==1 ) THEN
           call_modules = potet_jh()
@@ -323,6 +334,10 @@
       IF ( Model==4 ) THEN
         call_modules = write_climate_hru()
         IF ( call_modules/=0 ) CALL module_error('write_climate_hru', Arg, call_modules)
+        IF ( Process_flag==0 ) RETURN
+      ENDIF
+
+      IF ( Model==7 ) THEN
         IF ( Process_flag==0 ) RETURN
       ENDIF
 
@@ -417,8 +432,8 @@
      &                         Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
           Elapsed_time = Execution_time_end - Execution_time_start
           Elapsed_time_minutes = INT(Elapsed_time/60.0)
-          PRINT '(/, A,I5,A,F6.2,A, /)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                                   Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+          PRINT '(/, A,I5,A,F6.2,A,/)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                  Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
           WRITE ( PRMS_output_unit,'(/, A,I5,A,F6.2,A,/)'), 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                                                      Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         ELSEIF ( Process_flag==1 ) THEN
@@ -440,11 +455,13 @@
         ENDIF
       ENDIF
       IF ( Process_flag==1 ) THEN
-        WRITE ( PRMS_output_unit, '(A)' ) EQULS(:78)
-        WRITE ( Logunt, '(A)' ) EQULS(:78)
+        PRINT '(A)', EQULS(:68)
+        WRITE ( PRMS_output_unit, '(A)' ) EQULS(:68)
+        WRITE ( Logunt, '(A)' ) EQULS(:68)
       ELSEIF ( Process_flag==2 ) THEN
         IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
         IF ( Parameter_check_flag==2 ) STOP
+        PRINT *, ' '
       ENDIF
 
  9001 FORMAT (/, 26X, 27('='), /, 26X, 'Normal completion of GSFLOW', /, 26X, 27('='), /)
@@ -481,7 +498,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 1.2.2 06/01/2017', //, &
+     &        25X, 'Version 1.2.2 06/21/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -509,6 +526,12 @@
         Model = 9
       ELSEIF ( Model_mode(:13)=='WRITE_CLIMATE' ) THEN
         Model = 4
+      ELSEIF ( Model_mode(:7)=='CLIMATE' ) THEN
+        Model = 6
+      ELSEIF ( Model_mode(:5)=='POTET' ) THEN
+        Model = 7
+      ELSEIF ( Model_mode(:9)=='TRANSPIRE' ) THEN
+        Model = 8
       ELSEIF ( Model_mode(:13)=='DOCUMENTATION' ) THEN
         Model = 99
       ELSE
