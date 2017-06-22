@@ -82,7 +82,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2016-11-15 10:16:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-06-22 09:13:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -1716,35 +1716,23 @@ C
       USE GSFMODFLOW, ONLY: Gvr_cell_pct, Gwc_row, Gwc_col, Ncells,
      &    Totalarea_mf
       USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Print_debug, 
-     &    Gvr_cell_id, Parameter_check_flag
+     &    Gvr_cell_id
       USE PRMS_BASIN, ONLY: DNEARZERO
       USE GWFUZFMODULE, ONLY: IUZFBND
       IMPLICIT NONE
       INTRINSIC DBLE
-      EXTERNAL checkdim_param_limits
 ! Local Variables
-      INTEGER :: icell, ierr, i, irow, icol
+      INTEGER :: icell, i, irow, icol
       DOUBLE PRECISION :: pctdiff
       DOUBLE PRECISION, ALLOCATABLE :: cell_pct(:)
-      !REAL, ALLOCATABLE :: cell_temp_pct(:), cell_newpct(:)
 !***********************************************************************
       ALLOCATE ( cell_pct(Ngwcell) )
-!      ALLOCATE ( cell_temp_pct(Nhrucell), cell_newpct(Ngwcell) )
       cell_pct = 0.0D0
-      ierr = 0
       DO i = 1, Nhrucell
         icell = Gvr_cell_id(i)
-        IF ( Parameter_check_flag>0 )
-     &       CALL checkdim_param_limits(i, 'gvr_cell_id', 'nhrucell',
-     &                                  icell, 1, Ngwcell, ierr)
-!        cell_temp_pct(i) = Gvr_cell_pct(i)
-        cell_pct(icell) = cell_pct(icell) + DBLE( Gvr_cell_pct(i) )
+        IF ( icell>0 )
+     &       cell_pct(icell) = cell_pct(icell) + DBLE( Gvr_cell_pct(i) )  !rgn 6/21/17
       ENDDO
-
-      IF ( ierr==1 ) THEN
-        PRINT *, 'ERROR, check gsflow.log for messages'
-        STOP
-      ENDIF
 
       Ncells = 0
       Totalarea_mf = 0.0D0
@@ -1770,7 +1758,6 @@ C
       ENDDO
 
       DEALLOCATE ( cell_pct )
-!      DEALLOCATE ( cell_temp_pct, cell_newpct )
 
       END SUBROUTINE check_gvr_cell_pct
 
