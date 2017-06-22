@@ -71,7 +71,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-03-27 14:24:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-06-21 14:38:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -342,6 +342,7 @@
           hru_pct(is) = hru_pct(is) + temp_pct(i)
         ENDIF
         icell = Gvr_cell_id(i)
+        IF ( icell==0 ) CYCLE
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
         IF ( Print_debug>-1 ) THEN
@@ -512,6 +513,7 @@
         IF ( Hrucheck(ihru)==0 ) CYCLE
         Gw_rejected_grav(j) = 0.0
         icell = Gvr_cell_id(j)
+        IF ( icell==0 ) CYCLE
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
 

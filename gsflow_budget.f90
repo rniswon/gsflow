@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2017-03-09 11:17:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2017-06-22 13:37:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -288,6 +288,7 @@
       DO i = 1, Nhrucell
         ihru = Gvr_hru_id(i)
         icell = Gvr_cell_id(i)
+        IF ( icell==0 ) CYCLE
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
         pct = SNGL( Gvr_hru_pct_adjusted(i) )

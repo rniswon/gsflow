@@ -1740,19 +1740,21 @@ C
         irow = Gwc_row(i)
         icol = Gwc_col(i)
         IF ( IUZFBND(icol,irow)==0 ) CYCLE
-        pctdiff = cell_pct(i) - 1.0D0
-        Totalarea_mf = Totalarea_mf + pctdiff
-        Ncells = Ncells + 1
-        IF ( Print_debug>-1 ) THEN
-          IF ( pctdiff<-0.99999D0 ) THEN
-            PRINT *, 'WARNING, portion of cell in gvr_cell_pct',
-     &               ' mapping < 1.0 ', cell_pct(i), pctdiff
-            PRINT *, 'Will lose some water in MF cell:', i
-          ENDIF
-          IF ( pctdiff>1.00001D0 ) THEN
-            PRINT *, 'WARNING, portion of cell in gvr_cell_pct',
-     &               ' > 1.0 mapping', cell_pct(i), pctdiff
-            PRINT *, 'Will make some water in MF cell:', i
+        IF ( cell_pct(i)>0.0D0 ) THEN
+          pctdiff = cell_pct(i) - 1.0D0
+          Totalarea_mf = Totalarea_mf + pctdiff
+          Ncells = Ncells + 1
+          IF ( Print_debug>-1 ) THEN
+            IF ( pctdiff<0.0D0 ) THEN
+              PRINT *, 'WARNING, portion of cell in gvr_cell_pct',
+     &                 ' mapping < 1.0 ', cell_pct(i), pctdiff
+              PRINT *, 'Will lose some water in MF cell:', i
+            ENDIF
+            IF ( pctdiff>1.0D0 ) THEN
+              PRINT *, 'WARNING, portion of cell in gvr_cell_pct',
+     &                 ' > 1.0 mapping', cell_pct(i), pctdiff
+              PRINT *, 'Will make some water in MF cell:', i
+            ENDIF
           ENDIF
         ENDIF
       ENDDO
@@ -1848,7 +1850,8 @@ C
 
       DO i = 1, Nhrucell
         ! MF volume to PRMS inches
-        Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
+        IF ( Gvr_cell_id(i)>0 )
+     +       Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
         ! MF discharge to PRMS inches
         ! note DELT may change during simulation at some point, so this will need to go in read_stress
         Mfq2inch_conv(i) = Mfvol2inch_conv(i)*DELT
