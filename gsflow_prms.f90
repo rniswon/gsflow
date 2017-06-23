@@ -85,7 +85,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-01 10:45:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-06-23 12:18:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -141,7 +141,7 @@
      &         'Current iteration in GSFLOW simulation', 'none', KKITER)/=0 ) CALL read_error(3, 'KKITER')
           ALLOCATE ( Gvr_cell_id(Nhrucell) )
           IF ( declparam(MODNAME, 'gvr_cell_id', 'nhrucell', 'integer', &
-     &         '0', 'bounded', 'ngwcell', &
+     &         '55', 'bounded', 'ngwcell', &
      &         'Corresponding grid cell id associated with each GVR', &
      &         'Index of the grid cell associated with each gravity reservoir', &
      &         'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
@@ -167,6 +167,12 @@
         IF ( Model==0 ) THEN
           IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
      &         Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
+          IF ( Gvr_cell_id(1)==55 .AND. Gvr_cell_id(MAX(2,Nhrucell-111))==55 .AND. Gvr_cell_id(MAX(5,Nhrucell-444))==99 ) THEN
+            WRITE ( *, '(/,A,/)' ) 'WARNING: values of gvr_cell_id set to 1 to nhrucell'
+            DO i = 1, Nhrucell
+              Gvr_cell_id(i) = i
+            ENDDO
+          ENDIF
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
