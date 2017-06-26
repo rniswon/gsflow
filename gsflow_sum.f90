@@ -109,7 +109,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = 'gsflow_sum.f90 2017-03-27 14:24:00Z'
+      Version_gsflow_sum = 'gsflow_sum.f90 2017-05-15 10:13:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -909,17 +909,17 @@
      &    Gsflow_output_file, Gsf_rpt
       USE PRMS_MODULE, ONLY: Print_debug, Logunt
       IMPLICIT NONE
-      INTRINSIC TRIM
-      INTEGER, EXTERNAL :: control_integer, control_string
+      INTEGER, EXTERNAL :: control_integer, control_string, numchars
       EXTERNAL GSF_HEADERS, read_error, PRMS_open_output_file
 ! Local Variables
-      INTEGER :: ios
+      INTEGER :: nc, ios
 !***********************************************************************
       IF ( control_integer(Gsf_rpt, 'gsf_rpt')/=0 ) CALL read_error(5, 'gsf_rpt')
       IF ( Gsf_rpt==1 ) THEN  !gsf_rpt default = 1
 
         IF ( control_string(Csv_output_file, 'csv_output_file')/=0 ) CALL read_error(5, 'csv_output_file')
-        IF ( Csv_output_file(:1)==' ' .OR. Csv_output_file(:1)==CHAR(0) ) Csv_output_file = 'gsflow.csv'
+        IF ( Csv_output_file(:1)==' ' .OR. &
+     &       Csv_output_file(:1)==CHAR(0) ) Csv_output_file = 'gsflow.csv'
 
         CALL PRMS_open_output_file(Balance_unt, Csv_output_file, 'csv_output_file', 0, ios)
         IF ( ios/=0 ) STOP
@@ -935,11 +935,13 @@
 
       CALL PRMS_open_output_file(Gsf_unt, Gsflow_output_file, 'gsflow_output_file', 0, ios)
       IF ( ios/=0 ) STOP
-      PRINT 9001, 'Writing GSFLOW Water Budget File: ', TRIM(Gsflow_output_file)
-      WRITE ( Logunt, 9001 ) 'Writing GSFLOW Water Budget File: ', TRIM(Gsflow_output_file)
+      nc = numchars(Gsflow_output_file)
+      PRINT 9001, 'Writing GSFLOW Water Budget File: ', Gsflow_output_file(:nc)
+      WRITE ( Logunt, 9001 ) 'Writing GSFLOW Water Budget File: ', Gsflow_output_file(:nc)
       IF ( Gsf_rpt==1 ) THEN
-        PRINT 9001, 'Writing GSFLOW CSV File: ', TRIM(Csv_output_file)
-        WRITE ( Logunt, 9001 ) 'Writing GSFLOW CSV File: ', TRIM(Csv_output_file)
+        nc = numchars(Csv_output_file)
+        PRINT 9001, 'Writing GSFLOW CSV File: ', Csv_output_file(:nc)
+        WRITE ( Logunt, 9001 ) 'Writing GSFLOW CSV File: ', Csv_output_file(:nc)
         CALL GSF_HEADERS()
       ENDIF
 
