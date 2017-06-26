@@ -288,6 +288,7 @@
       DO i = 1, Nhrucell
         ihru = Gvr_hru_id(i)
         icell = Gvr_cell_id(i)
+        IF ( icell==0 ) CYCLE
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
         pct = SNGL( Gvr_hru_pct_adjusted(i) )
@@ -551,6 +552,7 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
+      Sat_S = 0.0D0
 
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
@@ -609,6 +611,7 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
+      Sat_S = 0.0D0
 
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
@@ -671,6 +674,8 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
+      Sat_S = 0.0D0
+
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
       DO k = 1, NLAY
