@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2017-03-09 11:17:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2017-06-27 16:20:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -234,7 +234,7 @@
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
 !Warning, modifies Gw2sm_grav
       USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id !, Print_debug
-      USE GLOBAL, ONLY: DELR, DELC
+      USE GLOBAL, ONLY: DELR, DELC !, IUNIT
       USE GWFBASMODULE, ONLY: VBVL, DELT
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET, UZOLSFLX, UZFLWT
       USE GWFLAKMODULE, ONLY: EVAP, SURFA
@@ -288,6 +288,7 @@
       DO i = 1, Nhrucell
         ihru = Gvr_hru_id(i)
         icell = Gvr_cell_id(i)
+        IF ( icell==0 ) CYCLE
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
         pct = SNGL( Gvr_hru_pct_adjusted(i) )
@@ -382,7 +383,11 @@
           IF ( Hru_type(i)==2 ) THEN
             lake = Lake_hru_id(i)
             !EVAP in mfl3/dt   SURFA in MFL2/dt
-            inches_on_lake = EVAP(lake)*DELT/SURFA(lake)*Mfl_to_inch                            !RGN 5/23/15 added *DELT for time units other than days.         
+            IF ( SURFA(lake)>0.0 ) THEN
+              inches_on_lake = EVAP(lake)*DELT/SURFA(lake)*Mfl_to_inch                            !RGN 5/23/15 added *DELT for time units other than days.
+            ELSE
+              inches_on_lake = 0.0
+            ENDIF
             Hru_actet(i) = inches_on_lake*SURFA(lake)*Mfl2_to_acre/Lake_area(lake)
             ! does not include any ET from UZF, i.e., dry areas in lake
             Actet_tot_gwsz(i) = Hru_actet(i)

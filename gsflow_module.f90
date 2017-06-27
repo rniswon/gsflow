@@ -30,10 +30,10 @@
       INTEGER, SAVE :: Prms_warmup
       CHARACTER(LEN=80), SAVE :: Version_read_control_file
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
-      DOUBLE PRECISION, SAVE :: Totalarea_mf
       REAL(8), DIMENSION(5) :: DIVS
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
+      REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
 ! Precip_flag (1=precip_1sta; 2=precip_laps; 3=precip_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
 ! Temp_flag (1=temp_1sta; 2=temp_laps; 3=temp_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
 ! Control parameters
@@ -90,8 +90,6 @@
       PARAMETER (VERSION3='1.04.0 09/15/2016')
       PARAMETER (MFVNAM='-NWT-SWR1')
       INTEGER, SAVE :: IBDT(8)
-!   Declared Parameter
-      REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
 !   Control Parameters
       INTEGER, SAVE :: Modflow_time_zero(6)
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Modflow_name

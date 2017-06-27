@@ -71,7 +71,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-06-21 14:38:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-06-27 16:23:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -177,7 +177,7 @@
       USE GWFUZFMODULE, ONLY: NTRAIL, NWAV
       USE GWFSFRMODULE, ONLY: ISEG, NSS
       USE GWFLAKMODULE, ONLY: NLAKES
-      USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes
+      USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes, Totalarea_mf, NCELLS
       USE PRMS_MODULE, ONLY: Nhru, Nsegment, Numlakes, Print_debug, &
      &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
@@ -412,8 +412,13 @@
 
       Totalarea = Totalarea*Basin_area_inv
       WRITE ( Logunt, 9003 ) (Totalarea-1.0D0)*100.0D0
-      IF ( Print_debug>-1 ) PRINT 9003, (Totalarea-1.0D0)*100.0D0
-
+      WRITE ( Logunt, '(/, A,D14.7)' ) 'Percent difference between cell mapping:', Totalarea_mf/DBLE(Ncells)*100.0D0
+      WRITE ( Logunt, '(/,A,I8)' ) 'Number of active cells:', Ncells
+      IF ( Print_debug>-1 ) THEN
+        PRINT 9003, (Totalarea-1.0D0)*100.0D0
+        PRINT '(/, A,D14.7)', 'Percent difference between cell mapping:', Totalarea_mf/DBLE(Ncells)*100.0D0
+        PRINT '(/,A,I8)', 'Number of active cells:', Ncells
+      ENDIF
       IF ( Nhru/=Nhrucell ) DEALLOCATE ( hru_pct, newpct, temp_pct )
       !DEALLOCATE ( nseg_rch, seg_area )
 
