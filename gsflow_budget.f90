@@ -383,8 +383,10 @@
           IF ( Hru_type(i)==2 ) THEN
             lake = Lake_hru_id(i)
             !EVAP in mfl3/dt   SURFA in MFL2/dt
-            inches_on_lake = EVAP(lake)*DELT/SURFA(lake)*Mfl_to_inch                            !RGN 5/23/15 added *DELT for time units other than days.         
-            Hru_actet(i) = inches_on_lake*SURFA(lake)*Mfl2_to_acre/Lake_area(lake)
+            IF ( SURFA(lake) > NEARZERO ) then
+              inches_on_lake = EVAP(lake)*DELT/SURFA(lake)*Mfl_to_inch                            !RGN 5/23/15 added *DELT for time units other than days.         
+              Hru_actet(i) = inches_on_lake*SURFA(lake)*Mfl2_to_acre/Lake_area(lake)
+            END IF
             ! does not include any ET from UZF, i.e., dry areas in lake
             Actet_tot_gwsz(i) = Hru_actet(i)
             Basin_lakeevap = Basin_lakeevap + Hru_actet(i)*harea
