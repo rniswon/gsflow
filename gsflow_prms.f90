@@ -52,7 +52,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-28 09:53:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-06-28 12:15:00Z'
 
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -120,12 +120,6 @@
           IF ( Model==0 .OR. Model==99 ) THEN
             IF ( declvar(MODNAME, 'KKITER', 'one', 1, 'integer', &
      &           'Current iteration in GSFLOW simulation', 'none', KKITER)/=0 ) CALL read_error(3, 'KKITER')
-            ALLOCATE ( Gvr_cell_id(Nhrucell) )
-            IF ( declparam(MODNAME, 'gvr_cell_id', 'nhrucell', 'integer', &
-     &           '55', 'bounded', 'ngwcell', &
-     &           'Corresponding grid cell id associated with each GVR', &
-     &           'Index of the grid cell associated with each gravity reservoir', &
-     &           'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
             ALLOCATE ( Gvr_cell_pct(Nhrucell) )
             IF ( Nhru/=Nhrucell ) THEN
               IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
@@ -134,6 +128,14 @@
      &             'Proportion of the MODFLOW cell area associated with each gravity reservoir', &
      &             'decimal fraction')/=0 ) CALL read_error(1, 'gvr_cell_pct')
             ENDIF
+          ENDIF
+          IF ( MapOutON_OFF>0 .OR. Model==0 .OR. Model==99 ) THEN
+            ALLOCATE ( Gvr_cell_id(Nhrucell) )
+            IF ( declparam(MODNAME, 'gvr_cell_id', 'nhrucell', 'integer', &
+     &           '-1', '-1', '999999999', &
+     &           'Corresponding grid cell id associated with each GVR', &
+     &           'Index of the grid cell associated with each gravity reservoir', &
+     &           'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
           ENDIF
 
         ENDIF
@@ -146,8 +148,6 @@
         IF ( Nhru==Nhrucell ) Grid_flag = 1
 
         IF ( Model==0 ) THEN
-          IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
-     &         Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
           IF ( Nhru==Nhrucell ) THEN
             Gvr_cell_pct = 1.0
           ELSE
@@ -156,6 +156,23 @@
           ENDIF
           call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
+        ENDIF
+        IF ( MapOutON_OFF>0 .OR. Model==0 ) THEN
+          IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
+     &         Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
+          IF ( Gvr_cell_id(1)==-1 ) THEN
+            IF ( Nhru==Nhrucell ) THEN
+              IF ( Print_debug>-1 ) THEN
+                PRINT *, 'WARNING, HRUs are assumed to be numbered from upper left corner'
+                PRINT *, '         gvr_cell_id values are set to 1 through nhru'
+              ENDIF
+              DO i = 1, Nhrucell
+                Gvr_cell_id(i) = 1
+              ENDDO
+            ELSE
+              STOP 'ERROR, gvr_cell_id must be specified'
+            ENDIF
+          ENDIF
         ENDIF
 !        Model_control_file = "D:\EDM_LT\GitHub\gsflow.git\gsflow_examples.git\sagehen_3lay_modsim\windows\gsflow_prms.control"
         IF ( Print_debug>-1 ) PRINT 9004, 'Using Control File: ', TRIM( Model_control_file )
