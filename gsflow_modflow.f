@@ -1686,7 +1686,7 @@ C
      &    Steady_state, ICNVG, Mft_to_days
       USE PRMS_MODULE, ONLY: Init_vars_from_file, Kkiter,
      &    Starttime, Start_year, Start_month, Start_day, Logunt,
-     &    KPER, KSTP, DIVS
+     &    KPER, KSTP, DIVS, Model
       USE GWFBASMODULE, ONLY: TOTIM
       IMPLICIT NONE
       ! Arguments
@@ -1736,6 +1736,7 @@ C
 
       IF ( Mft_to_days>1.0 ) PRINT *, 'CAUTION, MF time step /= 1 day'
 
+      IF ( Model>0 ) PRINT *, ' '
       Steady_state = 0
       ! run steady state and load Stress_dates array (Julian days)
       DO i = 1, NPER

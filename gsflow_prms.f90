@@ -6,6 +6,7 @@
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
       
       USE PRMS_MODULE
+      USE PRMS_READ_PARAM_FILE, ONLY: Version_read_parameter_file
       USE MF_DLL, ONLY: gsflow_modflow
       IMPLICIT NONE
 ! Arguments
@@ -51,7 +52,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-27 17:18:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-06-28 09:53:00Z'
 
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -112,6 +113,7 @@
 
           CALL print_module(PRMS_versn, 'GSFLOW Computation Order    ', 90)
           CALL print_module(Version_read_control_file, 'Read Control File           ', 90)
+          CALL print_module(Version_read_parameter_file, 'Read Parameter File         ', 90)
 
           CALL read_prms_data_file()
 
@@ -184,7 +186,7 @@
         ENDIF
         WRITE ( Logunt, 9004 ) 'Writing PRMS Water Budget File: ', TRIM( Model_output_file )
         WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day
-   4    FORMAT (/, 2(A, I5, 2('/',I2.2)))
+   4    FORMAT (/, 2(A, I5, 2('/',I2.2)), /)
 
         IF ( Init_vars_from_file==0 ) THEN
           Timestep = 0
@@ -509,7 +511,6 @@
 !***********************************************************************
       INTEGER FUNCTION setdims(AFR, MODSIM_ON_OFF)
       USE PRMS_MODULE
-      USE PRMS_CONTROL_FILE, ONLY: Model_control_file
       USE GLOBAL, ONLY: NSTP, NPER
       USE MF_DLL, ONLY: gsflow_modflow
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
@@ -539,7 +540,7 @@
       WRITE ( Logunt, 3 )
 3     FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 06/27/2017', //, &
+     &        22X, 'Version 1.2 MODSIM 06/28/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
