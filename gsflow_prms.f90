@@ -154,8 +154,6 @@
             IF ( getparam(MODNAME, 'gvr_cell_pct', Nhrucell, 'real', &
      &           Gvr_cell_pct)/=0 ) CALL read_error(2, 'gvr_cell_pct')
           ENDIF
-          call_modules = gsflow_modflow(AFR)
-          IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
         IF ( MapOutON_OFF>0 .OR. Model==0 ) THEN
           IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
@@ -173,6 +171,10 @@
               STOP 'ERROR, gvr_cell_id must be specified'
             ENDIF
           ENDIF
+        ENDIF
+        IF ( Model==0 ) THEN
+          call_modules = gsflow_modflow(AFR)
+          IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
 !        Model_control_file = "D:\EDM_LT\GitHub\gsflow.git\gsflow_examples.git\sagehen_3lay_modsim\windows\gsflow_prms.control"
         IF ( Print_debug>-1 ) PRINT 9004, 'Using Control File: ', TRIM( Model_control_file )
