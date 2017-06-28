@@ -623,7 +623,10 @@
         DO WHILE ( Kper_mfo<=Nper )
           test = gsflow_modflow(AFR)
           IF ( test/=0 ) CALL module_error(MODNAME, 'run', test)
-          IF ( mf_timestep==NSTP(Kper_mfo) ) Kper_mfo = Kper_mfo + 1
+          IF ( mf_timestep==NSTP(Kper_mfo) ) THEN
+            Kper_mfo = Kper_mfo + 1
+            mf_timestep = 0
+          ENDIF
           mf_timestep = mf_timestep + 1
         ENDDO
         Process_flag = 3

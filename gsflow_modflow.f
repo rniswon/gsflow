@@ -1309,9 +1309,9 @@ C
 C     ******************************************************************
 C     GET THE NAME OF THE NAME FILE
 C     ******************************************************************
-      USE PRMS_MODULE, ONLY: Model
+!      USE PRMS_MODULE, ONLY: Model
       USE GSFMODFLOW, ONLY: Modflow_name
-      INTRINSIC :: GETARG, INDEX, TRIM
+      INTRINSIC :: GETARG, TRIM
       INTEGER, EXTERNAL :: control_string
       EXTERNAL :: read_error
 C        SPECIFICATIONS:
@@ -1326,11 +1326,11 @@ C Get name file from command line or user interaction.
         FNAME=' '
         COMLIN=' '
 !rsr, hopefully MODSIM can use GSFLOW Control File, but assumed not to right now
-      IF ( Model<3 ) THEN
+!      IF ( Model<3 ) THEN
         IF ( control_string(Modflow_name, 'modflow_name')/=0 )
      &       CALL read_error(5, 'modflow_name')
         FNAME = Modflow_name
-      ELSE
+!      ELSE
 C *** Subroutines GETARG and GETCL are extensions to Fortran 90/95 that
 C *** allow a program to retrieve command-line arguments.  To enable
 C *** Modflow-2000 to read the name of a Name file from the command
@@ -1340,30 +1340,28 @@ C *** that support GETCL but not GETARG, comment out the call to GETARG
 C *** and uncomment the call to GETCL.  The calls to both GETARG and
 C *** GETCL may be commented out for compilers that do not support
 C *** either extension.
-        CALL GETARG(1,COMLIN) ! rsr, assume MODSIM can allow command line arguments
+!        CALL GETARG(1,COMLIN) ! rsr, assume MODSIM can allow command line arguments
 C        CALL GETCL(COMLIN)
-        ICOL = 1
-        IF(COMLIN.NE.' ') FNAME=COMLIN
+!        IF(COMLIN.NE.' ') FNAME=COMLIN
+!      ENDIF
+!      IF ( FNAME(:1).EQ.' ' ) THEN
+!  15    WRITE (*,*) ' Enter the path of the NAME FILE or "quit": '
+!        READ (*,'(A)') FNAME
+!        IF ( TRIM(FNAME)=='quit' .OR. TRIM(FNAME)=='QUIT' )
+!     &       CALL USTOP(' ')
+!        IF (FNAME(:1).EQ.' ') GOTO 15
+!      ENDIF
+      INQUIRE (FILE=TRIM(FNAME),EXIST=EXISTS)
+      IF (.NOT.EXISTS) THEN
+  16    PRINT '(/,A,A,/)', 'Name File does not exist: ', TRIM(FNAME)
+        PRINT *, ' Enter a different Name File path or "quit": '
+        READ (*,'(A)') FNAME
+        IF ( TRIM(FNAME)=='quit' .OR. TRIM(FNAME)=='QUIT'
+     &       .OR. FNAME(:1)==' ' ) CALL USTOP(' ')
+        INQUIRE ( FILE=TRIM(FNAME), EXIST=EXISTS )
+        IF ( .NOT.EXISTS ) GO TO 16
+        PRINT *, ' '
       ENDIF
-      IF ( FNAME(:1).EQ.' ' ) THEN
-        FNAME = 'modflow.nam'                              !# Hardwire
-!  15     WRITE (*,*) ' Enter the name of the NAME FILE: '
-!         READ (*,'(A)') FNAME
-!         CALL URWORD(FNAME,ICOL,ISTART,ISTOP,0,N,R,0,0)
-!         FNAME=FNAME(ISTART:ISTOP)
-!         IF (FNAME.EQ.' ') GOTO 15
-        ENDIF
-        INQUIRE (FILE=FNAME,EXIST=EXISTS)
-        IF(.NOT.EXISTS) THEN
-          NC=INDEX(FNAME,' ')
-          FNAME(NC:NC+3)='.nam'
-          INQUIRE (FILE=FNAME,EXIST=EXISTS)
-          IF(.NOT.EXISTS) THEN
-            WRITE (*,480) FNAME(1:NC-1),FNAME(1:NC+3)
-  480       FORMAT(1X,'Can''t find name file ',A,' or ',A)
-            CALL USTOP(' ')
-          ENDIF
-        ENDIF
 C
       RETURN
       END SUBROUTINE GETNAMFIL
