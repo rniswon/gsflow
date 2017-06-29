@@ -236,7 +236,7 @@
       IF ( Mnsziter<3 ) Mnsziter = 3
       IF ( Mnsziter>Mxsziter ) Mxsziter = Mnsziter
       WRITE (Logunt, '(/, A,F10.7,A,I4,A,I4,/)') 'szconverge =', Szconverge, ', mxsziter =', Mxsziter, ', mnsziter =', Mnsziter
-      WRITE (Logunt, '(A,D15.7,/)') 'Tolerance check for gvr_hru_pct:', PCT_CHK
+      WRITE (Logunt, '(A,D15.7)') 'Tolerance check for gvr_hru_pct:', PCT_CHK
 
       IF ( Nhru/=Nhrucell ) THEN
         IF ( getparam('prms2mf', 'gvr_hru_pct', Nhrucell, 'real', Gvr_hru_pct)/=0 ) CALL read_error(2, 'gvr_hru_pct')
