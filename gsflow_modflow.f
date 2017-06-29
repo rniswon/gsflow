@@ -994,6 +994,8 @@ C7C6---JUMP TO END OF PROGRAM IF CONVERGENCE WAS NOT ACHIEVED.
      &                             Convfail_cnt
 !gsf        END IF
           END IF
+!----INCREMENT CONTINUOUS TIME COUNTER FOR MODFLOW
+!          TOTIM = TOTIM + DELT    
 C
 C-----END OF TIME STEP (KSTP) AND STRESS PERIOD (KPER) LOOPS
 !gsf 90   CONTINUE
@@ -1583,7 +1585,7 @@ C
 !      IF ( Modflow_skip_stress.EQ.0 .and. Steady_state==0 )  !RGN
 !     +     CALL READ_STRESS()           !RGN read stress was called already
       IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) CALL READ_STRESS()
-      TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time
+      IF ( ISSFLG(1)/=1 ) TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time 6/28/17 need to include SS time
       KSTP = Modflow_time_in_stress ! caution, in days
       IF ( KSTP<0 ) KSTP = 0
 
