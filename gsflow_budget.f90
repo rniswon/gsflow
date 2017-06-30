@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2017-06-27 16:20:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2017-06-28 16:26:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -383,12 +383,12 @@
           IF ( Hru_type(i)==2 ) THEN
             lake = Lake_hru_id(i)
             !EVAP in mfl3/dt   SURFA in MFL2/dt
-            IF ( SURFA(lake)>0.0 ) THEN
-              inches_on_lake = EVAP(lake)*DELT/SURFA(lake)*Mfl_to_inch                            !RGN 5/23/15 added *DELT for time units other than days.
+            IF ( SURFA(lake)>NEARZERO ) THEN
+              inches_on_lake = EVAP(lake)*DELT/SURFA(lake)*Mfl_to_inch                            !RGN 5/23/15 added *DELT for time units other than days.         
+              Hru_actet(i) = inches_on_lake*SURFA(lake)*Mfl2_to_acre/Lake_area(lake)
             ELSE
-              inches_on_lake = 0.0
+              Hru_actet(i) = 0.0
             ENDIF
-            Hru_actet(i) = inches_on_lake*SURFA(lake)*Mfl2_to_acre/Lake_area(lake)
             ! does not include any ET from UZF, i.e., dry areas in lake
             Actet_tot_gwsz(i) = Hru_actet(i)
             Basin_lakeevap = Basin_lakeevap + Hru_actet(i)*harea
@@ -448,7 +448,7 @@
       !IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()
       !IF ( IUNIT(23)>0 ) CALL MODFLOW_GET_STORAGE_LPF()
       !IF ( IUNIT(62)>0 ) CALL MODFLOW_GET_STORAGE_UPW()
-!
+
       IF ( Vbnm_index(1)==-1 ) CALL MODFLOW_VB_DECODE(Vbnm_index)
       Sat_dS = VBVL(4,Vbnm_index(12)) - VBVL(3,Vbnm_index(12))
       Sat_S = Sat_S + Sat_dS

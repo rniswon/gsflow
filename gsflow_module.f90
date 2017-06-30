@@ -4,14 +4,14 @@
       MODULE PRMS_MODULE
       IMPLICIT NONE
       INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 32, MAXDIM = 500
-      CHARACTER(LEN=78), PARAMETER :: &
-     &  EQULS = '=============================================================================='
+      CHARACTER(LEN=68), PARAMETER :: &
+     &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 06/28/2017'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 06/30/2017'
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
-      INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw, One, Nmonths, Ndays
-      INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Numlakes, Nlapse
+      INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
+      INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Numlakes
       INTEGER, SAVE :: Ntemp, Nrain, Nsol, Nsegment, Ndepl, Nobs, Nevap, Ndeplval
       INTEGER, SAVE :: Starttime(6), Endtime(6), Number_timesteps
       INTEGER, SAVE :: Start_year, Start_month, Start_day, End_year, End_month, End_day
@@ -23,14 +23,14 @@
       INTEGER, SAVE :: Inputerror_flag, Timestep
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
       INTEGER, SAVE :: Grid_flag, Logunt, First_timestep
-      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, KPER, KSTP
+      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
-      INTEGER, SAVE :: Dynamic_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Kkiter
+      INTEGER, SAVE :: Dynamic_flag, Nwateruse, Nexternal, Nconsumed, Npoigages
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
       INTEGER, SAVE :: Prms_warmup
       CHARACTER(LEN=80), SAVE :: Version_read_control_file
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
-      REAL(8), DIMENSION(5) :: DIVS
+      INTEGER, SAVE :: Kkiter
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
       REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
@@ -39,7 +39,7 @@
 ! Control parameters
       INTEGER, SAVE :: Print_debug, MapOutON_OFF, CsvON_OFF, Dprst_flag, Subbasin_flag, Parameter_check_flag
       INTEGER, SAVE :: Init_vars_from_file, Save_vars_to_file, Orad_flag, Cascade_flag, Cascadegw_flag
-      INTEGER, SAVE :: NhruOutON_OFF, Gwr_swale_flag, NsubOutON_OFF
+      INTEGER, SAVE :: NhruOutON_OFF, Gwr_swale_flag, NsubOutON_OFF, BasinOutON_OFF
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Model_output_file, Var_init_file, Var_save_file
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Csv_output_file, Model_control_file, Param_file
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Temp_module, Srunoff_module, Et_module
@@ -58,14 +58,13 @@
 !     GSFLOW module
 !***********************************************************************
       MODULE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: MAXFILE_LENGTH
 !   Local Variables
       INTEGER, PARAMETER :: ITDIM = 80
       INTEGER, SAVE :: Convfail_cnt, Steady_state, Ncells, Gsflag
       INTEGER, SAVE :: IGRID, KKPER, ICNVG, NSOL, IOUTS
-      INTEGER, SAVE :: KKSTP, IERR, Max_iters, Nszchanging
+      INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters, Nszchanging
       INTEGER, SAVE :: Mfiter_cnt(ITDIM), Iter_cnt(ITDIM), Iterations
-      INTEGER, SAVE :: Szcheck, Sziters, INUNIT, NCVGERR
+      INTEGER, SAVE :: Szcheck, Sziters, INUNIT, KPER, NCVGERR
       INTEGER, SAVE :: Have_lakes, Max_sziters, Maxgziter
       INTEGER, SAVE, ALLOCATABLE :: Gwc_col(:), Gwc_row(:)
       REAL, SAVE :: Delt_save
@@ -82,6 +81,7 @@
       CHARACTER(LEN=80), SAVE :: Version_gsflow_modflow
       CHARACTER(LEN=14), PARAMETER :: MODNAME = 'gsflow_modflow'
       INTEGER, SAVE :: Stopcount
+      REAL(8), DIMENSION(5) :: DIVS
 !-------ASSIGN VERSION NUMBER AND DATE
       CHARACTER*40 VERSION,VERSION2,VERSION3
       CHARACTER*10 MFVNAM
@@ -92,5 +92,5 @@
       INTEGER, SAVE :: IBDT(8)
 !   Control Parameters
       INTEGER, SAVE :: Modflow_time_zero(6)
-      CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Modflow_name
+      CHARACTER(LEN=200), SAVE :: Modflow_name
     END MODULE GSFMODFLOW
