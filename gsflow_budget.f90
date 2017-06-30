@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2017-06-22 13:37:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2017-06-28 16:26:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -234,7 +234,7 @@
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
 !Warning, modifies Gw2sm_grav
       USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id !, Print_debug
-      USE GLOBAL, ONLY: IUNIT, DELR, DELC
+      USE GLOBAL, ONLY: DELR, DELC !, IUNIT
       USE GWFBASMODULE, ONLY: VBVL, DELT
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET, UZOLSFLX, UZFLWT
       USE GWFLAKMODULE, ONLY: EVAP, SURFA
@@ -383,10 +383,12 @@
           IF ( Hru_type(i)==2 ) THEN
             lake = Lake_hru_id(i)
             !EVAP in mfl3/dt   SURFA in MFL2/dt
-            IF ( SURFA(lake) > NEARZERO ) then
+            IF ( SURFA(lake)>NEARZERO ) THEN
               inches_on_lake = EVAP(lake)*DELT/SURFA(lake)*Mfl_to_inch                            !RGN 5/23/15 added *DELT for time units other than days.         
               Hru_actet(i) = inches_on_lake*SURFA(lake)*Mfl2_to_acre/Lake_area(lake)
-            END IF
+            ELSE
+              Hru_actet(i) = 0.0
+            ENDIF
             ! does not include any ET from UZF, i.e., dry areas in lake
             Actet_tot_gwsz(i) = Hru_actet(i)
             Basin_lakeevap = Basin_lakeevap + Hru_actet(i)*harea
@@ -443,12 +445,13 @@
         Basin_gvr2sm = Basin_gvr2sm*Basin_area_inv
       ENDIF
 
-      IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()
-      IF ( IUNIT(23)>0 ) CALL MODFLOW_GET_STORAGE_LPF()
-      IF ( IUNIT(62)>0 ) CALL MODFLOW_GET_STORAGE_UPW()
+      !IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()
+      !IF ( IUNIT(23)>0 ) CALL MODFLOW_GET_STORAGE_LPF()
+      !IF ( IUNIT(62)>0 ) CALL MODFLOW_GET_STORAGE_UPW()
 
       IF ( Vbnm_index(1)==-1 ) CALL MODFLOW_VB_DECODE(Vbnm_index)
       Sat_dS = VBVL(4,Vbnm_index(12)) - VBVL(3,Vbnm_index(12))
+      Sat_S = Sat_S + Sat_dS
 
       Unsat_S = UZTSRAT(6)
 
@@ -473,17 +476,17 @@
       ENDIF
 
       IF ( Vbnm_index(5)/=-1 ) THEN ! wells
-        modflow_in = modflow_in + VBVL(3, Vbnm_index(5))
+!        modflow_in = modflow_in + VBVL(3, Vbnm_index(5))
         Well_in = Well_in + VBVL(3, Vbnm_index(5))
       ENDIF
 
       IF ( Vbnm_index(6)/=-1 ) THEN ! multi node wells (MNW1)
-        modflow_in = modflow_in + VBVL(3, Vbnm_index(6))
+!        modflow_in = modflow_in + VBVL(3, Vbnm_index(6))
         Well_in = Well_in + VBVL(3, Vbnm_index(6))
       ENDIF
 
       IF ( Vbnm_index(14)/=-1 ) THEN ! multi node wells (MNW2)
-        modflow_in = modflow_in + VBVL(3, Vbnm_index(14))
+!        modflow_in = modflow_in + VBVL(3, Vbnm_index(14))
         Well_in = Well_in + VBVL(3, Vbnm_index(14))
       ENDIF
 
@@ -511,17 +514,17 @@
       ENDIF
 
       IF ( Vbnm_index(5)/=-1 ) THEN ! wells
-        modflow_out = modflow_out + VBVL(4, Vbnm_index(5))
+!        modflow_out = modflow_out + VBVL(4, Vbnm_index(5))
         Well_out = Well_out + VBVL(4, Vbnm_index(5))
       ENDIF
 
       IF ( Vbnm_index(6)/=-1 ) THEN ! multi node wells (MNW1)
-        modflow_out = modflow_out + VBVL(4, Vbnm_index(6))
+!        modflow_out = modflow_out + VBVL(4, Vbnm_index(6))
         Well_out = Well_out + VBVL(4, Vbnm_index(6))
       ENDIF
 
        IF ( Vbnm_index(14)/=-1 ) THEN ! multi node wells (MNW2)
-        modflow_out = modflow_out + VBVL(4, Vbnm_index(14))
+!        modflow_out = modflow_out + VBVL(4, Vbnm_index(14))
         Well_out = Well_out + VBVL(4, Vbnm_index(14))
       ENDIF
 
