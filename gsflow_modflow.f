@@ -107,7 +107,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       END FUNCTION gsfdecl
 
 !***********************************************************************
-!     gsfinit - Initialize MODFOW module - get parameter values
+!     gsfinit - Initialize MODFLOW module - get parameter values
 !***********************************************************************
       INTEGER FUNCTION gsfinit()
 !     ------------------------------------------------------------------
@@ -128,10 +128,10 @@ C1------USE package modules.
       INCLUDE 'openspec.inc'
 ! Functions
       INTRINSIC DBLE
-      INTEGER, EXTERNAL :: numchars, getparam, control_string
+      INTEGER, EXTERNAL :: numchars
       INTEGER, EXTERNAL :: GET_KPER
-      EXTERNAL :: SET_STRESS_DATES, read_error
-      EXTERNAL :: print_module, SETMFTIME, PRMS_open_module_file
+      EXTERNAL :: SET_STRESS_DATES
+      EXTERNAL :: print_module, SETMFTIME
       EXTERNAL :: SETCONVFACTORS, check_gvr_cell_pct
       EXTERNAL :: gsflow_modflow_restart, set_cell_values
 ! Local Variables

@@ -146,14 +146,14 @@
      &           'Proportion of the MODFLOW cell area associated with each gravity reservoir', &
      &           'decimal fraction')/=0 ) CALL read_error(1, 'gvr_cell_pct')
           ENDIF
-          IF ( MapOutON_OFF>0 .OR. Model==0 .OR. Model==99 ) THEN
-            ALLOCATE ( Gvr_cell_id(Nhrucell) )
-            IF ( declparam(MODNAME, 'gvr_cell_id', 'nhrucell', 'integer', &
-     &           '-1', '-1', '999999999', &
-     &           'Corresponding grid cell id associated with each GVR', &
-     &           'Index of the grid cell associated with each gravity reservoir', &
-     &           'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
-          ENDIF
+        ENDIF
+        IF ( MapOutON_OFF>0 .OR. Model==0 .OR. Model==99 ) THEN
+          ALLOCATE ( Gvr_cell_id(Nhrucell) )
+          IF ( declparam(MODNAME, 'gvr_cell_id', 'nhrucell', 'integer', &
+     &         '-1', '-1', '999999999', &
+     &         'Corresponding grid cell id associated with each GVR', &
+     &         'Index of the grid cell associated with each gravity reservoir', &
+     &         'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
         ENDIF
 
         Kkiter = 1 ! set for PRMS-only mode
