@@ -648,6 +648,7 @@
       IF ( control_integer(Init_vars_from_file, 'init_vars_from_file')/=0 ) Init_vars_from_file = 0
       IF ( control_integer(Save_vars_to_file, 'save_vars_to_file')/=0 ) Save_vars_to_file = 0
       IF ( control_string(mappingFileName, 'mappingFileName')/=0 ) CALL read_error(5, 'mappingFileName')
+      IF ( control_string(xyFileName, 'xyFileName')/=0 ) CALL read_error(5, 'xyFileName')
 
       IF ( Model==2 ) THEN
 ! for MODFLOW-only simulations
@@ -1365,12 +1366,12 @@
 !***********************************************************************
 !     gsflow_prmsSettings - set MODSIM variableswrite or read restart file
 !***********************************************************************
-      SUBROUTINE gsflow_prmsSettings(Numts, Model_mode, mapping_FileName, Start_time) BIND(C,NAME="gsflow_prmsSettings") 
+      SUBROUTINE gsflow_prmsSettings(Numts, Model_mode, mapping_FileName, Start_time, xy_FileName) BIND(C,NAME="gsflow_prmsSettings") 
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prmsSettings
-      USE PRMS_MODULE, ONLY: Model, Number_timesteps, Starttime, mappingFileName
+      USE PRMS_MODULE, ONLY: Model, Number_timesteps, Starttime, mappingFileName, xyFileName
       ! Arguments
       INTEGER, INTENT(OUT) :: Numts, Start_time(6), Model_mode
-      CHARACTER(LEN=*), INTENT(OUT) :: mapping_FileName
+      CHARACTER(LEN=*), INTENT(OUT) :: mapping_FileName, xy_FileName
       ! Functions
       INTEGER, EXTERNAL :: numchars
 !***********************************************************************
@@ -1378,6 +1379,8 @@
       Numts = Number_timesteps
       mapping_FileName = ' '
       mapping_FileName = mappingFileName(1:numchars(mappingFileName))
+      xy_FileName = ' '
+      xy_FileName = xyFileName(1:numchars(xyFileName))      
       Start_time = Starttime
       END SUBROUTINE gsflow_prmsSettings
 
