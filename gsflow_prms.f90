@@ -632,6 +632,7 @@
 
       IF ( control_integer(Init_vars_from_file, 'init_vars_from_file')/=0 ) Init_vars_from_file = 0
       IF ( control_integer(Save_vars_to_file, 'save_vars_to_file')/=0 ) Save_vars_to_file = 0
+      IF ( control_string(mappingFileName, 'mappingFileName')/=0 ) CALL read_error(5, 'mappingFileName')
 
       IF ( Model==2 ) THEN
 ! for MODFLOW-only simulations
@@ -665,7 +666,7 @@
       CALL setup_dimens()
 
       ! Open PRMS module output file
-      IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'prms.out')
+      IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'model_output_file')
       IF ( Print_debug>-2 ) THEN
         CALL PRMS_open_output_file(PRMS_output_unit, Model_output_file, 'model_output_file', 0, iret)
         IF ( iret/=0 ) STOP
@@ -674,12 +675,12 @@
 
       ! Check for restart files
       IF ( Init_vars_from_file==1 ) THEN
-        IF ( control_string(Var_init_file, 'var_init_file')/=0 ) CALL read_error(5, 'restart.in')
+        IF ( control_string(Var_init_file, 'var_init_file')/=0 ) CALL read_error(5, 'var_init_file')
         CALL PRMS_open_input_file(Restart_inunit, Var_init_file, 'var_init_file', 1, iret)
         IF ( iret/=0 ) STOP
       ENDIF
       IF ( Save_vars_to_file==1 ) THEN
-        IF ( control_string(Var_save_file, 'var_save_file')/=0 ) CALL read_error(5, 'restart.out')
+        IF ( control_string(Var_save_file, 'var_save_file')/=0 ) CALL read_error(5, 'var_save_file')
       ENDIF
 
       Temp_module = ' '
