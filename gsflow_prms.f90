@@ -531,13 +531,13 @@
       LOGICAL, INTENT(IN) :: AFR
 ! Functions
       INTEGER, EXTERNAL :: decldim, declfix, control_integer_array
-      INTEGER, EXTERNAL :: control_string, control_integer
+      INTEGER, EXTERNAL :: control_string, control_integer, compute_julday
       EXTERNAL :: read_error, PRMS_open_output_file, PRMS_open_input_file, module_error, check_module_names
       EXTERNAL :: read_control_file, setup_dimens, setup_params, read_parameter_file_dimens, get_control_arguments
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
-      INTEGER :: idim, iret, j
+      INTEGER :: idim, iret, j, startday, endday
       INTEGER :: test, mf_timestep
 !***********************************************************************
       setdims = 1
@@ -570,7 +570,7 @@
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
       GSFLOW_flag = 0
-!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 3=MODSIM; 4:=GSFLOW-MODSIM; 5=PRMS-MODSIM; 11=MODFLOW-MODSIM)
+!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 11=MODSIM-GSFLOW; 12=MODSIM-PRMS; 13=MODSIM-MODFLOW; 14=MODSIM)
       IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:4)=='    ') THEN
         Model = 0
         PRMS_flag = 0
@@ -584,6 +584,15 @@
         Model = 11
         PRMS_flag = 0
         GSFLOW_flag = 1
+      ELSEIF ( Model_mode(:14)=='MODSIM-MODFLOW' ) THEN
+        Model = 13
+        PRMS_flag = 0
+      ELSEIF ( Model_mode(:11)=='MODSIM-PRMS' ) THEN
+        Model = 12
+        PRMS_flag = 1
+      ELSEIF ( Model_mode(:6)=='MODSIM' ) THEN
+        Model = 14
+        PRMS_flag = 0
       ELSEIF ( Model_mode(:5)=='FROST' ) THEN
         Model = 9
       ELSEIF ( Model_mode(:13)=='WRITE_CLIMATE' ) THEN
@@ -630,6 +639,10 @@
       End_month = Endtime(2)
       End_day = Endtime(3)
 
+      startday = compute_julday(Start_year, Start_month, Start_day)
+      endday = compute_julday(End_year, End_month, End_day)
+      Number_timesteps = endday - startday + 1
+
       IF ( control_integer(Init_vars_from_file, 'init_vars_from_file')/=0 ) Init_vars_from_file = 0
       IF ( control_integer(Save_vars_to_file, 'save_vars_to_file')/=0 ) Save_vars_to_file = 0
       IF ( control_string(mappingFileName, 'mappingFileName')/=0 ) CALL read_error(5, 'mappingFileName')
@@ -662,6 +675,7 @@
         STOP
       ENDIF
 
+      IF ( Model>12 ) RETURN
 
       CALL setup_dimens()
 
@@ -1349,18 +1363,16 @@
 !***********************************************************************
 !     gsflow_prmsSettings - set MODSIM variableswrite or read restart file
 !***********************************************************************
-      SUBROUTINE gsflow_prmsSettings(Numts, MODSIM_on, mapping_FileName, Start_time) BIND(C,NAME="gsflow_prmsSettings") 
+      SUBROUTINE gsflow_prmsSettings(Numts, Model_mode, mapping_FileName, Start_time) BIND(C,NAME="gsflow_prmsSettings") 
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prmsSettings
       USE PRMS_MODULE, ONLY: Model, Number_timesteps, Starttime, mappingFileName
       ! Arguments
-      INTEGER, INTENT(OUT) :: Numts, Start_time(6)
-      LOGICAL, INTENT(OUT) :: MODSIM_on
+      INTEGER, INTENT(OUT) :: Numts, Start_time(6), Model_mode
       CHARACTER(LEN=*), INTENT(OUT) :: mapping_FileName
       ! Functions
       INTEGER, EXTERNAL :: numchars
 !***********************************************************************
-      MODSIM_on = .FALSE.
-      IF ( Model==11 ) MODSIM_on = .TRUE.
+      Model_mode = Model
       Numts = Number_timesteps
       mapping_FileName = ' '
       mapping_FileName = mappingFileName(1:numchars(mappingFileName))
