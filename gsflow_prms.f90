@@ -205,6 +205,8 @@
         Process_flag = 4
         dmy = setdims(AFR) ! if MODFLOW only the execution stops in setdims
 
+        IF ( Model>12 ) RETURN ! if MODSIM-MODFLOW or MODSIM mode
+
         IF ( GSFLOW_flag==1 .OR. PRMS_flag==1 ) THEN ! add conditions for PRMS-MODSIM and GSFLOW-MODSIM
           CALL setup_params()
           CALL read_parameter_file_dimens()
