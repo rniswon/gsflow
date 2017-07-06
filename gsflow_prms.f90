@@ -55,11 +55,11 @@
 
         PRMS_versn = 'gsflow_prms.f90 2017-07-06 11:22:00Z'
 
-        IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
+        IF ( GSFLOW_flag==1 .OR. PRMS_flag==1 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
         ENDIF
 
-        IF ( Model==0 ) THEN
+        IF ( GSFLOW_flag==1 ) THEN
           call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
@@ -111,7 +111,7 @@
 
           CALL read_prms_data_file()
 
-        IF ( Model==0 .OR. Model==99 ) THEN
+        IF ( GSFLOW_flag==1 .OR. Model==99 ) THEN
           IF ( declvar(MODNAME, 'KKITER', 'one', 1, 'integer', &
      &         'Current iteration in GSFLOW simulation', 'none', KKITER)/=0 ) CALL read_error(3, 'KKITER')
           ALLOCATE ( Gvr_cell_pct(Nhrucell) )
@@ -123,7 +123,7 @@
      &           'decimal fraction')/=0 ) CALL read_error(1, 'gvr_cell_pct')
           ENDIF
         ENDIF
-        IF ( MapOutON_OFF>0 .OR. Model==0 .OR. Model==99 ) THEN
+        IF ( MapOutON_OFF>0 .OR. GSFLOW_flag==1 .OR. Model==99 ) THEN
           ALLOCATE ( Gvr_cell_id(Nhrucell) )
           IF ( declparam(MODNAME, 'gvr_cell_id', 'nhrucell', 'integer', &
      &         '-1', '-1', '999999999', &
@@ -146,7 +146,7 @@
 
         Grid_flag = 0
         IF ( Nhru==Nhrucell ) Grid_flag = 1
-        IF ( Model==0 ) THEN
+        IF ( GSFLOW_flag==1 ) THEN
           IF ( Nhru==Nhrucell ) THEN
             Gvr_cell_pct = 1.0
           ELSE
@@ -154,7 +154,7 @@
      &           Gvr_cell_pct)/=0 ) CALL read_error(2, 'gvr_cell_pct')
           ENDIF
         ENDIF
-        IF ( MapOutON_OFF>0 .OR. Model==0 ) THEN
+        IF ( MapOutON_OFF>0 .OR. GSFLOW_flag==1 ) THEN
           IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
      &         Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
           IF ( Gvr_cell_id(1)==-1 ) THEN
@@ -171,7 +171,7 @@
             ENDIF
           ENDIF
         ENDIF
-        IF ( Model==0 ) THEN
+        IF ( GSFLOW_flag==1 ) THEN
           call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
@@ -205,7 +205,7 @@
         Process_flag = 4
         dmy = setdims(AFR) ! if MODFLOW only the execution stops in setdims
 
-        IF ( Model<2 ) THEN ! add conditions for PRMS-MODSIM and GSFLOW-MODSIM
+        IF ( GSFLOW_flag==1 .OR. PRMS_flag==1 ) THEN ! add conditions for PRMS-MODSIM and GSFLOW-MODSIM
           CALL setup_params()
           CALL read_parameter_file_dimens()
         ENDIF
@@ -218,7 +218,7 @@
           IF ( iret/=0 ) STOP
           CALL call_modules_restart(0)
         ENDIF
-        IF ( Model==0 ) THEN
+        IF ( GSFLOW_flag==1 ) THEN
           call_modules = gsflow_modflow(AFR)
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
@@ -414,7 +414,7 @@
 
 ! for GSFLOW simulations
 ! TODO below need this for gsflow-modsim and mfnwt-modsim
-      ELSEIF ( Model==0 ) THEN
+      ELSEIF ( GSFLOW_flag==1 ) THEN
 
         IF ( Process_flag==0 ) THEN
           call_modules = gsflow_modflow(AFR)
@@ -569,10 +569,12 @@
 
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
-!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 3=MODSIM; 4:=GSFLOW-MODSIM; 5=PRMS-MODSIM; 6=MODFLOW-MODSIM)
+      GSFLOW_flag = 0
+!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 3=MODSIM; 4:=GSFLOW-MODSIM; 5=PRMS-MODSIM; 11=MODFLOW-MODSIM)
       IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:4)=='    ') THEN
         Model = 0
         PRMS_flag = 0
+        GSFLOW_flag = 1
       ELSEIF ( Model_mode(:4)=='PRMS' .OR. Model_mode(:5)=='DAILY' )THEN
         Model = 1
       ELSEIF ( Model_mode(:7)=='MODFLOW' ) THEN
@@ -581,6 +583,7 @@
       ELSEIF ( Model_mode(:13)=='MODSIM-GSFLOW' ) THEN
         Model = 11
         PRMS_flag = 0
+        GSFLOW_flag = 1
       ELSEIF ( Model_mode(:5)=='FROST' ) THEN
         Model = 9
       ELSEIF ( Model_mode(:13)=='WRITE_CLIMATE' ) THEN
@@ -852,7 +855,7 @@
 ! map results dimensions
       IF ( control_integer(MapOutON_OFF, 'mapOutON_OFF')/=0 ) MapOutON_OFF = 0
       idim = 0
-      IF ( Model==0 .OR. MapOutON_OFF==1 ) idim = 1
+      IF ( GSFLOW_flag==1 .OR. MapOutON_OFF==1 ) idim = 1
       IF ( decldim('nhrucell', idim, MAXDIM, &
      &     'Number of unique intersections between HRUs and spatial units of a target map for mapped results')/=0 ) &
      &     CALL read_error(7, 'nhrucell')
@@ -989,7 +992,7 @@
       IF ( Ncascdgw==-1 ) CALL read_error(7, 'ncascdgw')
       IF ( Cascadegw_flag==2 ) Ncascdgw = Ncascade
       IF ( Ncascade==0 ) Cascade_flag = 0
-      IF ( Ncascdgw==0 .OR. Model==0 .OR. Model==2 ) Cascadegw_flag = 0
+      IF ( Ncascdgw==0 .OR. GSFLOW_flag==1 .OR. Model==2 ) Cascadegw_flag = 0
       IF ( Cascade_flag==1 .OR. Cascadegw_flag>0 ) THEN
         Call_cascade = 1
       ELSE
@@ -1039,7 +1042,7 @@
       IF ( Nratetbl==-1 ) CALL read_error(6, 'nratetbl')
 
       Stream_order_flag = 0
-      IF ( Strmflow_flag>1 .AND. Model/=0 ) THEN
+      IF ( Strmflow_flag>1 .AND. PRMS_flag==1 ) THEN
         Stream_order_flag = 1 ! strmflow_in_out, muskingum, or muskingum_lake
       ENDIF
 
@@ -1063,7 +1066,7 @@
       ENDIF
 
       Lake_route_flag = 0
-      IF ( Nlake>0 .AND. Strmflow_flag==3 .AND. Model/=0 ) Lake_route_flag = 1 ! muskingum_lake
+      IF ( Nlake>0 .AND. Strmflow_flag==3 .AND. PRMS_flag==1 ) Lake_route_flag = 1 ! muskingum_lake
 
       IF ( Segment_transferON_OFF==1 .OR. Gwr_transferON_OFF==1 .OR. External_transferON_OFF==1 .OR. &
      &     Dprst_transferON_OFF==1 .OR. Lake_transferON_OFF==1 .OR. Nconsumed>0 ) THEN
@@ -1356,7 +1359,7 @@
       INTEGER, EXTERNAL :: numchars
 !***********************************************************************
       MODSIM_on = .FALSE.
-      IF ( Model>10 ) MODSIM_on = .TRUE.
+      IF ( Model==11 ) MODSIM_on = .TRUE.
       Numts = Number_timesteps
       mapping_FileName = ' '
       mapping_FileName = mappingFileName(1:numchars(mappingFileName))
