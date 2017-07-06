@@ -1,7 +1,8 @@
+
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      SUBROUTINE gsflow_prms(Arg, AFR, numts, MODSIM_ON_OFF) BIND(C,NAME="gsflow_prms")  ! need vectors
+      SUBROUTINE gsflow_prms(Arg, AFR, Diversions) BIND(C,NAME="gsflow_prms")  ! need vectors
       
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
       
@@ -11,8 +12,8 @@
       IMPLICIT NONE
 ! Arguments
       CHARACTER(LEN=*), INTENT(IN) :: Arg
-      LOGICAL, INTENT(INOUT) :: AFR, MODSIM_ON_OFF
-      INTEGER, INTENT(OUT) :: Numts
+      LOGICAL, INTENT(INOUT) :: AFR
+      DOUBLE PRECISION, INTENT(IN) :: Diversions(*)
 ! Functions
       INTRINSIC :: DATE_AND_TIME, INT
       INTEGER, EXTERNAL :: check_dims, basin, climateflow, prms_time
@@ -52,7 +53,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-30 17:15:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-07-06 11:22:00Z'
 
         IF ( Model<2 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -202,7 +203,7 @@
 
       ELSEIF ( Process(:7)=='setdims' ) THEN
         Process_flag = 4
-        dmy = setdims(AFR, MODSIM_ON_OFF) ! if MODFLOW only the execution stops in setdims
+        dmy = setdims(AFR) ! if MODFLOW only the execution stops in setdims
 
         IF ( Model<2 ) THEN ! add conditions for PRMS-MODSIM and GSFLOW-MODSIM
           CALL setup_params()
@@ -412,6 +413,7 @@
         IF ( CsvON_OFF>0 ) CALL prms_summary()
 
 ! for GSFLOW simulations
+! TODO below need this for gsflow-modsim and mfnwt-modsim
       ELSEIF ( Model==0 ) THEN
 
         IF ( Process_flag==0 ) THEN
@@ -499,7 +501,6 @@
           CALL convert_params()
           STOP
         ENDIF
-        Numts = Number_timesteps
         PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
         WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
       ELSEIF ( Process_flag==3 ) THEN
@@ -520,7 +521,7 @@
 !***********************************************************************
 !     declare the dimensions
 !***********************************************************************
-      INTEGER FUNCTION setdims(AFR, MODSIM_ON_OFF)
+      INTEGER FUNCTION setdims(AFR)
       USE PRMS_MODULE
       USE GLOBAL, ONLY: NSTP, NPER
       USE MF_DLL, ONLY: gsflow_modflow
@@ -528,9 +529,8 @@
       IMPLICIT NONE
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      LOGICAL, INTENT(INOUT) :: MODSIM_ON_OFF
 ! Functions
-      INTEGER, EXTERNAL :: decldim, declfix, gsflow_prms, control_integer_array
+      INTEGER, EXTERNAL :: decldim, declfix, control_integer_array
       INTEGER, EXTERNAL :: control_string, control_integer
       EXTERNAL :: read_error, PRMS_open_output_file, PRMS_open_input_file, module_error, check_module_names
       EXTERNAL :: read_control_file, setup_dimens, setup_params, read_parameter_file_dimens, get_control_arguments
@@ -551,7 +551,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 06/28/2017', //, &
+     &        22X, 'Version 1.2 MODSIM 07/06/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -569,7 +569,6 @@
 
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
-      MODSIM_ON_OFF = .FALSE. ! set based on mode
 !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 3=MODSIM; 4:=GSFLOW-MODSIM; 5=PRMS-MODSIM; 6=MODFLOW-MODSIM)
       IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:4)=='    ') THEN
         Model = 0
@@ -578,6 +577,9 @@
         Model = 1
       ELSEIF ( Model_mode(:7)=='MODFLOW' ) THEN
         Model = 2
+        PRMS_flag = 0
+      ELSEIF ( Model_mode(:13)=='MODSIM-GSFLOW' ) THEN
+        Model = 11
         PRMS_flag = 0
       ELSEIF ( Model_mode(:5)=='FROST' ) THEN
         Model = 9
@@ -1339,6 +1341,27 @@
       ENDIF
       IF ( ierr==1 ) STOP
       END SUBROUTINE check_module_names
+
+!***********************************************************************
+!     gsflow_prmsSettings - set MODSIM variableswrite or read restart file
+!***********************************************************************
+      SUBROUTINE gsflow_prmsSettings(Numts, MODSIM_on, mapping_FileName, Start_time) BIND(C,NAME="gsflow_prmsSettings") 
+      !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prmsSettings
+      USE PRMS_MODULE, ONLY: Model, Number_timesteps, Starttime, mappingFileName
+      ! Arguments
+      INTEGER, INTENT(OUT) :: Numts, Start_time(6)
+      LOGICAL, INTENT(OUT) :: MODSIM_on
+      CHARACTER(LEN=*), INTENT(OUT) :: mapping_FileName
+      ! Functions
+      INTEGER, EXTERNAL :: numchars
+!***********************************************************************
+      MODSIM_on = .FALSE.
+      IF ( Model>10 ) MODSIM_on = .TRUE.
+      Numts = Number_timesteps
+      mapping_FileName = ' '
+      mapping_FileName = mappingFileName(1:numchars(mappingFileName))
+      Start_time = Starttime
+      END SUBROUTINE gsflow_prmsSettings
 
 !***********************************************************************
 !     call_modules_restart - write or read restart file

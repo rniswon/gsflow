@@ -43,7 +43,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-06-30 11:08:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-07-06 11:08:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -368,7 +368,7 @@ c      IF(IUNIT(14).GT.0) CALL LMG7AR(IUNIT(14),MXITER,IGRID)
 !      ENDIF
 C
 C--OPEN A FILE FOR COLLECTION GW-SW EXCHANGE TERMS BY REACH
-       IF ( Model>2 ) THEN
+       IF ( Model==11 ) THEN
 C      OUTFILE='C:\\EDM_LT\\MS_MF_SVN\\MODFLOW_Model
 C     &\\RCH_BY_RCH_GWSW_TERMS_EVERY_ITERATION.TXT'
 !         ISTAT=GETCWD(DIRNAME) 
@@ -479,7 +479,7 @@ C1------USE package modules.
 !      USE GWFHUFMODULE, ONLY:IOHUFHDS,IOHUFFLWS
       USE GWFEVTMODULE, ONLY:NEVTOP
       USE GWFRCHMODULE, ONLY:NRCHOP
-      USE GWFSFRMODULE, ONLY:SEG !, RECHSAVE    !edm (5/1/13) need to overwrite diversions with MODSIM values
+      USE GWFSFRMODULE, ONLY:SEG, NSS !, RECHSAVE    !edm (5/1/13) need to overwrite diversions with MODSIM values
 !      USE GWFUZFMODULE, ONLY:FINF
       USE PCGMODULE
 c     USE LMGMODULE
@@ -561,15 +561,14 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
 
 C--EDM
 C--Overwrite MODFLOW's diversions with those passed by MODSIM
-          IF ( Model>2 ) THEN
+          IF ( Model==11 ) THEN
 !              do i = 1, ndiversion
 !                seg(2,diversion_segment(i) = DIVS(diversion_index(i))
 !              enddo
-C            SEG(2,3) = DIVS(5)   !Reservoir Release 
-            SEG(2,4) = DIVS(1)   !Command Area #1
-            SEG(2,14) = DIVS(2)  !Command Area #2
-            SEG(2,26) = DIVS(3)  !Command Area #3
-            SEG(2,37) = DIVS(4)  !Command Area #4
+! DIVS in MODSIM must equal MODFLOW diversions, i.e., all values of SEG(2,NSS) must related to MODSIM
+            DO i = 1, NSS
+              SEG(2,i) = DIVS(i)
+            ENDDO
           ENDIF
 C
           IF(IUNIT(50).GT.0) THEN
@@ -780,7 +779,7 @@ C--EDM 1/25/16: The code that follows is for forcing the heads to be printed eac
 C  MODSIM-MODFLOW iteration as part of a dugging effort.  It can be deleted once 
 C  the bug has been resolved.
 C  First, set up BUFF
-   !       IF ( Model>2 ) THEN
+   !       IF ( Model==11 ) THEN
    !         IF (KPER.GE.7986) THEN
    !           DO 60 K=1,NLAY
    !             DO 59 I=1,NROW
@@ -848,7 +847,7 @@ C        REAL(8), DIMENSION(3,13), INTENT(inout) :: EXCHG  !From before switchin
         INTEGER, DIMENSION(1), INTENT(inout) :: KPER
 C        
 C      CALL RAD1_ACC_DEP(EXCHG)
-      !CALL RAD1_ACC_DEP2(EXCHG,KPER)
+      !CALL RAD1_ACC_DEP2(EXCHG,KPER) ! rsr this routine is missing
 C
       DO I=1,NLAKES    ! " - 1" Will need to adjust this between scenarios (Need to have it for 'dry up' scenario)
           ELAKVol(I)=VOL(I)
@@ -887,7 +886,7 @@ C
 ! ???      IF(IUNIT(63).GT.0) ICNVG = ICNVGFLG
       KKSTP = KSTP
       KKPER = KPER
-      IF ( Model>2 ) THEN
+      IF ( Model>10 ) THEN
 C--EDM
 C--Overwrite MODFLOW's diversions with those passed by MODSIM
 C        SEG(2,3) = DIVS(5)   !Reservoir Release  
@@ -1146,7 +1145,7 @@ C8------END OF SIMULATION
 C-------SAVE RESTART RECORDS FOR SUB PACKAGE
   110 IF(IUNIT(54).GT.0) CALL GWF2SUB7SV(IGRID)
 
-      IF ( Model>2 ) THEN
+      IF ( Model==11 ) THEN
 C
 C--CLOSE IRRIGATION OUTPUT FILE "IRRIG_OUT.TXT"
         CLOSE(202)
@@ -1719,7 +1718,8 @@ C
      &           mfstrt_jul, start_jul
         STOP
       ENDIF
-
+! TODO add test to compare MODFLOW_TIME_ZERO to MODSIM start data
+!
       IF ( Mft_to_days>1.0 ) PRINT *, 'CAUTION, MF time step /= 1 day'
 
       IF ( Model>0 ) PRINT *, ' '
