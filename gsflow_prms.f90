@@ -2,7 +2,7 @@
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      SUBROUTINE gsflow_prms(Arg, AFR, Diversions) BIND(C,NAME="gsflow_prms")  ! need vectors
+      SUBROUTINE gsflow_prms(Process_mode, AFR, Diversions) BIND(C,NAME="gsflow_prms")  ! need vectors
       
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
       
@@ -11,7 +11,8 @@
       USE MF_DLL, ONLY: gsflow_modflow
       IMPLICIT NONE
 ! Arguments
-      CHARACTER(LEN=*), INTENT(IN) :: Arg
+      !CHARACTER(LEN=*), INTENT(IN) :: Arg
+      INTEGER, INTENT(IN) :: Process_mode
       LOGICAL, INTENT(INOUT) :: AFR
       DOUBLE PRECISION, INTENT(IN) :: Diversions(*)
 ! Functions
@@ -42,6 +43,17 @@
 !***********************************************************************
       call_modules = 1
 
+      IF ( Process_mode==0 ) THEN
+        Arg = 'run'
+      ELSEIF ( Process_mode==1 ) THEN
+        Arg = 'decl'
+      ELSEIF ( Process_mode==2 ) THEN
+        Arg = 'init'
+      ELSEIF ( Process_mode==3 ) THEN
+        Arg = 'clean'
+      ELSEIF ( Process_mode==4 ) THEN
+        Arg = 'setdims'
+      ENDIF
       Process = Arg
 
       IF ( Process(:3)=='run' ) THEN
@@ -53,7 +65,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-07-06 11:22:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-07-07 14:02:00Z'
 
         IF ( GSFLOW_flag==1 .OR. PRMS_flag==1 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -1366,7 +1378,7 @@
 !***********************************************************************
 !     gsflow_prmsSettings - set MODSIM variableswrite or read restart file
 !***********************************************************************
-      SUBROUTINE gsflow_prmsSettings(Numts, Model_mode, mapping_FileName, Start_time, xy_FileName) BIND(C,NAME="gsflow_prmsSettings") 
+      SUBROUTINE gsflow_prmsSettings(Numts, Model_mode, Start_time, mapping_FileName, xy_FileName) BIND(C,NAME="gsflow_prmsSettings")
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prmsSettings
       USE PRMS_MODULE, ONLY: Model, Number_timesteps, Starttime, mappingFileName, xyFileName
       ! Arguments
@@ -1377,9 +1389,11 @@
 !***********************************************************************
       Model_mode = Model
       Numts = Number_timesteps
-      mapping_FileName = ' '
+      print *, LEN(mapping_FileName)
+      print *, LEN(xy_FileName)
+!      mapping_FileName = ' '
       mapping_FileName = mappingFileName(1:numchars(mappingFileName))
-      xy_FileName = ' '
+!      xy_FileName = ' '
       xy_FileName = xyFileName(1:numchars(xyFileName))      
       Start_time = Starttime
       END SUBROUTINE gsflow_prmsSettings
