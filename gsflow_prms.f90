@@ -33,11 +33,10 @@
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
       INTEGER, EXTERNAL :: declvar, declparam, getparam, numchars
       EXTERNAL :: module_error, read_error, print_module, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, nhru_summary
-      INTEGER, EXTERNAL :: muskingum_lake, water_use_read, dynamic_param_read, setup, setdims, stream_temp
+      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, nhru_summary, check_parameters
+      INTEGER, EXTERNAL :: muskingum_lake, water_use_read, dynamic_param_read, setdims, stream_temp !, setup
       EXTERNAL ::precip_temp_grid, prms_summary, convert_params
       EXTERNAL :: read_control_file, read_prms_data_file, read_parameter_file_dimens
-      EXTERNAL :: setup_dimens, setup_params
 ! Local Variables
       INTEGER :: i, iret, nc, call_modules, dmy
 !***********************************************************************
@@ -65,7 +64,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-07-07 14:02:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-07-07 16:30:00Z'
 
         IF ( GSFLOW_flag==1 .OR. PRMS_flag==1 ) THEN ! GSFLOW or PRMS mode
           IF ( check_dims()/=0 ) STOP
@@ -265,8 +264,8 @@
         call_modules = soltab()
         IF ( call_modules/=0 ) CALL module_error('soltab', Arg, call_modules)
 
-        call_modules = setup()
-        IF ( call_modules/=0 ) CALL module_error('setup', Arg, call_modules)
+!        call_modules = setup()
+!        IF ( call_modules/=0 ) CALL module_error('setup', Arg, call_modules)
       ENDIF
 
     IF ( AFR ) THEN
@@ -515,6 +514,7 @@
           CALL convert_params()
           STOP
         ENDIF
+        IF ( Print_debug>-1 ) CALL check_parameters()
         PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
         WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
       ELSEIF ( Process_flag==3 ) THEN
@@ -547,7 +547,7 @@
       INTEGER, EXTERNAL :: decldim, declfix, control_integer_array
       INTEGER, EXTERNAL :: control_string, control_integer, compute_julday
       EXTERNAL :: read_error, PRMS_open_output_file, PRMS_open_input_file, module_error, check_module_names
-      EXTERNAL :: read_control_file, setup_dimens, setup_params, read_parameter_file_dimens, get_control_arguments
+      EXTERNAL :: read_control_file, setup_dimens, read_parameter_file_dimens, get_control_arguments
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
