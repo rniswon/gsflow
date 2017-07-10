@@ -1374,13 +1374,15 @@
 !***********************************************************************
       Model_mode = Model
       Numts = Number_timesteps
-      print *, LEN(mapping_FileName)
-      print *, LEN(xy_FileName)
-!      mapping_FileName = ' '
-      mapping_FileName = mappingFileName(1:numchars(mappingFileName))
-!      xy_FileName = ' '
-      xy_FileName = xyFileName(1:numchars(xyFileName))      
       Start_time = Starttime
+      IF ( Model>9 .AND. Model<20 ) THEN
+        print *, LEN(mapping_FileName)
+        print *, LEN(xy_FileName)
+!        mapping_FileName = ' '
+        mapping_FileName = mappingFileName(1:numchars(mappingFileName))
+!        xy_FileName = ' '
+        xy_FileName = xyFileName(1:numchars(xyFileName))
+      ENDIF
       END SUBROUTINE gsflow_prmsSettings
 
 !***********************************************************************
