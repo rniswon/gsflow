@@ -8,7 +8,7 @@
       
       USE PRMS_MODULE
       USE PRMS_READ_PARAM_FILE, ONLY: Version_read_parameter_file
-      USE MF_DLL, ONLY: gsflow_modflow
+      USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN
       IMPLICIT NONE
 ! Arguments
       !CHARACTER(LEN=*), INTENT(IN) :: Arg
@@ -42,6 +42,7 @@
 !***********************************************************************
       call_modules = 1
 
+      ! Process_mode set in MODSIM interface
       IF ( Process_mode==0 ) THEN
         Arg = 'run'
       ELSEIF ( Process_mode==1 ) THEN
@@ -51,9 +52,11 @@
       ELSEIF ( Process_mode==3 ) THEN
         Arg = 'clean'
       ELSEIF ( Process_mode==4 ) THEN
+        ! MODFLOW-only doesn't leave setdims
         Arg = 'setdims'
       ENDIF
       Process = Arg
+      Process_flag = Process_mode
 
       IF ( Process(:3)=='run' ) THEN
         Process_flag = 0 !(0=run, 1=declare, 2=init, 3=clean, 4=setdims)
@@ -62,16 +65,17 @@
         CALL DATE_AND_TIME(VALUES=Elapsed_time_start)
         Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
-        Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-07-07 16:30:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-07-10 16:30:00Z'
 
-        IF ( GSFLOW_flag==1 .OR. PRMS_flag==1 ) THEN ! GSFLOW or PRMS mode
+        ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
+        IF ( PRMS_flag==1 ) THEN
           IF ( check_dims()/=0 ) STOP
         ENDIF
 
+        ! GSFLOW, MODSIM-GSFLOW
         IF ( GSFLOW_flag==1 ) THEN
-          call_modules = gsflow_modflow(AFR)
+          call_modules = gsfdecl()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
 
@@ -79,7 +83,7 @@
         WRITE ( Logunt, 10 ) PRMS_VERSION
         WRITE ( PRMS_output_unit, 10 ) PRMS_VERSION
   10  FORMAT (/, 15X, 'Precipitation-Runoff Modeling System (PRMS)', /, 23X, A)
-      15  FORMAT (/, 8X, 'Process',  12X, 'Available Modules', /, 68('-'), /, &
+  15  FORMAT (/, 8X, 'Process',  12X, 'Available Modules', /, 68('-'), /, &
      &        '  Basin Definition: basin', /, &
      &        '    Cascading Flow: cascade', /, &
      &        '  Time Series Data: obs, water_use_read, dynamic_param_read', /, &
@@ -120,7 +124,7 @@
         CALL print_module(Version_read_control_file, 'Read Control File           ', 90)
         CALL print_module(Version_read_parameter_file, 'Read Parameter File         ', 90)
 
-          CALL read_prms_data_file()
+        CALL read_prms_data_file()
 
         IF ( GSFLOW_flag==1 .OR. Model==99 ) THEN
           IF ( declvar(MODNAME, 'KKITER', 'one', 1, 'integer', &
@@ -153,8 +157,6 @@
         First_timestep = Timestep
 
       ELSEIF ( Process(:4)=='init' ) THEN
-        Process_flag = 2
-
         Grid_flag = 0
         IF ( Nhru==Nhrucell ) Grid_flag = 1
         IF ( GSFLOW_flag==1 ) THEN
@@ -182,10 +184,9 @@
             ENDIF
           ENDIF
         ENDIF
-        IF ( GSFLOW_flag==1 ) THEN
-          call_modules = gsflow_modflow(AFR)
-          IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
-        ENDIF
+
+        IF ( GSFLOW_flag==1 ) CALL MFNWT_INIT(AFR)
+
 !        Model_control_file = "D:\EDM_LT\GitHub\gsflow.git\gsflow_examples.git\sagehen_3lay_modsim\windows\gsflow_prms.control"
         nc = numchars(Model_control_file)
         IF ( Print_debug>-1 ) PRINT 9004, 'Using Control File: ', Model_control_file(:nc)
@@ -213,17 +214,13 @@
         WRITE ( Logunt, 9004 ) 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
 
       ELSEIF ( Process(:7)=='setdims' ) THEN
-        Process_flag = 4
         dmy = setdims(AFR) ! if MODFLOW only the execution stops in setdims
 
-        IF ( Model>12 ) RETURN ! if MODSIM-MODFLOW or MODSIM mode
-
-        IF ( GSFLOW_flag==1 .OR. PRMS_flag==1 ) THEN ! add conditions for PRMS-MODSIM and GSFLOW-MODSIM
+        IF ( PRMS_flag==1 ) THEN ! PRMS is active
           CALL setup_params()
           CALL read_parameter_file_dimens()
         ENDIF
       ELSE  !IF ( Process(:5)=='clean' ) THEN
-        Process_flag = 3
         IF ( Init_vars_from_file==1 ) CLOSE ( Restart_inunit )
         IF ( Save_vars_to_file==1 ) THEN
           nc = numchars(Var_save_file)
@@ -231,14 +228,12 @@
           IF ( iret/=0 ) STOP
           CALL call_modules_restart(0)
         ENDIF
-        IF ( GSFLOW_flag==1 ) THEN
-          call_modules = gsflow_modflow(AFR)
-          IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
-        ENDIF
+        IF ( GSFLOW_flag==1 ) CALL MFNWT_CLEAN()
       ENDIF
 
       IF ( Model==99 ) THEN
-        IF ( Process_flag==4 .OR. Process_flag<2 ) THEN
+          !(0=run, 1=declare, 2=init, 3=clean, 4=setdims)
+        IF ( Process_flag==4 .OR. Process_flag==1 ) THEN
           Init_vars_from_file = 0 ! make sure this is set so all variables and parameters are declared
           CALL module_doc()
           call_modules = 0
@@ -291,10 +286,10 @@
       ENDIF
 
       IF ( Climate_temp_flag==0 ) THEN
-        IF ( Temp_flag==6 ) THEN
-          call_modules = xyz_dist()
-        ELSEIF ( Temp_combined_flag==1 ) THEN
+        IF ( Temp_combined_flag==1 ) THEN
           call_modules = temp_1sta_laps()
+        ELSEIF ( Temp_flag==6 ) THEN
+          call_modules = xyz_dist()
         ELSEIF ( Temp_flag==3 ) THEN
           call_modules = temp_dist2()
         ELSEIF ( Temp_flag==5 ) THEN
@@ -314,12 +309,12 @@
         IF ( call_modules/=0 ) CALL module_error(Precip_module, Arg, call_modules)
       ENDIF
 
-      IF ( Model==6 ) THEN
+      IF ( Model==26 ) THEN
         IF ( Process_flag==0 ) RETURN
       ENDIF
 
 ! frost_date is a pre-process module
-      IF ( Model==9 ) THEN
+      IF ( Model==29 ) THEN
         call_modules = frost_date()
         IF ( call_modules/=0 ) CALL module_error('frost_date', Arg, call_modules)
         IF ( Process_flag==0 ) RETURN
@@ -342,7 +337,7 @@
       ENDIF
       IF ( call_modules/=0 ) CALL module_error(Transp_module, Arg, call_modules)
 
-      IF ( Model==8 ) THEN
+      IF ( Model==28 ) THEN
         IF ( Process_flag==0 ) RETURN
       ENDIF
 
@@ -365,13 +360,13 @@
         IF ( call_modules/=0 ) CALL module_error(Et_module, Arg, call_modules)
       ENDIF
 
-      IF ( Model==4 ) THEN
+      IF ( Model==24 ) THEN
         call_modules = write_climate_hru()
         IF ( call_modules/=0 ) CALL module_error('write_climate_hru', Arg, call_modules)
         IF ( Process_flag==0 ) RETURN
       ENDIF
 
-      IF ( Model==7 ) THEN
+      IF ( Model==27 ) THEN
         IF ( Process_flag==0 ) RETURN
       ENDIF
 
@@ -386,8 +381,8 @@
       IF ( call_modules/=0 ) CALL module_error(Srunoff_module, Arg, call_modules)
 
     ENDIF ! AFR = TRUE
-! for PRMS-only simulations
-      IF ( PRMS_flag==1 ) THEN
+! for PRMS-only and MODSIM-PRMS simulations
+      IF ( PRMS_flag==1 .AND. GSFLOW_flag==0 ) THEN
         call_modules = soilzone()
         IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
@@ -430,8 +425,7 @@
       ELSEIF ( GSFLOW_flag==1 ) THEN
 
         IF ( Process_flag==0 ) THEN
-          call_modules = gsflow_modflow(AFR)
-          IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
+          CALL MFNWT_RUN(AFR)
 
 ! The following modules are in the MODFLOW iteration loop
 ! (contained in gsflow_modflow.f).
@@ -457,7 +451,7 @@
         IF ( call_modules/=0 ) CALL module_error('gsflow_sum', Arg, call_modules)
       ENDIF
 
-    !  FIX: do not write output until MODSIM converges with GSFLOW
+!!!!!  FIX: do not write output until MODSIM converges with GSFLOW
       IF ( MapOutON_OFF>0 ) THEN
         call_modules = map_results()
         IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
@@ -503,14 +497,16 @@
       ENDIF
       IF ( Process_flag==1 ) THEN
         CALL read_parameter_file_params()
-        IF ( Print_debug>-2 ) PRINT '(A)', EQULS
-        WRITE ( PRMS_output_unit, '(A)' ) EQULS
+        IF ( Print_debug>-2 ) THEN
+          PRINT '(A)', EQULS
+          WRITE ( PRMS_output_unit, '(A)' ) EQULS
+        ENDIF
         WRITE ( Logunt, '(A)' ) EQULS
-        IF ( Model==10 ) CALL convert_params()
+        IF ( Model==25 ) CALL convert_params()
       ELSEIF ( Process_flag==2 ) THEN
         IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
         IF ( Parameter_check_flag==2 ) STOP
-        IF ( Model==10 ) THEN
+        IF ( Model==25 ) THEN
           CALL convert_params()
           STOP
         ENDIF
@@ -518,8 +514,9 @@
         PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
         WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
       ELSEIF ( Process_flag==3 ) THEN
-        WRITE ( PRMS_output_unit,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                                                Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+        IF ( Print_debug>-2 ) &
+     &    WRITE ( PRMS_output_unit,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                                  Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                                      Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         CLOSE ( Logunt )
@@ -538,7 +535,7 @@
       INTEGER FUNCTION setdims(AFR)
       USE PRMS_MODULE
       USE GLOBAL, ONLY: NSTP, NPER
-      USE MF_DLL, ONLY: gsflow_modflow
+      USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
 ! Arguments
@@ -585,40 +582,37 @@
       PRMS_flag = 1
       GSFLOW_flag = 0
 !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 11=MODSIM-GSFLOW; 12=MODSIM-PRMS; 13=MODSIM-MODFLOW; 14=MODSIM)
-      IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:4)=='    ') THEN
+      IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:6)=='gsflow' .OR. Model_mode(:4)=='    ') THEN
         Model = 0
-        PRMS_flag = 0
         GSFLOW_flag = 1
-      ELSEIF ( Model_mode(:4)=='PRMS' .OR. Model_mode(:5)=='DAILY' )THEN
+      ELSEIF ( Model_mode(:4)=='PRMS' .OR. Model_mode(:4)=='prms' .OR. Model_mode(:5)=='DAILY' )THEN
         Model = 1
-      ELSEIF ( Model_mode(:7)=='MODFLOW' ) THEN
+      ELSEIF ( Model_mode(:7)=='MODFLOW' .OR. Model_mode(:7)=='modflow') THEN
         Model = 2
         PRMS_flag = 0
       ELSEIF ( Model_mode(:13)=='MODSIM-GSFLOW' ) THEN
-        Model = 11
-        PRMS_flag = 0
+        Model = 10
         GSFLOW_flag = 1
       ELSEIF ( Model_mode(:14)=='MODSIM-MODFLOW' ) THEN
-        Model = 13
+        Model = 12
         PRMS_flag = 0
       ELSEIF ( Model_mode(:11)=='MODSIM-PRMS' ) THEN
-        Model = 12
-        PRMS_flag = 1
+        Model = 11
       ELSEIF ( Model_mode(:6)=='MODSIM' ) THEN
-        Model = 14
+        Model = 13
         PRMS_flag = 0
       ELSEIF ( Model_mode(:5)=='FROST' ) THEN
-        Model = 9
+        Model = 29
       ELSEIF ( Model_mode(:13)=='WRITE_CLIMATE' ) THEN
-        Model = 4
+        Model = 24
       ELSEIF ( Model_mode(:7)=='CLIMATE' ) THEN
-        Model = 6
+        Model = 26
       ELSEIF ( Model_mode(:5)=='POTET' ) THEN
-        Model = 7
+        Model = 27
       ELSEIF ( Model_mode(:9)=='TRANSPIRE' ) THEN
-        Model = 8
-      ELSEIF ( Model_mode(:7)=='CONVERT' ) THEN
-        Model = 10
+        Model = 28
+      ELSEIF ( Model_mode(:7)=='CONVERT' ) THEN ! can be CONVERT4 or CONVERT5 or CONVERT (=CONVERT5)
+        Model = 25
       ELSEIF ( Model_mode(:13)=='DOCUMENTATION' ) THEN
         Model = 99
       ELSE
@@ -666,31 +660,22 @@
 ! for MODFLOW-only simulations
         Kper_mfo = 1
         mf_timestep = 1
-        Process_flag = 1
-        test = gsflow_modflow(AFR)
+        test = gsfdecl()
         IF ( test/=0 ) CALL module_error(MODNAME, 'declare', test)
-        Process_flag = 2
-        test = gsflow_modflow(AFR)
-        IF ( test/=0 ) CALL module_error(MODNAME, 'initialize', test)
+        CALL MFNWT_INIT(AFR)
         PRINT *, ' '
         WRITE (Logunt, '(1X)')
-        Process_flag = 0
         DO WHILE ( Kper_mfo<=Nper )
-          test = gsflow_modflow(AFR)
-          IF ( test/=0 ) CALL module_error(MODNAME, 'run', test)
+          CALL MFNWT_RUN(AFR)
           IF ( mf_timestep==NSTP(Kper_mfo) ) THEN
-              Kper_mfo = Kper_mfo + 1
-              mf_timestep = 0
+            Kper_mfo = Kper_mfo + 1
+            mf_timestep = 0
           ENDIF
           mf_timestep = mf_timestep + 1
         ENDDO
-        Process_flag = 3
-        test = gsflow_modflow(AFR)
-        IF ( test/=0 ) CALL module_error(MODNAME, 'clean', test)
+        CALL MFNWT_CLEAN()
         STOP
       ENDIF
-
-      IF ( Model>12 ) RETURN
 
       CALL setup_dimens()
 
@@ -1072,7 +1057,7 @@
       IF ( Nratetbl==-1 ) CALL read_error(6, 'nratetbl')
 
       Stream_order_flag = 0
-      IF ( Strmflow_flag>1 .AND. PRMS_flag==1 ) THEN
+      IF ( Strmflow_flag>1 .AND. PRMS_flag==1 .AND. GSFLOW_flag==0 ) THEN
         Stream_order_flag = 1 ! strmflow_in_out, muskingum, or muskingum_lake
       ENDIF
 
@@ -1096,7 +1081,7 @@
       ENDIF
 
       Lake_route_flag = 0
-      IF ( Nlake>0 .AND. Strmflow_flag==3 .AND. PRMS_flag==1 ) Lake_route_flag = 1 ! muskingum_lake
+      IF ( Nlake>0 .AND. Strmflow_flag==3 .AND. GSFLOW_flag==0 ) Lake_route_flag = 1 ! muskingum_lake
 
       IF ( Segment_transferON_OFF==1 .OR. Gwr_transferON_OFF==1 .OR. External_transferON_OFF==1 .OR. &
      &     Dprst_transferON_OFF==1 .OR. Lake_transferON_OFF==1 .OR. Nconsumed>0 ) THEN
