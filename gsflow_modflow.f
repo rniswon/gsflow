@@ -9,26 +9,6 @@ C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
 !rgn------NEW VERSION NUMBER 1.1.2, 9/15/2016
 !rsr------MODIFIED for use in GSFLOW and MODSIM/GSFLOW
 C     ******************************************************************
-C
-      INTEGER FUNCTION gsflow_modflow(AFR)
-      USE PRMS_MODULE, ONLY: Process_flag
-      IMPLICIT NONE
-! Arguments
-      LOGICAL, INTENT(IN) :: AFR
-!***********************************************************************
-      gsflow_modflow = 0
-
-      IF ( Process_flag==0 ) THEN
-        CALL MFNWT_RUN(AFR)
-      ELSEIF ( Process_flag==1 ) THEN
-        gsflow_modflow = gsfdecl()
-      ELSEIF ( Process_flag==2 ) THEN
-        CALL MFNWT_INIT(AFR)
-      ELSEIF ( Process_flag==3 ) THEN
-        CALL MFNWT_CLEAN()
-      ENDIF
-
-      END FUNCTION gsflow_modflow
 
 !***********************************************************************
 !     gsfdecl - set up parameters for GSFLOW computations
@@ -43,7 +23,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-07-06 11:08:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-07-10 11:16:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -776,10 +756,10 @@ c            END IF
             IF(IERR.EQ.1) CALL USTOP(' ')
 C
 C--EDM 1/25/16: The code that follows is for forcing the heads to be printed each
-C  MODSIM-MODFLOW iteration as part of a dugging effort.  It can be deleted once 
+C  MODSIM-MODFLOW iteration as part of a debugging effort.  It can be deleted once 
 C  the bug has been resolved.
 C  First, set up BUFF
-   !       IF ( Model==11 ) THEN
+   !       IF ( Model>10 ) THEN
    !         IF (KPER.GE.7986) THEN
    !           DO 60 K=1,NLAY
    !             DO 59 I=1,NROW
