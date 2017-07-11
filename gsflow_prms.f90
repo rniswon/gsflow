@@ -1361,28 +1361,38 @@
       END SUBROUTINE check_module_names
 
 !***********************************************************************
-!     gsflow_prmsSettings - set MODSIM variableswrite or read restart file
+!     gsflow_prmsSettings - set MODSIM variables set in PRMS
 !***********************************************************************
-      SUBROUTINE gsflow_prmsSettings(Numts, Model_mode, Start_time, mapping_FileName, xy_FileName) BIND(C,NAME="gsflow_prmsSettings")
+      SUBROUTINE gsflow_prmsSettings(Numts, Model_mode, Start_time, File_length, mapping_FileName, xy_FileName) BIND(C,NAME="gsflow_prmsSettings")
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prmsSettings
       USE PRMS_MODULE, ONLY: Model, Number_timesteps, Starttime, mappingFileName, xyFileName
+      IMPLICIT NONE
       ! Arguments
+      INTEGER, INTENT(IN) :: File_length
       INTEGER, INTENT(OUT) :: Numts, Start_time(6), Model_mode
-      CHARACTER(LEN=*), INTENT(OUT) :: mapping_FileName, xy_FileName
+      CHARACTER(LEN=1), INTENT(OUT) :: mapping_FileName(File_length), xy_FileName(File_length)
       ! Functions
       INTEGER, EXTERNAL :: numchars
+      ! Local Variabales
+      INTEGER :: i, nc, nc2
 !***********************************************************************
       Model_mode = Model
       Numts = Number_timesteps
       Start_time = Starttime
-      IF ( Model>9 .AND. Model<20 ) THEN
-        print *, LEN(mapping_FileName)
-        print *, LEN(xy_FileName)
-!        mapping_FileName = ' '
-        mapping_FileName = mappingFileName(1:numchars(mappingFileName))
-!        xy_FileName = ' '
-        xy_FileName = xyFileName(1:numchars(xyFileName))
-      ENDIF
+      nc = numchars(mappingFileName)
+      nc2 = numchars(xyFileName)
+      DO i = 1, File_length
+        IF ( i<=nc ) THEN
+          mapping_FileName(i) = mappingFileName(i:i)
+        ELSE
+          mapping_FileName(i) = ' '
+        ENDIF
+        IF ( i<=nc ) THEN
+          xy_FileName(i) = xyFileName(i:i)
+        ELSE
+          xy_FileName(i) = ' '
+        ENDIF
+      ENDDO
       END SUBROUTINE gsflow_prmsSettings
 
 !***********************************************************************
