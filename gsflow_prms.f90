@@ -87,7 +87,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-06-29 17:15:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-07-07 17:15:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -1121,10 +1121,6 @@
       ELSEIF ( Temp_module(:9)=='temp_2sta' ) THEN
         PRINT *, 'ERROR, module temp_2sta_prms not available, use a different temp_module'
         ierr = 1
-      ELSEIF ( Temp_module(:9)/='temp_1sta' .AND. Temp_module(:9)/='temp_laps' &
-     &         .AND. Temp_module(:9)/='temp_dist2' .AND. Temp_module(:9)/='ide_dis' ) THEN
-        PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
-        ierr = 1
       ENDIF
 
       IF ( Precip_module(:11)=='precip_prms' ) THEN
@@ -1185,20 +1181,16 @@
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_prms to ccsolrad'
       ENDIF
 
-      IF ( Srunoff_module(:18)=='srunoff_carea_prms' ) &
-     &     PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_carea_prms to srunoff_carea'
-      IF ( Srunoff_module(:18)=='srunoff_smidx_prms' ) &
-     &     PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_smidx_prms to srunoff_smidx'
+      IF ( Srunoff_module(:18)=='srunoff_carea_prms' ) THEN
+        PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_carea_prms to srunoff_carea'
+      ELSEIF ( Srunoff_module(:18)=='srunoff_smidx_prms' ) THEN
+        PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_smidx_prms to srunoff_smidx'
+      ENDIF
 
       IF ( Strmflow_module(:13)=='strmflow_prms' ) THEN
         PRINT *, 'WARNING, deprecated strmflow_module value, change strmflow_prms to strmflow'
       ELSEIF ( Strmflow_module(:13)=='strmflow_lake' ) THEN
         PRINT *, 'ERROR, module strmflow_lake not available, use a different strmflow_module'
-        ierr = 1
-      ENDIF
-      IF ( Strmflow_module(:15)/='strmflow_in_out' &
-     &     .AND. Strmflow_module(:8)/='strmflow' .AND. Strmflow_module(:9)/='muskingum' ) THEN
-        PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
         ierr = 1
       ENDIF
       IF ( ierr==1 ) STOP
