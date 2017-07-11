@@ -425,7 +425,9 @@
       ELSEIF ( GSFLOW_flag==1 ) THEN
 
         IF ( Process_flag==0 ) THEN
-          CALL MFNWT_RUN(AFR)
+! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST GSFLOW-MODSIM ITERATION
+          CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
+          CALL MFNWT_RUN(AFR)  !SOLVE GW SW EQUATIONS FOR GSFLOW-MODSIM ITERATION
 
 ! The following modules are in the MODFLOW iteration loop
 ! (contained in gsflow_modflow.f).
@@ -443,15 +445,14 @@
           call_modules = gsflow_mf2prms()
           IF ( call_modules/=0 ) CALL module_error('gsflow_mf2prms', Arg, call_modules)
         ENDIF
-
+!!!!!  FIX: do not calc budget or write output until MODSIM converges with GSFLOW
+        CALL MFNWT_OCBUDGET()          ! CALCULATE MODFLOW BUDGET
         call_modules = gsflow_budget()
         IF ( call_modules/=0 ) CALL module_error('gsflow_budget', Arg, call_modules)
 
         call_modules = gsflow_sum()
         IF ( call_modules/=0 ) CALL module_error('gsflow_sum', Arg, call_modules)
       ENDIF
-
-!!!!!  FIX: do not write output until MODSIM converges with GSFLOW
       IF ( MapOutON_OFF>0 ) THEN
         call_modules = map_results()
         IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
@@ -666,7 +667,9 @@
         PRINT *, ' '
         WRITE (Logunt, '(1X)')
         DO WHILE ( Kper_mfo<=Nper )
-          CALL MFNWT_RUN(AFR)
+            CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
+            CALL MFNWT_RUN(AFR)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+            CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
           IF ( mf_timestep==NSTP(Kper_mfo) ) THEN
             Kper_mfo = Kper_mfo + 1
             mf_timestep = 0

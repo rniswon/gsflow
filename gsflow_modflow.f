@@ -438,14 +438,14 @@ C
 C
       RETURN
       END SUBROUTINE MFNWT_INIT
-
-C     *************************************************************
-C     RUN THE MODFLOW SOLVER ROUTINE WITH THE LATEST VALUES OF 
-C     ISEG UPDATED BY MODSIM.
-C     *************************************************************
-      SUBROUTINE MFNWT_RUN(AFR) BIND(C,NAME="MFNWT_RUN")
 C
-      !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_RUN
+C     *************************************************************
+C     RUN THE MODFLOW TIME ADVANCE SUBROUTINES FOR NEW TIME STEP
+C
+C     *************************************************************
+      SUBROUTINE MFNWT_TIMEADVANCE(AFR) BIND(C,NAME="MFNWT_TIMEADVANCE")
+C
+      !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_TIMEADVANCE
 C
 !     ------------------------------------------------------------------
 !        SPECIFICATIONS:
@@ -539,17 +539,17 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
 !          IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(22),AFR)  !rgn 6/12/12 !rsr, note commented out passing AFR
           END IF
 
-C--EDM
+C--EDM----RGN THIS IS ALL DONE INSIDE SFR NOW
 C--Overwrite MODFLOW's diversions with those passed by MODSIM
-          IF ( Model>11 ) THEN ! not ready to do this
+!          IF ( Model>11 ) THEN ! not ready to do this
 !              do i = 1, ndiversion
 !                seg(2,diversion_segment(i) = DIVS(diversion_index(i))
 !              enddo
 ! DIVS in MODSIM must equal MODFLOW diversions, i.e., all values of SEG(2,NSS) must related to MODSIM
-            DO i = 1, NSS
-              SEG(2,i) = DIVS(i)
-            ENDDO
-          ENDIF
+!            DO i = 1, NSS
+!              SEG(2,i) = DIVS(i)
+!            ENDDO
+!          ENDIF
 C
           IF(IUNIT(50).GT.0) THEN
             IF (IUNIT(1).GT.0) THEN
@@ -597,14 +597,61 @@ C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
    26     FORMAT('Skipping:  Stress period: ',i5,4x,
      &       'Time step: ',i5)
           ENDIF
+      END SUBROUTINE MFNWT_TIMEADVANCE
+
+C     *************************************************************
+C     RUN THE MODFLOW SOLVER ROUTINE WITH THE LATEST VALUES OF 
+C     ISEG UPDATED BY MODSIM.
+C     *************************************************************
+      SUBROUTINE MFNWT_RUN(AFR) BIND(C,NAME="MFNWT_RUN")
 C
-C7C2----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
+      !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_RUN
+C
+!     ------------------------------------------------------------------
+!        SPECIFICATIONS:
+!     ------------------------------------------------------------------
+      USE GSFMODFLOW
+      USE PRMS_MODULE, ONLY: Model, Kper_mfo, Print_debug, Kkiter,
+     &    Logunt, Init_vars_from_file, GSFLOW_flag
+C1------USE package modules.
+      USE GLOBAL
+      USE GWFBASMODULE
+!      USE GWFHUFMODULE, ONLY:IOHUFHDS,IOHUFFLWS
+      USE GWFEVTMODULE, ONLY:NEVTOP
+      USE GWFRCHMODULE, ONLY:NRCHOP
+      USE GWFSFRMODULE, ONLY:SEG, NSS !, RECHSAVE    !edm (5/1/13) need to overwrite diversions with MODSIM values
+!      USE GWFUZFMODULE, ONLY:FINF
+      USE PCGMODULE
+c     USE LMGMODULE
+      USE SIPMODULE
+      USE DE4MODULE
+!      USE GMGMODULE
+!gsf  USE PCGN
+      USE GWFNWTMODULE, ONLY:ITREAL !,ICNVGFLG
+      IMPLICIT NONE
+      INTEGER I
+      LOGICAL, INTENT(IN) :: AFR
+!      CHARACTER*16 TEXT
+!      DATA TEXT /'            HEAD'/
+!      CHARACTER*20 FMTOUT, CRADFM
+      INCLUDE 'openspec.inc'
+! FUNCTIONS AND SUBROUTINES
+      INTEGER, EXTERNAL :: soilzone
+      INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms
+      INTRINSIC MIN
+! Local Variables
+      INTEGER :: retval, KITER, iss, iprt
+      INTEGER :: ITREAL2
+!***********************************************************************
+C
+C1----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
           Szcheck = 0
           IF ( gsflag==1 ) Szcheck = 1
 !          DO 30 KITER = 1, MXITER
            KITER = 0
            ITREAL2 = 0
            IF ( IUNIT(63).GT.0 ) ITREAL = 0
+C
            DO WHILE (ITREAL2.LT.MXITER)
             KITER = KITER + 1
             KKITER = KITER
@@ -798,10 +845,6 @@ C
   33      CONTINUE
       !move above and executed when AFR = TRUE
           IF(IUNIT(62).GT.0 ) CALL GWF2UPWUPDATE(2,Igrid)
-C
-C7C3----DETERMINE WHICH OUTPUT IS NEEDED.
-        CALL MFNWT_OCBUDGET()
-
  9001 FORMAT ('ERROR in ', A, ' module, arg = run.',
      &        ' Called from gsfrun.', /, 'Return val =', I2)
 
@@ -866,15 +909,16 @@ C
 ! ???      IF(IUNIT(63).GT.0) ICNVG = ICNVGFLG
       KKSTP = KSTP
       KKPER = KPER
-      IF ( Model>11 ) THEN ! not ready to do this
+! CODE BELOW COMMENTED OUT BECAUSE DIVERSIONS ARE SET IN SFR
+!      IF ( Model>11 ) THEN ! not ready to do this
 C--EDM
-C--Overwrite MODFLOW's diversions with those passed by MODSIM
+C--Overwrite MODFLOW's diversions with those passed by MODSIM  
 C        SEG(2,3) = DIVS(5)   !Reservoir Release  
-        SEG(2,4) = DIVS(1)   !Command Area #1
-        SEG(2,14) = DIVS(2)  !Command Area #2
-        SEG(2,26) = DIVS(3)  !Command Area #3
-        SEG(2,37) = DIVS(4)  !Command Area #4
-      ENDIF
+        !SEG(2,4) = DIVS(1)   !Command Area #1
+        !SEG(2,14) = DIVS(2)  !Command Area #2
+        !SEG(2,26) = DIVS(3)  !Command Area #3
+        !SEG(2,37) = DIVS(4)  !Command Area #4
+!      ENDIF
 
           CALL GWF2BAS7OC(KKSTP,KKPER,ICNVG,IUNIT(12),IGRID)
 C
@@ -1715,7 +1759,9 @@ C
             KSTP = 0
             ! DELT = 1.0 ! ?? what if steady state PERLEN not equal one day, DELT set in MFNWT_RDSTRESS
             Steady_state = 1
-            CALL MFNWT_RUN(AFR)
+            CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
+            CALL MFNWT_RUN(AFR)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+            CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
             Steady_state = 0
             IF ( ICNVG==0 ) THEN
               PRINT 222, KKITER
