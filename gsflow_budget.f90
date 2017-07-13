@@ -229,11 +229,11 @@
       INTEGER FUNCTION gsfbudrun()
       USE GSFBUDGET
       USE GSFMODFLOW, ONLY: Mfq2inch_conv, Mfl2_to_acre, Szcheck, ICNVG, &
-     &    Mfvol2inch_conv, Mfl3t_to_cfs, Mfl_to_inch, Gwc_col, Gwc_row, Have_lakes
+     &    Mfvol2inch_conv, Mfl3t_to_cfs, Mfl_to_inch, Gwc_col, Gwc_row
 !Warning, modifies Gw_rejected_grav, Gw_rejected_grav
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
 !Warning, modifies Gw2sm_grav
-      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id !, Print_debug
+      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Have_lakes !, Print_debug
       USE GLOBAL, ONLY: DELR, DELC !, IUNIT
       USE GWFBASMODULE, ONLY: VBVL, DELT
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET, UZOLSFLX, UZFLWT

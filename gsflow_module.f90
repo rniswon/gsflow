@@ -3,34 +3,33 @@
 !***********************************************************************
       MODULE PRMS_MODULE
       IMPLICIT NONE
-      INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 32, MAXDIM = 500
+      INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 32
+      INTEGER, PARAMETER :: MAXDIM = 500
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 07/07/2017'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 07/13/2017'
       CHARACTER(LEN=8), SAVE :: Process, Arg
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
       INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Numlakes
       INTEGER, SAVE :: Ntemp, Nrain, Nsol, Nsegment, Ndepl, Nobs, Nevap, Ndeplval
-      INTEGER, SAVE :: Starttime(6), Endtime(6), Number_timesteps
+      INTEGER, SAVE :: Starttime(6), Endtime(6)
       INTEGER, SAVE :: Start_year, Start_month, Start_day, End_year, End_month, End_day
-      INTEGER, SAVE :: Transp_flag, Sroff_flag, Solrad_flag, Et_flag
+      INTEGER, SAVE :: Transp_flag, Sroff_flag, Solrad_flag, Et_flag, Water_use_flag
       INTEGER, SAVE :: Climate_temp_flag, Climate_precip_flag, Climate_potet_flag, Climate_transp_flag
       INTEGER, SAVE :: Lake_route_flag, Nratetbl, Strmflow_flag, Stream_order_flag
       INTEGER, SAVE :: Temp_flag, Precip_flag, Climate_hru_flag, Climate_swrad_flag
-      INTEGER, SAVE :: Precip_combined_flag, Temp_combined_flag, statsON_OFF
+      INTEGER, SAVE :: Precip_combined_flag, Temp_combined_flag
       INTEGER, SAVE :: Inputerror_flag, Timestep
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
       INTEGER, SAVE :: Grid_flag, Logunt, First_timestep
-      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag
+      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag, Have_lakes, Number_timesteps
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
-      INTEGER, SAVE :: Dynamic_flag, Nwateruse, Nexternal, Nconsumed, Npoigages
+      INTEGER, SAVE :: Dynamic_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Kkiter
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
-      INTEGER, SAVE :: Prms_warmup
       CHARACTER(LEN=80), SAVE :: Version_read_control_file
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
-      INTEGER, SAVE :: Kkiter
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
       REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
@@ -48,11 +47,11 @@
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Model_mode, Precip_module, Solrad_module
       CHARACTER(LEN=8), SAVE :: Soilzone_module
       INTEGER, SAVE :: Dyn_imperv_flag, Dyn_intcp_flag, Dyn_covden_flag, Dyn_covtype_flag, Dyn_transp_flag, Dyn_potet_flag
-      INTEGER, SAVE :: Dyn_soil_flag, Dyn_radtrncf_flag, Water_use_flag, Dyn_dprst_flag,  Dprst_transferON_OFF
+      INTEGER, SAVE :: Dyn_soil_flag, Dyn_radtrncf_flag, Dyn_dprst_flag,  Dprst_transferON_OFF
       INTEGER, SAVE :: Dyn_snareathresh_flag, Dyn_transp_on_flag
       INTEGER, SAVE :: Dyn_sro2dprst_perv_flag, Dyn_sro2dprst_imperv_flag, Dyn_fallfrost_flag, Dyn_springfrost_flag
       INTEGER, SAVE :: Gwr_transferON_OFF, External_transferON_OFF, Segment_transferON_OFF, Lake_transferON_OFF
-      INTEGER, SAVE :: Stream_temp_flag, Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag
+      INTEGER, SAVE :: Stream_temp_flag, Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF, Prms_warmup
       END MODULE PRMS_MODULE
 
 !***********************************************************************
@@ -66,7 +65,7 @@
       INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters, Nszchanging
       INTEGER, SAVE :: Mfiter_cnt(ITDIM), Iter_cnt(ITDIM), Iterations
       INTEGER, SAVE :: Szcheck, Sziters, INUNIT, KPER, NCVGERR
-      INTEGER, SAVE :: Have_lakes, Max_sziters, Maxgziter
+      INTEGER, SAVE :: Max_sziters, Maxgziter
       INTEGER, SAVE, ALLOCATABLE :: Gwc_col(:), Gwc_row(:)
       REAL, SAVE :: Delt_save
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Stress_dates(:)

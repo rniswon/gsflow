@@ -63,7 +63,7 @@ C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model, GSFLOW_flag,
+      USE PRMS_MODULE, ONLY: Model, GSFLOW_flag, Have_lakes,
      &    EQULS, Logunt, Init_vars_from_file, Kper_mfo
 C1------USE package modules.
       USE GLOBAL

@@ -28,14 +28,14 @@
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow
       INTEGER, EXTERNAL :: srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, write_climate_hru
-      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, potet_pm_sta
-      EXTERNAL :: module_doc, nsub_summary, basin_summary
+      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, muskingum_lake, numchars, declvar
+      INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta !, setup
+      EXTERNAL :: module_error, print_module, PRMS_open_output_file
+      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, basin_summary
+      EXTERNAL :: prms_summary, nhru_summary, module_doc, convert_params, read_error, nsub_summary
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
-      INTEGER, EXTERNAL :: declvar, declparam, getparam, numchars
-      EXTERNAL :: module_error, read_error, print_module, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, nhru_summary, check_parameters
-      INTEGER, EXTERNAL :: muskingum_lake, water_use_read, dynamic_param_read, setdims, stream_temp !, setup
-      EXTERNAL ::precip_temp_grid, prms_summary, convert_params
+      INTEGER, EXTERNAL :: declparam, getparam, setdims, stream_temp
+      EXTERNAL :: check_parameters, precip_temp_grid
       EXTERNAL :: read_control_file, read_prms_data_file, read_parameter_file_dimens
 ! Local Variables
       INTEGER :: i, iret, nc, call_modules, dmy
@@ -66,7 +66,7 @@
         Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
 
-        PRMS_versn = 'gsflow_prms.f90 2017-07-10 16:30:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-07-13 14:58:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -104,9 +104,9 @@
      &        'Streamflow Routing: strmflow, strmflow_in_out, muskingum,', /, &
      &        '                    muskingum_lake', /, &
      &        'Stream Temperature: stream_temp', /, &
-     &        '    Output Summary: basin_sum, subbasin, map_results, nhru_summary', /, &
-     &        '                    nsub_summary, basin_summary, water_balance,', /, &
-     &        '                    prms_summary', /, &
+     &        '    Output Summary: basin_sum, subbasin, map_results, prms_summary,', /, &
+     &        '                    nhru_summary, nsub_summary, water_balance', /, &
+     &        '                    basin_summary', /, &
      &        '     Preprocessing: write_climate_hru, frost_date', /, 68('-'))
   16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 19X, &
      &        'Module', 16X, 'Version Date', /, A)
@@ -148,6 +148,7 @@
         ENDIF
 
         Kkiter = 1 ! set for PRMS-only mode
+        Have_lakes = 0 ! set for modes when MODFLOW is not active
 
         IF ( Init_vars_from_file==0 ) THEN
           Timestep = 0
@@ -523,7 +524,7 @@
       ENDIF
     4 FORMAT (/, 2(A, I5, 2('/',I2.2)), //, A, /)
  9001 FORMAT (/, 26X, 27('='), /, 26X, 'Normal completion of GSFLOW', /, 26X, 27('='), /)
- 9002 FORMAT (//, 74('='), /, 'Please give careful consideration to fixing all ERROR and WARNING messages', /, 74('='))
+ 9002 FORMAT (//, 74('='), /, 'Please give careful consideration to fixing all ERROR and WARNING messages', /, 74('='), /)
  9003 FORMAT ('Execution ', A, ' date and time (yyyy/mm/dd hh:mm:ss)', I5, 2('/',I2.2), I3, 2(':',I2.2), /)
  9004 FORMAT (/, 2A)
 
@@ -543,13 +544,13 @@
 ! Functions
       INTEGER, EXTERNAL :: decldim, declfix, control_integer_array
       INTEGER, EXTERNAL :: control_string, control_integer, compute_julday
-      EXTERNAL :: read_error, PRMS_open_output_file, PRMS_open_input_file, module_error, check_module_names
-      EXTERNAL :: read_control_file, setup_dimens, read_parameter_file_dimens, get_control_arguments
+      EXTERNAL :: read_error, PRMS_open_output_file, PRMS_open_input_file, check_module_names
+      EXTERNAL :: read_control_file, setup_dimens, read_parameter_file_dimens, get_control_arguments, module_error
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
-      INTEGER :: idim, iret, j, startday, endday
-      INTEGER :: test, mf_timestep
+      INTEGER :: idim, iret, j
+      INTEGER :: test, mf_timestep, startday, endday
 !***********************************************************************
       setdims = 1
 
@@ -975,6 +976,8 @@
 ! Functions
       INTEGER, EXTERNAL :: getdim
       EXTERNAL :: check_dimens
+! Local Variables
+      INTEGER :: ierr
 !***********************************************************************
 
       Nhru = getdim('nhru')
@@ -1031,7 +1034,6 @@
 
       Numlakes = getdim('numlakes')
       IF ( Numlakes==-1 ) CALL read_error(7, 'numlakes')
-      IF ( Nlake>0 .AND. Numlakes==0 ) Numlakes = Nlake
 
       Ndepl = getdim('ndepl')
       IF ( Ndepl==-1 ) CALL read_error(7, 'ndepl')
@@ -1056,10 +1058,25 @@
       Nratetbl = getdim('nratetbl')
       IF ( Nratetbl==-1 ) CALL read_error(6, 'nratetbl')
 
-      Stream_order_flag = 0
-      IF ( Strmflow_flag>1 .AND. PRMS_flag==1 .AND. GSFLOW_flag==0 ) THEN
-        Stream_order_flag = 1 ! strmflow_in_out, muskingum, or muskingum_lake
+      Water_use_flag = 0
+      IF ( Nwateruse>0 ) THEN
+        IF ( Segment_transferON_OFF==1 .OR. Gwr_transferON_OFF==1 .OR. External_transferON_OFF==1 .OR. &
+     &       Dprst_transferON_OFF==1 .OR. Lake_transferON_OFF==1 .OR. Nconsumed>0 .OR. Nwateruse>0 ) Water_use_flag = 1
       ENDIF
+
+      ierr = 0
+      IF ( Segment_transferON_OFF==1 .OR. Gwr_transferON_OFF==1 .OR. External_transferON_OFF==1 .OR. &
+     &     Dprst_transferON_OFF==1 .OR. Lake_transferON_OFF==1 .OR. Nconsumed>0 ) THEN
+        IF ( Dprst_transferON_OFF==1 .AND. Dprst_flag==0 ) THEN
+          PRINT *, 'ERROR, specified water-use event based dprst input and have dprst inactive'
+          ierr = 1
+        ENDIF
+        IF ( Lake_transferON_OFF==1 .AND. Strmflow_flag/=3 ) THEN
+          PRINT *, 'ERROR, specified water-use event based lake input and have lake simulation inactive'
+          ierr = 1
+        ENDIF
+      ENDIF
+      IF ( ierr==1 ) STOP
 
       IF ( Nsegment<1 .AND. Model/=99 ) THEN
         IF ( Stream_order_flag==1 .OR. Call_cascade==1 ) THEN
@@ -1068,31 +1085,18 @@
         ENDIF
       ENDIF
 
+      Lake_route_flag = 0
+      IF ( Nlake>0 .AND. Strmflow_flag==3 .AND. GSFLOW_flag==0 ) Lake_route_flag = 1 ! muskingum_lake
+
+      Stream_order_flag = 0
+      IF ( Strmflow_flag>1 .AND. PRMS_flag==1 .AND. GSFLOW_flag==0 ) THEN
+        Stream_order_flag = 1 ! strmflow_in_out, muskingum, or muskingum_lake
+      ENDIF
+
       IF ( Stream_temp_flag>0 .AND. Stream_order_flag==1 ) THEN
         PRINT *, 'ERROR, stream temperature computation requires streamflow routing'
         PRINT *, '       thus strmflow_module must be set to strmflow_in_out, muskingum, or muskingum_lake'
         STOP
-      ENDIF
-
-      Water_use_flag = 0
-      IF ( Nwateruse>0 ) THEN
-        IF ( Segment_transferON_OFF==1 .OR. Gwr_transferON_OFF==1 .OR. External_transferON_OFF==1 .OR. &
-     &       Dprst_transferON_OFF==1 .OR. Lake_transferON_OFF==1 .OR. Nconsumed>0 .OR. Nwateruse<1 ) Water_use_flag = 1
-      ENDIF
-
-      Lake_route_flag = 0
-      IF ( Nlake>0 .AND. Strmflow_flag==3 .AND. GSFLOW_flag==0 ) Lake_route_flag = 1 ! muskingum_lake
-
-      IF ( Segment_transferON_OFF==1 .OR. Gwr_transferON_OFF==1 .OR. External_transferON_OFF==1 .OR. &
-     &     Dprst_transferON_OFF==1 .OR. Lake_transferON_OFF==1 .OR. Nconsumed>0 ) THEN
-        IF ( Dprst_transferON_OFF==1 .AND. Dprst_flag==0 ) THEN
-          PRINT *, 'ERROR, specified water-use event based dprst input and have dprst inactive'
-          Inputerror_flag = 1
-        ENDIF
-        IF ( Lake_transferON_OFF==1 .AND. Strmflow_flag/=3 ) THEN
-          PRINT *, 'ERROR, specified water-use event based lake input and have lake simulation inactive'
-          Inputerror_flag = 1
-        ENDIF
       ENDIF
 
       IF ( NsubOutON_OFF==1 .AND. Nsub==0 ) THEN
@@ -1185,11 +1189,12 @@
       INTEGER, EXTERNAL :: potet_pan, potet_jh, potet_hamon, potet_hs, potet_pt, potet_pm
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow, srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, strmflow_in_out
-      INTEGER, EXTERNAL :: write_climate_hru, muskingum, potet_pm_sta
-      INTEGER, EXTERNAL :: dynamic_param_read, water_use_read, muskingum_lake, stream_temp, setup
+      INTEGER, EXTERNAL :: write_climate_hru, muskingum, muskingum_lake
+      EXTERNAL :: nhru_summary, prms_summary, water_balance, nsub_summary, basin_summary
+      INTEGER, EXTERNAL :: dynamic_param_read, water_use_read, potet_pm_sta
+      INTEGER, EXTERNAL :: stream_temp !, setup
+      EXTERNAL :: precip_temp_grid
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
-      EXTERNAL :: nhru_summary, water_balance, nsub_summary, basin_summary
-      EXTERNAL :: precip_temp_grid, prms_summary
 ! Local variable
       INTEGER :: test
 !**********************************************************************
@@ -1197,7 +1202,7 @@
       test = cascade()
       test = climateflow()
       test = soltab()
-      test = setup()
+!      test = setup()
       test = prms_time()
       test = obs()
       test = water_use_read()

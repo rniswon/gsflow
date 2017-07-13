@@ -558,7 +558,7 @@
 !***********************************************************************
       INTEGER FUNCTION gsfsumrun()
       USE GSFSUM
-      USE GSFMODFLOW, ONLY: Mfl3t_to_cfs, KKSTP, KKPER, Have_lakes, Maxgziter
+      USE GSFMODFLOW, ONLY: Mfl3t_to_cfs, KKSTP, KKPER, Maxgziter
 !      USE GSFPRMS2MF, ONLY: Net_sz2gw
       USE GSFBUDGET, ONLY: NetBoundaryFlow2Sat_Q, Gw_bnd_in, Gw_bnd_out, Well_in, &
      &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S
@@ -570,7 +570,7 @@
      &    TOTSTOR_LAK, TOTWTHDRW_LAK, TOTRUNF_LAK, TOTSURFIN_LAK, &
      &    TOTSURFOT_LAK, TOTEVAP_LAK, TOTPPT_LAK
       USE GWFBASMODULE, ONLY: DELT
-      USE PRMS_MODULE, ONLY: Print_debug, KKITER, Nobs, Timestep, Dprst_flag
+      USE PRMS_MODULE, ONLY: Print_debug, KKITER, Nobs, Timestep, Dprst_flag, Have_lakes
       USE PRMS_OBS, ONLY: Runoff, Runoff_units
       USE PRMS_BASIN, ONLY: CFS2CMS_CONV
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
@@ -1005,8 +1005,7 @@
 !***********************************************************************
       USE GSFSUM
       USE GWFSFRMODULE, ONLY: STRMDELSTOR_RATE, STRMDELSTOR_CUM, IRTFLG
-      USE PRMS_MODULE, ONLY: KKITER
-      USE GSFMODFLOW, ONLY: Have_lakes
+      USE PRMS_MODULE, ONLY: KKITER, Have_lakes
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
       INTRINSIC ABS

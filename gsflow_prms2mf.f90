@@ -177,9 +177,9 @@
       USE GWFUZFMODULE, ONLY: NTRAIL, NWAV
       USE GWFSFRMODULE, ONLY: ISEG, NSS
       USE GWFLAKMODULE, ONLY: NLAKES
-      USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes
+      USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col
       USE PRMS_MODULE, ONLY: Nhru, Nsegment, Numlakes, Print_debug, &
-     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Init_vars_from_file
+     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Init_vars_from_file, Have_lakes
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area, NEARZERO
       USE PRMS_SOILZONE, ONLY: Gvr_hru_id, Gvr_hru_pct_adjusted
@@ -441,12 +441,12 @@
       INTEGER FUNCTION prms2mfrun()
       USE GSFPRMS2MF
       USE GSFMODFLOW, ONLY: Gvr2cell_conv, Acre_inches_to_mfl3, &
-     &    Inch_to_mfl_t, Gwc_row, Gwc_col, Szcheck, Have_lakes, Stopcount, Mft_to_days
+     &    Inch_to_mfl_t, Gwc_row, Gwc_col, Szcheck, Stopcount, Mft_to_days
       USE GLOBAL, ONLY: IBOUND
 !     USE GLOBAL, ONLY: IOUT
       USE GWFUZFMODULE, ONLY: IUZFBND, NWAVST, PETRATE, IGSFLOW, FINF
       USE GWFLAKMODULE, ONLY: RNF, EVAPLK, PRCPLK, NLAKES
-      USE PRMS_MODULE, ONLY: KKITER, Nhrucell, Gvr_cell_id, Logunt
+      USE PRMS_MODULE, ONLY: KKITER, Nhrucell, Gvr_cell_id, Logunt, Have_lakes
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
       USE PRMS_FLOWVARS, ONLY: Hru_actet
