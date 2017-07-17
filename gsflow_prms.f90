@@ -217,6 +217,8 @@
       ELSEIF ( Process(:7)=='setdims' ) THEN
         dmy = setdims(AFR) ! if MODFLOW only the execution stops in setdims
 
+        IF ( Model==12 .OR. Model==13 ) RETURN ! MODSIM or MODSIM-MODFLOW modes
+
         IF ( PRMS_flag==1 ) THEN ! PRMS is active
           CALL setup_params()
           CALL read_parameter_file_dimens()
@@ -679,6 +681,8 @@
         CALL MFNWT_CLEAN()
         STOP
       ENDIF
+
+      IF ( Model==12 .OR. Model==13 ) RETURN ! MODSIM or MODSIM-MODFLOW modes
 
       CALL setup_dimens()
 
