@@ -563,7 +563,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 07/06/2017', //, &
+     &        22X, 'Version 1.2 MODSIM 07/17/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -1370,36 +1370,40 @@
 !***********************************************************************
 !     gsflow_prmsSettings - set MODSIM variables set in PRMS
 !***********************************************************************
-      SUBROUTINE gsflow_prmsSettings(Numts, Model_mode, Start_time, File_length, mapping_FileName, xy_FileName) BIND(C,NAME="gsflow_prmsSettings")
+      SUBROUTINE gsflow_prmsSettings(Numts, Model_mode, Start_time, xy_len, xy_FileName, map_len, map_FileName) BIND(C,NAME="gsflow_prmsSettings")
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prmsSettings
       USE PRMS_MODULE, ONLY: Model, Number_timesteps, Starttime, mappingFileName, xyFileName
       IMPLICIT NONE
       ! Arguments
-      INTEGER, INTENT(IN) :: File_length
+      INTEGER, INTENT(IN) :: xy_len, map_len
       INTEGER, INTENT(OUT) :: Numts, Start_time(6), Model_mode
-      CHARACTER(LEN=1), INTENT(OUT) :: mapping_FileName(File_length), xy_FileName(File_length)
+      CHARACTER(LEN=1), INTENT(INOUT) :: xy_FileName(xy_len), map_FileName(map_len)
       ! Functions
       INTEGER, EXTERNAL :: numchars
       ! Local Variabales
-      INTEGER :: i, nc, nc2
+      INTEGER :: i, nc
 !***********************************************************************
       Model_mode = Model
       Numts = Number_timesteps
       Start_time = Starttime
-      nc = numchars(mappingFileName)
-      nc2 = numchars(xyFileName)
-      DO i = 1, File_length
-        IF ( i<=nc ) THEN
-          mapping_FileName(i) = mappingFileName(i:i)
-        ELSE
-          mapping_FileName(i) = ' '
-        ENDIF
+      nc = numchars(xyFileName)
+      DO i = 1, xy_len
         IF ( i<=nc ) THEN
           xy_FileName(i) = xyFileName(i:i)
         ELSE
           xy_FileName(i) = ' '
         ENDIF
       ENDDO
+
+      nc = numchars(mappingFileName)
+      DO i = 1, map_len
+        IF ( i<=nc ) THEN
+          map_FileName(i) = mappingFileName(i:i)
+        ELSE
+          map_FileName(i) = ' '
+        ENDIF
+      ENDDO
+
       END SUBROUTINE gsflow_prmsSettings
 
 !***********************************************************************
