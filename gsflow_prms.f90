@@ -8,7 +8,7 @@
       
       USE PRMS_MODULE
       USE PRMS_READ_PARAM_FILE, ONLY: Version_read_parameter_file
-      USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN
+      USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_TIMEADVANCE
       IMPLICIT NONE
 ! Arguments
       !CHARACTER(LEN=*), INTENT(IN) :: Arg
@@ -66,7 +66,7 @@
         Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
 
-        PRMS_versn = 'gsflow_prms.f90 2017-07-13 14:58:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-07-17 16:30:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -104,9 +104,9 @@
      &        'Streamflow Routing: strmflow, strmflow_in_out, muskingum,', /, &
      &        '                    muskingum_lake', /, &
      &        'Stream Temperature: stream_temp', /, &
-     &        '    Output Summary: basin_sum, subbasin, map_results, prms_summary,', /, &
-     &        '                    nhru_summary, nsub_summary, water_balance', /, &
-     &        '                    basin_summary', /, &
+     &        '    Output Summary: basin_sum, subbasin, map_results, nhru_summary', /, &
+     &        '                    nsub_summary, basin_summary, water_balance,', /, &
+     &        '                    prms_summary', /, &
      &        '     Preprocessing: write_climate_hru, frost_date', /, 68('-'))
   16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 19X, &
      &        'Module', 16X, 'Version Date', /, A)
@@ -446,8 +446,7 @@
           call_modules = gsflow_mf2prms()
           IF ( call_modules/=0 ) CALL module_error('gsflow_mf2prms', Arg, call_modules)
         ENDIF
-!!!!!  FIX: do not calc budget or write output until MODSIM converges with GSFLOW
-        CALL MFNWT_OCBUDGET()          ! CALCULATE MODFLOW BUDGET
+
         call_modules = gsflow_budget()
         IF ( call_modules/=0 ) CALL module_error('gsflow_budget', Arg, call_modules)
 
@@ -537,7 +536,7 @@
       INTEGER FUNCTION setdims(AFR)
       USE PRMS_MODULE
       USE GLOBAL, ONLY: NSTP, NPER
-      USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN
+      USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_OCBUDGET, MFNWT_TIMEADVANCE
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
 ! Arguments
