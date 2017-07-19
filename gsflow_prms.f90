@@ -73,7 +73,7 @@
           IF ( check_dims()/=0 ) STOP
         ENDIF
 
-        ! GSFLOW, MODSIM-GSFLOW
+        ! GSFLOW, GSFLOW-MODSIM
         IF ( GSFLOW_flag==1 ) THEN
           call_modules = gsfdecl()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
@@ -584,7 +584,7 @@
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
       GSFLOW_flag = 0
-!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 11=MODSIM-GSFLOW; 12=MODSIM-PRMS; 13=MODSIM-MODFLOW; 14=MODSIM)
+!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 11=GSFLOW-MODSIM; 12=MODSIM-PRMS; 13=MODSIM-MODFLOW; 14=MODSIM)
       IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:6)=='gsflow' .OR. Model_mode(:4)=='    ') THEN
         Model = 0
         GSFLOW_flag = 1
@@ -593,7 +593,7 @@
       ELSEIF ( Model_mode(:7)=='MODFLOW' .OR. Model_mode(:7)=='modflow') THEN
         Model = 2
         PRMS_flag = 0
-      ELSEIF ( Model_mode(:13)=='MODSIM-GSFLOW' ) THEN
+      ELSEIF ( Model_mode(:13)=='GSFLOW-MODSIM' ) THEN
         Model = 10
         GSFLOW_flag = 1
       ELSEIF ( Model_mode(:14)=='MODSIM-MODFLOW' ) THEN

@@ -7,7 +7,7 @@ C     ******************************************************************
 C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
 !rgn------NEW VERSION NUMBER 1.1.2, 9/15/2016
-!rsr------MODIFIED for use in GSFLOW and MODSIM/GSFLOW
+!rsr------MODIFIED for use in GSFLOW and GSFLOW/MODSIM
 C     ******************************************************************
 
 !***********************************************************************
@@ -68,7 +68,6 @@ C     ------------------------------------------------------------------
 C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
-!gsf      USE ApplicationsInterface !rsr, need to uncomment
       USE GWFUZFMODULE, ONLY: Version_uzf
       USE GWFSFRMODULE, ONLY: Version_sfr
       USE GWFLAKMODULE, ONLY: Version_lak
@@ -106,9 +105,6 @@ C
      &           'SWR ', 'SWI2', 'gfb ', '    ', 'IWRT', 'IRED', '    ',  ! 70     - SWR - JDH 
      &           30*'    '/                                               ! 71-100 - SWR - JDH
 C     ------------------------------------------------------------------
-C
-C--Try stepping into C# here
-!      call IdlAppInit() !rsr, need to uncomment
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3  !rsr moved to declare procedure
@@ -348,23 +344,23 @@ c      IF(IUNIT(14).GT.0) CALL LMG7AR(IUNIT(14),MXITER,IGRID)
 !      ENDIF
 C
 C--OPEN A FILE FOR COLLECTION GW-SW EXCHANGE TERMS BY REACH
-       IF ( Model>11 ) THEN ! not ready to do this
+!       IF ( Model>11 ) THEN ! not ready to do this
 C      OUTFILE='C:\\EDM_LT\\MS_MF_SVN\\MODFLOW_Model
 C     &\\RCH_BY_RCH_GWSW_TERMS_EVERY_ITERATION.TXT'
 !         ISTAT=GETCWD(DIRNAME) 
-         ISTAT = 0
-         IF(ISTAT==0) THEN
-           OUTFILE=TRIM(DIRNAME) // '\GW-SW_terms_every_iter.txt'
-           OPEN(271,FILE=OUTFILE)
-           WRITE(271,275) "KPER","Q_IN"," ISEG"," IRCH","SEEP","USERRNF",
-     +                    "UZFRNF","PREC","EVAP","Q_OUT"
-  275 FORMAT(A11,2A5,6A11)
+!         ISTAT = 0
+!         IF(ISTAT==0) THEN
+!           OUTFILE=TRIM(DIRNAME) // '\GW-SW_terms_every_iter.txt'
+!           OPEN(271,FILE=OUTFILE)
+!           WRITE(271,275) "KPER","Q_IN"," ISEG"," IRCH","SEEP","USERRNF",
+!     +                    "UZFRNF","PREC","EVAP","Q_OUT"
+!  275 FORMAT(A11,2A5,6A11)
 C
 C--Open a file for watching heads inbetween MODSIM-MODFLOW iterations
-          OUTFILE=TRIM(DIRNAME) // '\ITER_HEADS.txt'
-          OPEN(996,FILE=OUTFILE)
-        ENDIF
-      ENDIF
+!          OUTFILE=TRIM(DIRNAME) // '\ITER_HEADS.txt'
+!          OPEN(996,FILE=OUTFILE)
+!        ENDIF
+!      ENDIF
 C
 C  Observation allocate and read
       CALL OBS2BAS7AR(IUNIT(28),IGRID)
@@ -434,7 +430,6 @@ C
         Kkper_new = GET_KPER()
         Kper_mfo = Kkper_new
       ENDIF
-C
 C
       RETURN
       END SUBROUTINE MFNWT_INIT
@@ -522,7 +517,7 @@ C7C1----CALCULATE TIME STEP LENGTH. SET HOLD=HNEW.
 C--(5/6/13) Based on a conversation with Rich, everything in the 
 C  following if statement should be moved to it's own subroutine.
 C  For now, just to move forward, I'm stuffing it into an IF statement.
-          IF(AFR) THEN !rsr, AFR hard-coded to TRUE, ***CAUTION***
+          IF(AFR) THEN
           IF(IUNIT(62).GT.0 ) CALL GWF2UPWUPDATE(1,Igrid)
           CALL GWF2BAS7AD(KKPER,KKSTP,IGRID)
           IF(IUNIT(62).GT.0) CALL GWF2UPW1AD(IGRID)
@@ -536,7 +531,6 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
      1                                           IGRID)
           IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
           IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(22))  !rgn 6/12/12
-!          IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(22),AFR)  !rgn 6/12/12 !rsr, note commented out passing AFR
           END IF
 
 C--EDM----RGN THIS IS ALL DONE INSIDE SFR NOW
@@ -580,7 +574,7 @@ C
 !          ENDIF     
           IF(IUNIT(64).GT.0) CALL GWF2SWR7AD(KKPER,KKSTP,
      2                                       IGRID,IUNIT(54))  !SWR - JDH
-          IF ( Model.EQ.2 ) THEN !rsr, ?? format 26 is not used, should it be
+          IF ( Model.EQ.2 ) THEN
 C
 C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
             iprt = 0
@@ -651,12 +645,12 @@ C1----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
            KITER = 0
            ITREAL2 = 0
            IF ( IUNIT(63).GT.0 ) ITREAL = 0
-C
            DO WHILE (ITREAL2.LT.MXITER)
             KITER = KITER + 1
             KKITER = KITER
             IF ( IUNIT(63).EQ.0 ) ITREAL2 = KITER
             IF(IUNIT(62).GT.0) CALL GWF2UPWUPDATE(2,Igrid)
+      
 C
 C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
             CALL GWF2BAS7FM(IGRID)
@@ -711,7 +705,7 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Sziters = Sziters + 1
               Maxgziter = KKITER
             ENDIF
-            IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,               !Look here
+            IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
      2                           IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
@@ -796,10 +790,10 @@ c            END IF
 !     1              KKITER,KKSTP,KKPER,ICNVG,HNOFLO,IGRID)
 !            ENDIF
 ! Calculate new heads using Newton solver
-            IF(IUNIT(63).GT.0 ) 
+          IF(IUNIT(63).GT.0 ) 
      1          CALL GWF2NWT1FM(KKITER,ICNVG,KSTP,KPER,Mxiter,
      2                          IUNIT(22),IGRID)
-            IF ( IUNIT(63).GT.0 )ITREAL2 = ITREAL
+          IF ( IUNIT(63).GT.0 )ITREAL2 = ITREAL
             IF(IERR.EQ.1) CALL USTOP(' ')
 C
 C--EDM 1/25/16: The code that follows is for forcing the heads to be printed each
@@ -842,14 +836,13 @@ C7C2C---IF CONVERGENCE CRITERION HAS BEEN MET STOP ITERATING.
           END DO
           KITER = MXITER
 C
-  33      CONTINUE
+   33     CONTINUE
       !move above and executed when AFR = TRUE
           IF(IUNIT(62).GT.0 ) CALL GWF2UPWUPDATE(2,Igrid)
  9001 FORMAT ('ERROR in ', A, ' module, arg = run.',
      &        ' Called from gsfrun.', /, 'Return val =', I2)
 
       END SUBROUTINE MFNWT_RUN
-C
 C
 C     ************************************************************************
 C     ACCUMULATE ACCRETION/DEPLETIONS FOR ALL STREAM SEGMENETS AND LAKES THAT
@@ -999,8 +992,8 @@ C7C4----CALCULATE BUDGET TERMS. SAVE CELL-BY-CELL FLOW TERMS.
           IF(IUNIT(8).GT.0) THEN
              IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
      1                                                     0,IGRID)
-!            CALL GWF2RCH7BD(KKSTP,KKPER,IUNIT(44),IGRID)  
-             CALL GWF2RCH7BD(KKSTP,KKPER,IGRID) 
+!           CALL GWF2RCH7BD(KKSTP,KKPER,IUNIT(44),IGRID)  
+          CALL GWF2RCH7BD(KKSTP,KKPER,IGRID) 
              IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
      1                                                     1,IGRID)
           END IF
@@ -1169,29 +1162,29 @@ C8------END OF SIMULATION
 C-------SAVE RESTART RECORDS FOR SUB PACKAGE
   110 IF(IUNIT(54).GT.0) CALL GWF2SUB7SV(IGRID)
 
-      IF ( Model>11 ) THEN ! not ready to do this
+!      IF ( Model>11 ) THEN ! not ready to do this
 C
 C--CLOSE IRRIGATION OUTPUT FILE "IRRIG_OUT.TXT"
-        CLOSE(202)
+!        CLOSE(202)
 C
 C--CLOSE ITERATION GW-SW EXCHANGE OUTPUT FILE OPENED UP IN RAD1AR
-        CLOSE(271)
+!        CLOSE(271)
 C
 C--CLOSE DEBUG HEAD OUTPUT FILE
-        CLOSE(996)
+!        CLOSE(996)
 C
 C--CLOSE DEBUG TEXT OUTPUT
-        CLOSE(995)
+!        CLOSE(995)
 C
 C--CLOSE OLF DEBUG TEXT OUTPUT
-        CLOSE(994)
+!        CLOSE(994)
 C
 C--CLOSE ITERATIVE APPLICATIONS TEXT OUTPUT
-        CLOSE(993)
+!        CLOSE(993)
 C
 C--CLOSE FILE CONTAINING CELL INFO
 !        CLOSE(999)
-       ENDIF
+!       ENDIF
 C
 C-------WRITE RESTART INFORMATION FOR HEADS, SFR, AND UZF
       IF ( Save_vars_to_file==1 ) THEN
@@ -1224,7 +1217,6 @@ C9------LAST BECAUSE IT DEALLOCATES IUNIT.
       IF(IUNIT(9).GT.0) CALL SIP7DA(IGRID)
       IF(IUNIT(10).GT.0) CALL DE47DA(IGRID)
       IF(IUNIT(13).GT.0) CALL PCG7DA(IGRID)
-c      IF(IUNIT(14).GT.0) CALL LMG7DA(IGRID)
 !      IF(IUNIT(59).GT.0) CALL PCGN2DA(IGRID)
       IF(IUNIT(63).GT.0) THEN    
         IF(LINMETH.EQ.1) THEN
@@ -1298,7 +1290,7 @@ C10-----END OF PROGRAM.
         WRITE (Logunt, *) 'FAILED TO MEET SOLVER CONVERGENCE CRITERIA ',
      1          NCVGERR,' TIME(S)'
       ELSE
-        PRINT '(A)', 'Normal termination of simulation'
+        WRITE(*,*) ' Normal termination of simulation'
         WRITE (Logunt, '(A)') 'Normal termination of simulation'
       END IF
 
@@ -1362,9 +1354,9 @@ C        CALL GETCL(COMLIN)
 !     &       CALL USTOP(' ')
 !        IF (FNAME(:1).EQ.' ') GOTO 15
 !      ENDIF
-      nc = numchars(FNAME)
-      INQUIRE (FILE=FNAME(:nc),EXIST=EXISTS)
-      IF (.NOT.EXISTS) THEN
+        nc = numchars(FNAME)
+        INQUIRE (FILE=FNAME(:nc),EXIST=EXISTS)
+        IF(.NOT.EXISTS) THEN
   16    PRINT '(/,A,A,/)', 'Name File does not exist: ', FNAME(:nc)
         PRINT *, ' Enter a different Name File path or "quit": '
         READ (*,'(A)') FNAME
@@ -1378,7 +1370,6 @@ C        CALL GETCL(COMLIN)
 C
       RETURN
       END SUBROUTINE GETNAMFIL
-
       SUBROUTINE GLO1BAS6ET(IOUT,IBDT,IPRTIM)
 C     ******************************************************************
 C     Get end time and calculate elapsed time
@@ -1491,7 +1482,7 @@ C     Write times to file if requested
       ENDIF
 C
       RETURN
-      END SUBROUTINE GLO1BAS6ET
+      END
 
 !***********************************************************************
 !     READ AND PREPARE INFORMATION FOR STRESS PERIOD.
