@@ -56,7 +56,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !***********************************************************************
 C
       SUBROUTINE MFNWT_INIT(AFR, Diversions, Idivert,EXCHANGE,DELTAVOL,
-     &                      Nlk)  !BIND(C,NAME="MFNWT_INIT")
+     &                      Nlk, Nlakeshold)  !BIND(C,NAME="MFNWT_INIT")
 C      
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_INIT
 C
@@ -79,7 +79,7 @@ C1------USE package modules.
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
       INTEGER, INTENT(IN) :: Idivert(*)
-      INTEGER, INTENT(INOUT) :: Nlk
+      INTEGER, INTENT(INOUT) :: Nlk, Nlakeshold
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
       DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*)
 ! Functions
@@ -309,7 +309,7 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
       IF(IUNIT(22).GT.0 .OR. IUNIT(44).GT.0) THEN
           CALL GWF2LAK7AR(
      1             IUNIT(22),IUNIT(44),IUNIT(15),IUNIT(55),NSOL,IGRID)
-          Nlk = NLAKES
+          Nlakeshold = Nlakes
       END IF
       IF(IUNIT(46).GT.0) CALL GWF2GAG7AR(IUNIT(46),IUNIT(44),
      1                                     IUNIT(22),IGRID)
@@ -652,6 +652,7 @@ c     USE LMGMODULE
 C
 C1----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
           Szcheck = 0
+          iss = issflg(kper)
           IF ( gsflag==1 ) Szcheck = 1
 !          DO 30 KITER = 1, MXITER
            KITER = 0
@@ -717,18 +718,19 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Sziters = Sziters + 1
               Maxgziter = KKITER
             ENDIF
-            IF(IUNIT(44).GT.0) CALL MODSIM2SFR(Diversions,Idivert)
+            IF(IUNIT(44).GT.0.and.iss==0) CALL MODSIM2SFR(Diversions,
+     +                                                     Idivert)
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
      2                           IUNIT(64),IGRID)  
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
      1                              IUNIT(22),IUNIT(63),IUNIT(8), 
      2                              IUNIT(55),IGRID)  
-            IF(IUNIT(44).GT.0) CALL SFR2MODSIM(EXCHANGE)
+            IF(IUNIT(44).GT.0.and.iss==0) CALL SFR2MODSIM(EXCHANGE)
             IF(IUNIT(22).GT.0) THEN
                 CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
      1                                     IUNIT(44),IUNIT(55),IGRID)
-                CALL LAK2MODSIM(DELTAVOL)
+                IF(iss==0)CALL LAK2MODSIM(DELTAVOL)
             ENDIF
             IF(IUNIT(50).GT.0) THEN
               IF (IUNIT(1).GT.0) THEN
