@@ -55,7 +55,8 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !     MFNWT_INIT - Initialize MODFLOW module - get parameter values
 !***********************************************************************
 C
-      SUBROUTINE MFNWT_INIT(AFR) BIND(C,NAME="MFNWT_INIT")
+      SUBROUTINE MFNWT_INIT(AFR, Diversions, Idivert) 
+     &                 BIND(C,NAME="MFNWT_INIT")
 C      
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_INIT
 C
@@ -77,6 +78,8 @@ C1------USE package modules.
       INCLUDE 'openspec.inc'
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
+      INTEGER, INTENT(IN) :: Idivert(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
 ! Functions
       INTRINSIC DBLE
       INTEGER, EXTERNAL :: numchars
@@ -419,7 +422,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       ENDIF
 
       ! run SS if needed, read to current stress period, read restart if needed
-      CALL SET_STRESS_DATES(AFR)
+      CALL SET_STRESS_DATES(AFR, Diversions, Idivert)
       CALL SETCONVFACTORS()
 
       Delt_save = DELT
@@ -597,7 +600,8 @@ C     *************************************************************
 C     RUN THE MODFLOW SOLVER ROUTINE WITH THE LATEST VALUES OF 
 C     ISEG UPDATED BY MODSIM.
 C     *************************************************************
-      SUBROUTINE MFNWT_RUN(AFR) BIND(C,NAME="MFNWT_RUN")
+      SUBROUTINE MFNWT_RUN(AFR, Diversions, Idivert) 
+     &           BIND(C,NAME="MFNWT_RUN")
 C
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_RUN
 C
@@ -625,6 +629,8 @@ c     USE LMGMODULE
       IMPLICIT NONE
       INTEGER I
       LOGICAL, INTENT(IN) :: AFR
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
+      INTEGER, INTENT(IN) :: Idivert(*)
 !      CHARACTER*16 TEXT
 !      DATA TEXT /'            HEAD'/
 !      CHARACTER*20 FMTOUT, CRADFM
@@ -705,12 +711,13 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Sziters = Sziters + 1
               Maxgziter = KKITER
             ENDIF
+            IF(IUNIT(44).GT.0) CALL MODSIM2SFR(Diversions,Idivert)
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
-     2                           IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
+     2                           IUNIT(64),IGRID)  
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
      1                              IUNIT(22),IUNIT(63),IUNIT(8), 
-     2                              IUNIT(55),IGRID)   !cjm (added IUNIT(8))
+     2                              IUNIT(55),IGRID)  
             IF(IUNIT(22).GT.0) CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
      1                                     IUNIT(44),IUNIT(55),IGRID)
             IF(IUNIT(50).GT.0) THEN
@@ -1680,7 +1687,7 @@ C
 !***********************************************************************
 !     READ AND PREPARE INFORMATION FOR STRESS PERIOD.
 !***********************************************************************
-      SUBROUTINE SET_STRESS_DATES(AFR)
+      SUBROUTINE SET_STRESS_DATES(AFR, Diversions, Idivert)
       USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
@@ -1691,6 +1698,8 @@ C
       IMPLICIT NONE
       ! Arguments
       LOGICAL, INTENT(IN) :: AFR
+      INTEGER, INTENT(IN) :: Idivert(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
       EXTERNAL :: RESTART1READ
       INTEGER, EXTERNAL :: compute_julday, control_integer_array
 !      DOUBLE PRECISION, EXTERNAL :: compute_julday
@@ -1751,7 +1760,7 @@ C
             ! DELT = 1.0 ! ?? what if steady state PERLEN not equal one day, DELT set in MFNWT_RDSTRESS
             Steady_state = 1
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-            CALL MFNWT_RUN(AFR)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+            CALL MFNWT_RUN(AFR, Diversions, Idivert)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
             CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
             Steady_state = 0
             IF ( ICNVG==0 ) THEN

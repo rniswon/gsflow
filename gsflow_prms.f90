@@ -2,7 +2,7 @@
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      SUBROUTINE gsflow_prms(Process_mode, AFR, Diversions) BIND(C,NAME="gsflow_prms")  ! need vectors
+      SUBROUTINE gsflow_prms(Process_mode, AFR, Diversions, Idivert) BIND(C,NAME="gsflow_prms")  ! need vectors
       
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
       
@@ -12,9 +12,9 @@
       IMPLICIT NONE
 ! Arguments
       !CHARACTER(LEN=*), INTENT(IN) :: Arg
-      INTEGER, INTENT(IN) :: Process_mode
+      INTEGER, INTENT(IN) :: Process_mode, Idivert(*)
       LOGICAL, INTENT(INOUT) :: AFR
-      DOUBLE PRECISION, INTENT(IN) :: Diversions(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
 ! Functions
       INTRINSIC :: DATE_AND_TIME, INT
       INTEGER, EXTERNAL :: check_dims, basin, climateflow, prms_time
@@ -186,7 +186,7 @@
           ENDIF
         ENDIF
 
-        IF ( GSFLOW_flag==1 ) CALL MFNWT_INIT(AFR)
+        IF ( GSFLOW_flag==1 ) CALL MFNWT_INIT(AFR, Diversions, Idivert)
 
 !        Model_control_file = "D:\EDM_LT\GitHub\gsflow.git\gsflow_examples.git\sagehen_3lay_modsim\windows\gsflow_prms.control"
         nc = numchars(Model_control_file)
@@ -215,7 +215,7 @@
         WRITE ( Logunt, 9004 ) 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
 
       ELSEIF ( Process(:7)=='setdims' ) THEN
-        dmy = setdims(AFR) ! if MODFLOW only the execution stops in setdims
+        dmy = setdims(AFR, Diversions, Idivert) ! if MODFLOW only the execution stops in setdims
 
         IF ( Model==12 .OR. Model==13 ) RETURN ! MODSIM or MODSIM-MODFLOW modes
 
@@ -430,7 +430,7 @@
         IF ( Process_flag==0 ) THEN
 ! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST GSFLOW-MODSIM ITERATION
           CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-          CALL MFNWT_RUN(AFR)  !SOLVE GW SW EQUATIONS FOR GSFLOW-MODSIM ITERATION
+          CALL MFNWT_RUN(AFR, Diversions, Idivert)  !SOLVE GW SW EQUATIONS FOR GSFLOW-MODSIM ITERATION
 
 ! The following modules are in the MODFLOW iteration loop
 ! (contained in gsflow_modflow.f).
@@ -535,7 +535,7 @@
 !***********************************************************************
 !     declare the dimensions
 !***********************************************************************
-      INTEGER FUNCTION setdims(AFR)
+      INTEGER FUNCTION setdims(AFR, Diversions, Idivert)
       USE PRMS_MODULE
       USE GLOBAL, ONLY: NSTP, NPER
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_OCBUDGET, MFNWT_TIMEADVANCE
@@ -543,6 +543,8 @@
       IMPLICIT NONE
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
+      INTEGER, INTENT(IN) :: Idivert(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
 ! Functions
       INTEGER, EXTERNAL :: decldim, declfix, control_integer_array
       INTEGER, EXTERNAL :: control_string, control_integer, compute_julday
@@ -665,12 +667,12 @@
         mf_timestep = 1
         test = gsfdecl()
         IF ( test/=0 ) CALL module_error(MODNAME, 'declare', test)
-        CALL MFNWT_INIT(AFR)
+        CALL MFNWT_INIT(AFR, Diversions, Idivert)
         PRINT *, ' '
         WRITE (Logunt, '(1X)')
         DO WHILE ( Kper_mfo<=Nper )
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-            CALL MFNWT_RUN(AFR)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+            CALL MFNWT_RUN(AFR, Diversions, Idivert)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
             CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
           IF ( mf_timestep==NSTP(Kper_mfo) ) THEN
             Kper_mfo = Kper_mfo + 1
