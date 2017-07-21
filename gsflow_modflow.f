@@ -55,8 +55,8 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !     MFNWT_INIT - Initialize MODFLOW module - get parameter values
 !***********************************************************************
 C
-      SUBROUTINE MFNWT_INIT(AFR, Diversions, Idivert) 
-     &                 BIND(C,NAME="MFNWT_INIT")
+      SUBROUTINE MFNWT_INIT(AFR, Diversions, Idivert,EXCHANGE,DELTAVOL,
+     &                      Nlk)  !BIND(C,NAME="MFNWT_INIT")
 C      
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_INIT
 C
@@ -71,15 +71,17 @@ C1------USE package modules.
       USE GWFBASMODULE
       USE GWFUZFMODULE, ONLY: Version_uzf
       USE GWFSFRMODULE, ONLY: Version_sfr
-      USE GWFLAKMODULE, ONLY: Version_lak
+      USE GWFLAKMODULE, ONLY: Version_lak, Nlakes
 !gsf  USE PCGN
       IMPLICIT NONE
       INTEGER :: I
       INCLUDE 'openspec.inc'
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      INTEGER, INTENT(IN) :: Idivert(600)
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(600)
+      INTEGER, INTENT(IN) :: Idivert(*)
+      INTEGER, INTENT(INOUT) :: Nlk
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*)
 ! Functions
       INTRINSIC DBLE
       INTEGER, EXTERNAL :: numchars
@@ -304,8 +306,11 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
       IF(IUNIT(55).GT.0) CALL GWF2UZF1AR(IUNIT(55),IUNIT(1),
      1                                   IUNIT(23),IUNIT(37),
      2                                   IUNIT(63),IGRID)
-      IF(IUNIT(22).GT.0 .OR. IUNIT(44).GT.0) CALL GWF2LAK7AR(
+      IF(IUNIT(22).GT.0 .OR. IUNIT(44).GT.0) THEN
+          CALL GWF2LAK7AR(
      1             IUNIT(22),IUNIT(44),IUNIT(15),IUNIT(55),NSOL,IGRID)
+          Nlk = NLAKES
+      END IF
       IF(IUNIT(46).GT.0) CALL GWF2GAG7AR(IUNIT(46),IUNIT(44),
      1                                     IUNIT(22),IGRID)
       IF(IUNIT(39).GT.0) CALL GWF2ETS7AR(IUNIT(39),IGRID)
@@ -422,7 +427,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       ENDIF
 
       ! run SS if needed, read to current stress period, read restart if needed
-      CALL SET_STRESS_DATES(AFR, Diversions, Idivert)
+      CALL SET_STRESS_DATES(AFR, Diversions, Idivert, EXCHANGE,DELTAVOL)
       CALL SETCONVFACTORS()
 
       Delt_save = DELT
@@ -600,7 +605,7 @@ C     *************************************************************
 C     RUN THE MODFLOW SOLVER ROUTINE WITH THE LATEST VALUES OF 
 C     ISEG UPDATED BY MODSIM.
 C     *************************************************************
-      SUBROUTINE MFNWT_RUN(AFR, Diversions, Idivert) 
+      SUBROUTINE MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE,DELTAVOL)
      &           BIND(C,NAME="MFNWT_RUN")
 C
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_RUN
@@ -629,8 +634,9 @@ c     USE LMGMODULE
       IMPLICIT NONE
       INTEGER I
       LOGICAL, INTENT(IN) :: AFR
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(600)
-      INTEGER, INTENT(IN) :: Idivert(600)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*), EXCHANGE(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(*)
+      INTEGER, INTENT(IN) :: Idivert(*)
 !      CHARACTER*16 TEXT
 !      DATA TEXT /'            HEAD'/
 !      CHARACTER*20 FMTOUT, CRADFM
@@ -718,8 +724,12 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
      1                              IUNIT(22),IUNIT(63),IUNIT(8), 
      2                              IUNIT(55),IGRID)  
-            IF(IUNIT(22).GT.0) CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
+            IF(IUNIT(44).GT.0) CALL SFR2MODSIM(EXCHANGE)
+            IF(IUNIT(22).GT.0) THEN
+                CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
      1                                     IUNIT(44),IUNIT(55),IGRID)
+                CALL LAK2MODSIM(DELTAVOL)
+            ENDIF
             IF(IUNIT(50).GT.0) THEN
               IF (IUNIT(1).GT.0) THEN
                 CALL GWF2MNW27BCF(KPER,IGRID)
@@ -1687,7 +1697,8 @@ C
 !***********************************************************************
 !     READ AND PREPARE INFORMATION FOR STRESS PERIOD.
 !***********************************************************************
-      SUBROUTINE SET_STRESS_DATES(AFR, Diversions, Idivert)
+      SUBROUTINE SET_STRESS_DATES(AFR, Diversions, Idivert, 
+     &    EXCHANGE, DELTAVOL)
       USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
@@ -1698,8 +1709,9 @@ C
       IMPLICIT NONE
       ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      INTEGER, INTENT(IN) :: Idivert(600)
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(600)
+      INTEGER, INTENT(IN) :: Idivert(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*)
       EXTERNAL :: RESTART1READ
       INTEGER, EXTERNAL :: compute_julday, control_integer_array
 !      DOUBLE PRECISION, EXTERNAL :: compute_julday
@@ -1760,7 +1772,7 @@ C
             ! DELT = 1.0 ! ?? what if steady state PERLEN not equal one day, DELT set in MFNWT_RDSTRESS
             Steady_state = 1
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-            CALL MFNWT_RUN(AFR, Diversions, Idivert)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+            CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
             CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
             Steady_state = 0
             IF ( ICNVG==0 ) THEN
