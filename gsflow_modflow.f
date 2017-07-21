@@ -78,8 +78,8 @@ C1------USE package modules.
       INCLUDE 'openspec.inc'
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      INTEGER, INTENT(IN) :: Idivert(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
+      INTEGER, INTENT(IN) :: Idivert(600)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(600)
 ! Functions
       INTRINSIC DBLE
       INTEGER, EXTERNAL :: numchars
@@ -629,8 +629,8 @@ c     USE LMGMODULE
       IMPLICIT NONE
       INTEGER I
       LOGICAL, INTENT(IN) :: AFR
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
-      INTEGER, INTENT(IN) :: Idivert(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(600)
+      INTEGER, INTENT(IN) :: Idivert(600)
 !      CHARACTER*16 TEXT
 !      DATA TEXT /'            HEAD'/
 !      CHARACTER*20 FMTOUT, CRADFM
@@ -1698,8 +1698,8 @@ C
       IMPLICIT NONE
       ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      INTEGER, INTENT(IN) :: Idivert(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
+      INTEGER, INTENT(IN) :: Idivert(600)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(600)
       EXTERNAL :: RESTART1READ
       INTEGER, EXTERNAL :: compute_julday, control_integer_array
 !      DOUBLE PRECISION, EXTERNAL :: compute_julday

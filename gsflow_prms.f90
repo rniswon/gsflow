@@ -12,9 +12,9 @@
       IMPLICIT NONE
 ! Arguments
       !CHARACTER(LEN=*), INTENT(IN) :: Arg
-      INTEGER, INTENT(IN) :: Process_mode, Idivert(*)
+      INTEGER, INTENT(IN) :: Process_mode, Idivert(600)
       LOGICAL, INTENT(INOUT) :: AFR
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(600)
 ! Functions
       INTRINSIC :: DATE_AND_TIME, INT
       INTEGER, EXTERNAL :: check_dims, basin, climateflow, prms_time
@@ -543,8 +543,8 @@
       IMPLICIT NONE
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      INTEGER, INTENT(IN) :: Idivert(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
+      INTEGER, INTENT(IN) :: Idivert(600)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(600)
 ! Functions
       INTEGER, EXTERNAL :: decldim, declfix, control_integer_array
       INTEGER, EXTERNAL :: control_string, control_integer, compute_julday
