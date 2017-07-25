@@ -2,21 +2,23 @@
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      SUBROUTINE gsflow_prms(Process_mode, AFR, NLAKES, Dim, Diversions, Idivert, EXCHANGE, DELTAVOL) BIND(C,NAME="gsflow_prms")  ! need vectors
+      SUBROUTINE gsflow_prms(Process_mode, AFR, Nsegshold, Nlakeshold, Diversions, Idivert, EXCHANGE, DELTAVOL) BIND(C,NAME="gsflow_prms")  ! need vectors
       
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
       
       USE PRMS_MODULE
       USE PRMS_READ_PARAM_FILE, ONLY: Version_read_parameter_file
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_TIMEADVANCE
+      USE GWFSFRMODULE, ONLY: NSS
+      USE GWFLAKMODULE, ONLY: NLAKES
       IMPLICIT NONE
 ! Arguments
       !CHARACTER(LEN=*), INTENT(IN) :: Arg
-      INTEGER, INTENT(IN) :: Process_mode, Dim, Idivert(Dim)
-      INTEGER, INTENT(INOUT) :: NLAKES
+      INTEGER, INTENT(IN) :: Process_mode, Idivert(Nsegment)
+      INTEGER, INTENT(INOUT) :: Nsegshold, Nlakeshold
       LOGICAL, INTENT(INOUT) :: AFR
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Dim)
-      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(NLAKES), EXCHANGE(Nsegment)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegment)
+      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Numlakes), EXCHANGE(Nsegment)
 ! Functions
       INTRINSIC :: DATE_AND_TIME, INT
       INTEGER, EXTERNAL :: check_dims, basin, climateflow, prms_time
@@ -68,11 +70,12 @@
         Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
 
-        PRMS_versn = 'gsflow_prms.f90 2017-07-17 16:30:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-07-25 13:32:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
           IF ( check_dims()/=0 ) STOP
+          Nsegshold = Nsegment
         ENDIF
 
         ! GSFLOW, GSFLOW-MODSIM
@@ -188,7 +191,19 @@
           ENDIF
         ENDIF
 
-        IF ( GSFLOW_flag==1 ) CALL MFNWT_INIT(AFR, Diversions, Idivert,EXCHANGE, DELTAVOL,NLAKES)
+        IF ( GSFLOW_flag==1 ) THEN
+          CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, Nlakeshold)
+          IF ( Have_lakes==1 .AND. Numlakes/=NLAKES ) THEN
+            PRINT *, 'ERROR, NLAKES not equal to Numlakes'
+            PRINT *, '       NLAKES=', NLAKES, '; Numlakes=', Numlakes
+            STOP
+          ENDIF
+          IF ( Nsegment/=NSS ) THEN
+            PRINT *, 'ERROR, NSS not equal to nsegment'
+            PRINT *, '       NSS=', NSS, '; nsegment=', Nsegment
+            STOP
+          ENDIF
+        ENDIF
 
 !        Model_control_file = "D:\EDM_LT\GitHub\gsflow.git\gsflow_examples.git\sagehen_3lay_modsim\windows\gsflow_prms.control"
         nc = numchars(Model_control_file)
@@ -217,7 +232,7 @@
         WRITE ( Logunt, 9004 ) 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
 
       ELSEIF ( Process(:7)=='setdims' ) THEN
-        dmy = setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL) ! if MODFLOW only the execution stops in setdims
+        dmy = setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, Nlakeshold) ! if MODFLOW only the execution stops in setdims
 
         IF ( Model==12 .OR. Model==13 ) RETURN ! MODSIM or MODSIM-MODFLOW modes
 
@@ -537,7 +552,7 @@
 !***********************************************************************
 !     declare the dimensions
 !***********************************************************************
-      INTEGER FUNCTION setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL)
+      INTEGER FUNCTION setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, Nlakeshold)
       USE PRMS_MODULE
       USE GLOBAL, ONLY: NSTP, NPER
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_OCBUDGET, MFNWT_TIMEADVANCE
@@ -545,6 +560,7 @@
       IMPLICIT NONE
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
+      INTEGER, INTENT(INOUT) :: Nlakeshold
       INTEGER, INTENT(IN) :: Idivert(*)
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
       DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*)
@@ -556,7 +572,7 @@
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
-      INTEGER :: idim, iret, j, Nlakes
+      INTEGER :: idim, iret, j
       INTEGER :: test, mf_timestep, startday, endday
 !***********************************************************************
       setdims = 1
@@ -590,7 +606,10 @@
       PRMS_flag = 1
       GSFLOW_flag = 0
 !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 11=GSFLOW-MODSIM; 12=MODSIM-PRMS; 13=MODSIM-MODFLOW; 14=MODSIM)
-      IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:6)=='gsflow' .OR. Model_mode(:4)=='    ') THEN
+      IF ( Model_mode(:13)=='GSFLOW-MODSIM' ) THEN
+        Model = 10
+        GSFLOW_flag = 1
+      ELSEIF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:6)=='gsflow' .OR. Model_mode(:4)=='    ') THEN
         Model = 0
         GSFLOW_flag = 1
       ELSEIF ( Model_mode(:4)=='PRMS' .OR. Model_mode(:4)=='prms' .OR. Model_mode(:5)=='DAILY' )THEN
@@ -598,9 +617,6 @@
       ELSEIF ( Model_mode(:7)=='MODFLOW' .OR. Model_mode(:7)=='modflow') THEN
         Model = 2
         PRMS_flag = 0
-      ELSEIF ( Model_mode(:13)=='GSFLOW-MODSIM' ) THEN
-        Model = 10
-        GSFLOW_flag = 1
       ELSEIF ( Model_mode(:14)=='MODSIM-MODFLOW' ) THEN
         Model = 12
         PRMS_flag = 0
@@ -670,13 +686,13 @@
         mf_timestep = 1
         test = gsfdecl()
         IF ( test/=0 ) CALL module_error(MODNAME, 'declare', test)
-        CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL,Nlakes)
+        CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, Nlakeshold)
         PRINT *, ' '
         WRITE (Logunt, '(1X)')
         DO WHILE ( Kper_mfo<=Nper )
-            CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-            CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
-            CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
+          CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
+          CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+          CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
           IF ( mf_timestep==NSTP(Kper_mfo) ) THEN
             Kper_mfo = Kper_mfo + 1
             mf_timestep = 0
@@ -870,7 +886,7 @@
      &     'Number of GWR links for cascading flow')/=0 ) CALL read_error(7, 'ncascdgw')
 
 ! nsegment dimension
-      IF ( decldim('nsegment', 0, MAXDIM, 'Number of stream-channel segments')/=0 ) CALL read_error(7, 'nsegment')
+      IF ( decldim('nsegment', 1, MAXDIM, 'Number of stream-channel segments')/=0 ) CALL read_error(7, 'nsegment')
 
 ! subbasin dimensions
       IF ( control_integer(Subbasin_flag, 'subbasin_flag')/=0 ) Subbasin_flag = 1
@@ -941,7 +957,7 @@
       IF ( decldim('nhru', 1, MAXDIM, 'Number of HRUs')/=0 ) CALL read_error(7, 'nhru')
       IF ( decldim('nssr', 1, MAXDIM, 'Number of subsurface reservoirs')/=0 ) CALL read_error(7, 'nssr')
       IF ( decldim('nlake', 0, MAXDIM, 'Number of lake HRUs')/=0 ) CALL read_error(7, 'nlake')
-      IF ( decldim('numlakes', 0, MAXDIM, 'Number of lakes')/=0 ) CALL read_error(7, 'numlakes')
+      IF ( decldim('numlakes', 1, MAXDIM, 'Number of lakes')/=0 ) CALL read_error(7, 'numlakes')
       IF ( decldim('npoigages', 0, MAXDIM, 'Number of POI gages')/=0 ) CALL read_error(7, 'npoigages')
 
 ! Time-series data stations, need to know if in Data File

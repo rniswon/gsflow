@@ -7,7 +7,7 @@ C     ******************************************************************
 C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
 !rgn------NEW VERSION NUMBER 1.1.2, 9/15/2016
-!rsr------MODIFIED for use in GSFLOW and GSFLOW/MODSIM
+!rsr------MODIFIED for use in GSFLOW and GSFLOW-MODSIM
 C     ******************************************************************
 
 !***********************************************************************
@@ -23,7 +23,7 @@ C     ******************************************************************
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-07-10 11:16:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-07-25 12:30:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -56,7 +56,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !***********************************************************************
 C
       SUBROUTINE MFNWT_INIT(AFR, Diversions, Idivert,EXCHANGE,DELTAVOL,
-     &                      Nlk)  !BIND(C,NAME="MFNWT_INIT")
+     &                      Nlakeshold)  !BIND(C,NAME="MFNWT_INIT")
 C      
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_INIT
 C
@@ -71,7 +71,7 @@ C1------USE package modules.
       USE GWFBASMODULE
       USE GWFUZFMODULE, ONLY: Version_uzf
       USE GWFSFRMODULE, ONLY: Version_sfr
-      USE GWFLAKMODULE, ONLY: Version_lak, Nlakes
+      USE GWFLAKMODULE, ONLY: Version_lak, NLAKES
 !gsf  USE PCGN
       IMPLICIT NONE
       INTEGER :: I
@@ -79,7 +79,7 @@ C1------USE package modules.
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
       INTEGER, INTENT(IN) :: Idivert(*)
-      INTEGER, INTENT(INOUT) :: Nlk
+      INTEGER, INTENT(INOUT) :: Nlakeshold
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
       DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*)
 ! Functions
@@ -93,8 +93,8 @@ C
       CHARACTER*80 HEADNG(2)
       CHARACTER*200 FNAME
       CHARACTER*4 solver
-      CHARACTER OUTFILE*255,DIRNAME*200
-      INTEGER   ISTAT
+!      CHARACTER OUTFILE*255,DIRNAME*200
+!      INTEGER   ISTAT
 !gsf  INTEGER IBDT(8)
 C
       CHARACTER*4 CUNIT(NIUNIT)
@@ -309,7 +309,7 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
       IF(IUNIT(22).GT.0 .OR. IUNIT(44).GT.0) THEN
           CALL GWF2LAK7AR(
      1             IUNIT(22),IUNIT(44),IUNIT(15),IUNIT(55),NSOL,IGRID)
-          Nlk = NLAKES
+          Nlakeshold = NLAKES
       END IF
       IF(IUNIT(46).GT.0) CALL GWF2GAG7AR(IUNIT(46),IUNIT(44),
      1                                     IUNIT(22),IGRID)
@@ -454,15 +454,15 @@ C
 !        SPECIFICATIONS:
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model, Kper_mfo, Print_debug, Kkiter,
+      USE PRMS_MODULE, ONLY: Model, Kper_mfo, Print_debug,
      &    Logunt, Init_vars_from_file, GSFLOW_flag
 C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
 !      USE GWFHUFMODULE, ONLY:IOHUFHDS,IOHUFFLWS
-      USE GWFEVTMODULE, ONLY:NEVTOP
-      USE GWFRCHMODULE, ONLY:NRCHOP
-      USE GWFSFRMODULE, ONLY:SEG, NSS !, RECHSAVE    !edm (5/1/13) need to overwrite diversions with MODSIM values
+!      USE GWFEVTMODULE, ONLY:NEVTOP
+!      USE GWFRCHMODULE, ONLY:NRCHOP
+!      USE GWFSFRMODULE, ONLY:SEG, NSS !, RECHSAVE    !edm (5/1/13) need to overwrite diversions with MODSIM values
 !      USE GWFUZFMODULE, ONLY:FINF
       USE PCGMODULE
 c     USE LMGMODULE
@@ -483,8 +483,9 @@ c     USE LMGMODULE
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms
       INTRINSIC MIN
 ! Local Variables
-      INTEGER :: retval, KITER, iss, iprt
-      INTEGER :: ITREAL2
+!      INTEGER :: retval, KITER, iss, iprt
+!      INTEGER :: ITREAL2
+      INTEGER :: iss, iprt
 !***********************************************************************
 C
 C7------SIMULATE EACH STRESS PERIOD.
@@ -585,7 +586,7 @@ C
           IF ( Model.EQ.2 ) THEN
 C
 C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
-            iprt = 0
+            iprt = 0 ! rsr, using FORMAT 26 is not done because of this statement
             CALL UMESPR('SOLVING FOR HEAD',' ',IOUT)
             IF ( iprt==0 ) THEN
               WRITE (Logunt, 25) KPER, KSTP
@@ -614,15 +615,14 @@ C
 !        SPECIFICATIONS:
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model, Kper_mfo, Print_debug, Kkiter,
-     &    Logunt, Init_vars_from_file, GSFLOW_flag
+      USE PRMS_MODULE, ONLY: Model, Kkiter
 C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
 !      USE GWFHUFMODULE, ONLY:IOHUFHDS,IOHUFFLWS
       USE GWFEVTMODULE, ONLY:NEVTOP
       USE GWFRCHMODULE, ONLY:NRCHOP
-      USE GWFSFRMODULE, ONLY:SEG, NSS !, RECHSAVE    !edm (5/1/13) need to overwrite diversions with MODSIM values
+!      USE GWFSFRMODULE, ONLY:SEG, NSS !, RECHSAVE    !edm (5/1/13) need to overwrite diversions with MODSIM values
 !      USE GWFUZFMODULE, ONLY:FINF
       USE PCGMODULE
 c     USE LMGMODULE
@@ -644,14 +644,16 @@ c     USE LMGMODULE
 ! FUNCTIONS AND SUBROUTINES
       INTEGER, EXTERNAL :: soilzone
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms
+      EXTERNAL :: MODSIM2SFR, SFR2MODSIM, LAK2MODSIM
       INTRINSIC MIN
 ! Local Variables
-      INTEGER :: retval, KITER, iss, iprt
+      INTEGER :: retval, KITER, iss
       INTEGER :: ITREAL2
 !***********************************************************************
 C
 C1----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
           Szcheck = 0
+          iss = ISSFLG(KKPER)
           IF ( gsflag==1 ) Szcheck = 1
 !          DO 30 KITER = 1, MXITER
            KITER = 0
@@ -717,18 +719,24 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Sziters = Sziters + 1
               Maxgziter = KKITER
             ENDIF
-            IF(IUNIT(44).GT.0) CALL MODSIM2SFR(Diversions,Idivert)
+!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 11=GSFLOW-MODSIM; 12=MODSIM-PRMS; 13=MODSIM-MODFLOW; 14=MODSIM)
+            IF ( Model>10 ) THEN
+              IF(IUNIT(44).GT.0.AND.iss==0) CALL MODSIM2SFR(Diversions,
+     +                                                      Idivert)
+            ENDIF
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
      2                           IUNIT(64),IGRID)  
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
      1                              IUNIT(22),IUNIT(63),IUNIT(8), 
      2                              IUNIT(55),IGRID)  
-            IF(IUNIT(44).GT.0) CALL SFR2MODSIM(EXCHANGE)
+            IF ( Model>10 ) THEN
+              IF(IUNIT(44).GT.0 .AND. iss==0) CALL SFR2MODSIM(EXCHANGE)
+            ENDIF
             IF(IUNIT(22).GT.0) THEN
                 CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
      1                                     IUNIT(44),IUNIT(55),IGRID)
-                CALL LAK2MODSIM(DELTAVOL)
+                IF(Model>10 .AND. iss==0) CALL LAK2MODSIM(DELTAVOL)
             ENDIF
             IF(IUNIT(50).GT.0) THEN
               IF (IUNIT(1).GT.0) THEN
@@ -905,9 +913,9 @@ C
       USE GWFEVTMODULE, ONLY:NEVTOP
       USE GWFRCHMODULE, ONLY:NRCHOP
 !      USE GWFNWTMODULE, ONLY:ICNVGFLG
-      USE GWFSFRMODULE, ONLY:SEG        !edm (5/1/13) need to overwrite diversions with MODSIM values
+!      USE GWFSFRMODULE, ONLY:SEG        !edm (5/1/13) need to overwrite diversions with MODSIM values
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model, Print_debug, Logunt, Timestep,
+      USE PRMS_MODULE, ONLY: Print_debug, Logunt, Timestep,
      &    Kkiter
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
