@@ -78,7 +78,7 @@
           Nsegshold = Nsegment
         ENDIF
 
-        ! GSFLOW, GSFLOW-MODSIM
+        ! GSFLOW, MODSIM-GSFLOW
         IF ( GSFLOW_flag==1 ) THEN
           call_modules = gsfdecl()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
@@ -441,13 +441,13 @@
         IF ( CsvON_OFF>0 ) CALL prms_summary()
 
 ! for GSFLOW simulations
-! TODO below need this for gsflow-modsim and mfnwt-modsim
+! TODO below need this for MODSIM-GSFLOW and MODSIM-MODFLOW
       ELSEIF ( GSFLOW_flag==1 ) THEN
 
         IF ( Process_flag==0 ) THEN
-! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST GSFLOW-MODSIM ITERATION
+! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST MODSIM-GSFLOW ITERATION
           CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-          CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL)  !SOLVE GW SW EQUATIONS FOR GSFLOW-MODSIM ITERATION
+          CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL)  !SOLVE GW SW EQUATIONS FOR MODSIM-GSFLOW ITERATION
 
 ! The following modules are in the MODFLOW iteration loop
 ! (contained in gsflow_modflow.f).
@@ -605,8 +605,8 @@
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
       GSFLOW_flag = 0
-!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 11=GSFLOW-MODSIM; 12=MODSIM-PRMS; 13=MODSIM-MODFLOW; 14=MODSIM)
-      IF ( Model_mode(:13)=='GSFLOW-MODSIM' ) THEN
+!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
+      IF ( Model_mode(:13)=='MODSIM-GSFLOW' ) THEN
         Model = 10
         GSFLOW_flag = 1
       ELSEIF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:6)=='gsflow' .OR. Model_mode(:4)=='    ') THEN

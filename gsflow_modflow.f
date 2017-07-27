@@ -7,7 +7,7 @@ C     ******************************************************************
 C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
 !rgn------NEW VERSION NUMBER 1.1.2, 9/15/2016
-!rsr------MODIFIED for use in GSFLOW and GSFLOW-MODSIM
+!rsr------MODIFIED for use in GSFLOW and MODSIM-GSFLOW
 C     ******************************************************************
 
 !***********************************************************************
@@ -719,7 +719,7 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Sziters = Sziters + 1
               Maxgziter = KKITER
             ENDIF
-!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 11=GSFLOW-MODSIM; 12=MODSIM-PRMS; 13=MODSIM-MODFLOW; 14=MODSIM)
+!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
             IF ( Model>10 ) THEN
               IF(IUNIT(44).GT.0.AND.iss==0) CALL MODSIM2SFR(Diversions,
      +                                                      Idivert)
