@@ -70,7 +70,7 @@
         Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
 
-        PRMS_versn = 'gsflow_prms.f90 2017-08-08 15:17:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-08-09 12:00:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -427,7 +427,7 @@
         ELSEIF ( Strmflow_flag==5 ) THEN
           call_modules = strmflow_in_out()
         ELSEIF ( Strmflow_flag==3 ) THEN
-          call_modules = muskingum_lake()
+          IF ( MODSIM_FLAG==0 ) call_modules = muskingum_lake()
         ENDIF
         IF ( call_modules/=0 ) CALL module_error(Strmflow_module, Arg, call_modules)
 
@@ -1141,6 +1141,11 @@
       Stream_order_flag = 0
       IF ( Strmflow_flag>1 .AND. PRMS_flag==1 .AND. GSFLOW_flag==0 ) THEN
         Stream_order_flag = 1 ! strmflow_in_out, muskingum, or muskingum_lake
+      ENDIF
+
+      IF ( MODSIM_flag==1 ) THEN
+        Lake_route_flag = 0
+        Stream_order_flag = 0
       ENDIF
 
       IF ( Stream_temp_flag>0 .AND. Stream_order_flag==1 ) THEN
