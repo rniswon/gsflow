@@ -405,6 +405,7 @@
             WRITE (*, 9001) i
             ierr = 1
 ! must separate condition as lake_hru_id not allocated if have_lakes=0
+            ! rsr, need to check that lake_hru_id not 0
           ENDIF
         ENDIF
       ENDDO

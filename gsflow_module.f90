@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 07/25/2017'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 08/08/2017'
       CHARACTER(LEN=8), SAVE :: Process, Arg
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -24,12 +24,14 @@
       INTEGER, SAVE :: Inputerror_flag, Timestep
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
       INTEGER, SAVE :: Grid_flag, Logunt, First_timestep
-      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag, Have_lakes, Number_timesteps
+      INTEGER, SAVE :: Have_lakes, Prms_warmup, MODSIM_flag
+      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag, Number_timesteps
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
       INTEGER, SAVE :: Dynamic_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Kkiter
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
       CHARACTER(LEN=80), SAVE :: Version_read_control_file
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Lake_In_Out_vol(:)
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
       REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
@@ -51,7 +53,7 @@
       INTEGER, SAVE :: Dyn_snareathresh_flag, Dyn_transp_on_flag
       INTEGER, SAVE :: Dyn_sro2dprst_perv_flag, Dyn_sro2dprst_imperv_flag, Dyn_fallfrost_flag, Dyn_springfrost_flag
       INTEGER, SAVE :: Gwr_transferON_OFF, External_transferON_OFF, Segment_transferON_OFF, Lake_transferON_OFF
-      INTEGER, SAVE :: Stream_temp_flag, Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF, Prms_warmup
+      INTEGER, SAVE :: Stream_temp_flag, Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF
       END MODULE PRMS_MODULE
 
 !***********************************************************************

@@ -1,0 +1,217 @@
+!***********************************************************************
+!     Compute PRMS inflows and outflows for MODSIM lakes and segments
+!***********************************************************************
+      MODULE GSFPRMS2MODSIM
+      IMPLICIT NONE
+!   Module Variables
+      CHARACTER(LEN=18), SAVE :: MODNAME
+!   Declared Variables
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Segment_latflow(:), Lake_InOut_flow(:)
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Lake_latflow(:), Lake_precip(:), Lake_et(:)
+      END MODULE GSFPRMS2MODSIM
+
+!     ******************************************************************
+!     Mapping module to convert PRMS states for use by MODSIM
+!     ******************************************************************
+      INTEGER FUNCTION gsflow_prms2modsim()
+      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file
+      IMPLICIT NONE
+! Functions
+      INTEGER, EXTERNAL :: prms2modsimdecl, prms2modsiminit !, prms2modsimrun
+      EXTERNAL :: gsflow_prms2modsim_restart
+!***********************************************************************
+      gsflow_prms2modsim = 0
+
+      IF ( Process(:3)=='run' ) THEN
+!        gsflow_prms2modsim = prms2modsimrun()
+      ELSEIF ( Process(:4)=='decl' ) THEN
+        gsflow_prms2modsim = prms2modsimdecl()
+      ELSEIF ( Process(:4)=='init' ) THEN
+        IF ( Init_vars_from_file==1 ) CALL gsflow_prms2modsim_restart(1)
+        gsflow_prms2modsim = prms2modsiminit()
+      ELSEIF ( Process(:5)=='clean' ) THEN
+        IF ( Save_vars_to_file==1 ) CALL gsflow_prms2modsim_restart(0)
+      ENDIF
+
+      END FUNCTION gsflow_prms2modsim
+
+!***********************************************************************
+!     prms2modsimdecl - set up parameters
+!   Declared Parameters
+!     hru_area
+!***********************************************************************
+      INTEGER FUNCTION prms2modsimdecl()
+      USE GSFPRMS2MODSIM
+      IMPLICIT NONE
+      INTEGER, EXTERNAL :: declparam, declvar
+      EXTERNAL read_error, print_module
+! Save Variables
+      CHARACTER(LEN=80), SAVE :: Version_gsflow_prms2modsim
+!***********************************************************************
+      prms2modsimdecl = 0
+
+      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2017-08-08 16:11:00Z'
+      CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
+      MODNAME = 'gsflow_prms2modsim'
+
+      END FUNCTION prms2modsimdecl
+
+!***********************************************************************
+!     prms2mfinit - Initialize PRMS2MF module - get parameter values
+!***********************************************************************
+      INTEGER FUNCTION prms2modsiminit()
+      USE GSFPRMS2MODSIM
+      USE PRMS_MODULE, ONLY: Nsegment, Numlakes, &
+     &    Init_vars_from_file, Numlakes
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Lake_hru_id
+      IMPLICIT NONE
+      INTEGER, EXTERNAL :: declvar
+      EXTERNAL read_error
+      INTRINSIC ABS, DBLE
+! Local Variables
+      INTEGER :: i, ii, ierr
+!      DOUBLE PRECISION, ALLOCATABLE, DIMENSION(:) :: seg_area
+!***********************************************************************
+      prms2modsiminit = 0
+      ierr = 0
+
+!      IF ( Numlakes/=NLAKES ) THEN ! use MODSIM dimensions
+!        PRINT *, 'ERROR, PRMS dimension numlakes must equal Lake Package NLAKES'
+!        PRINT *, '       nlake=', Numlakes, ' NLAKES=', NLAKES
+!        ierr = 1
+!      ENDIF
+
+!      IF ( Nsegment/=NSS ) THEN
+!        PRINT *, 'ERROR, nsegment must equal NSS', Nsegment, NSS
+!        ierr = 1
+!      ENDIF
+
+      ALLOCATE ( Segment_latflow(Nsegment) )
+      IF ( declvar(MODNAME, 'Segment_latflow', 'nsegment', Nsegment, 'double', &
+     &     'Lateral flow to each segment', &
+     &     'acre-ft', Segment_latflow)/=0 ) CALL read_error(3, 'Segment_latflow')
+      ALLOCATE ( Lake_latflow(Numlakes) )
+      IF ( declvar(MODNAME, 'Lake_latflow', 'numlakes', Numlakes, 'double', &
+     &     'Total lateral flow into each lake', &
+     &     'acre-ft', Lake_latflow)/=0 ) CALL read_error(3, 'Lake_latflow')
+      ALLOCATE ( Lake_precip(Numlakes) )
+      IF ( declvar(MODNAME, 'Lake_precip', 'numlakes', Numlakes, 'double', &
+     &     'Precipitation into each lake', &
+     &     'acre-ft', Lake_precip)/=0 ) CALL read_error(3, 'Lake_precip')
+      ALLOCATE ( Lake_et(Numlakes) )
+      IF ( declvar(MODNAME, 'Lake_et', 'numlakes', Numlakes, 'double', &
+     &     'Evaporation from each lake', &
+     &     'acre-ft', Lake_et)/=0 ) CALL read_error(3, 'Lake_et')
+      ALLOCATE ( Lake_InOut_flow(Numlakes) )
+      IF ( Init_vars_from_file==0 ) THEN
+        Segment_latflow = 0.0D0
+        Lake_latflow = 0.0D0
+        Lake_precip = 0.0D0
+        Lake_et = 0.0D0
+        Lake_InOut_flow = 0.0D0
+      ENDIF
+
+      ! sanity check
+      DO ii = 1, Active_hrus
+        i = Hru_route_order(ii)
+        IF ( Hru_type(i)==2 ) THEN
+          ! Lake package active if Have_lakes=1
+          IF ( Lake_hru_id(i)==0 ) THEN
+            WRITE (*, 9001) i
+            ierr = 1
+! must separate condition as lake_hru_id not allocated if have_lakes=0
+          ENDIF
+        ENDIF
+      ENDDO
+      IF ( ierr==1 ) STOP
+
+      !DEALLOCATE ( nseg_rch, seg_area ) ! need seg_area
+
+ 9001 FORMAT ('ERROR, HRU:', I7, ' is specified as a lake (hru_type=2) and lake_hru_id is specified as 0', /)
+
+      END FUNCTION prms2modsiminit
+
+!***********************************************************************
+!     prms2modsimrun - Maps the PRMS results to MODSIM lakes and segments
+!***********************************************************************
+      INTEGER FUNCTION prms2modsimrun(Lake_In_Out_vol)
+      USE GSFPRMS2MODSIM
+      USE PRMS_MODULE, ONLY: Nsegment, Numlakes
+      USE PRMS_BASIN, ONLY: FT2_PER_ACRE, Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_hru_id
+      USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
+      USE PRMS_FLOWVARS, ONLY: Hru_actet
+      USE PRMS_SET_TIME, ONLY: Cfs_conv, Timestep_seconds
+      USE PRMS_SRUNOFF, ONLY: Hortonian_lakes, Strm_seg_in
+      USE PRMS_SOILZONE, ONLY: Lakein_sz
+!      USE PRMS_GWFLOW, ONLY: 
+      IMPLICIT NONE
+! Arguments
+      DOUBLE PRECISION :: Lake_In_Out_vol(*)
+! Local Variables
+      INTEGER :: ii, ilake, j, i
+!***********************************************************************
+      prms2modsimrun = 0
+
+!-----------------------------------------------------------------------
+! Flow to stream segments in Strm_seg_in, units cfs
+!-----------------------------------------------------------------------
+      Cfs_conv = FT2_PER_ACRE/12.0D0/Timestep_seconds ! need segment_latflow in acre-ft
+      DO i = 1, Nsegment
+        Segment_latflow(i) = Strm_seg_in(i) / Cfs_conv
+      ENDDO
+
+!-----------------------------------------------------------------------
+! Add runoff and precip to lakes
+! Pass in hru_actet for the lake
+!-----------------------------------------------------------------------
+      Lake_latflow = 0.0D0
+      Lake_precip = 0.0D0
+      Lake_et = 0.0D0
+      Lake_InOut_flow = 0.0D0
+      DO ii = 1, Active_hrus
+        j = Hru_route_order(ii)
+        IF ( Hru_type(j)==2 ) THEN
+          ilake = Lake_hru_id(j)
+          ! need gwflow ??
+          Lake_latflow(ilake) = Lake_latflow(ilake) + (Lakein_sz(j)+Hortonian_lakes(j))*Hru_area(j)/12.0D0 
+          Lake_precip(ilake) = Lake_precip(ilake) + Hru_ppt(j)*Hru_area(j)/12.0D0 
+          Lake_et(ilake) = Lake_et(ilake) + Hru_actet(j)*Hru_area(j)/12.0D0 ! acre-ft per day.
+          Lake_InOut_flow(ilake) = Lake_InOut_flow(ilake) + Lake_latflow(ilake) + Lake_precip(ilake) - Lake_et(ilake)
+        ENDIF
+      ENDDO
+      DO i = 1, Numlakes
+        Lake_In_Out_vol(i) = Lake_InOut_flow(i)
+      ENDDO
+ 
+      END FUNCTION prms2modsimrun
+
+!***********************************************************************
+!     Write to or read from restart file
+!***********************************************************************
+      SUBROUTINE gsflow_prms2modsim_restart(In_out)
+      USE PRMS_MODULE, ONLY: Restart_outunit, Restart_inunit
+      USE GSFPRMS2MODSIM
+      IMPLICIT NONE
+      ! Argument
+      INTEGER, INTENT(IN) :: In_out
+      EXTERNAL check_restart
+      ! Local Variable
+      CHARACTER(LEN=14) :: module_name
+!***********************************************************************
+      IF ( In_out==0 ) THEN
+        WRITE ( Restart_outunit ) MODNAME
+        WRITE ( Restart_outunit ) Segment_latflow
+        WRITE ( Restart_outunit ) Lake_latflow
+        WRITE ( Restart_outunit ) Lake_precip
+        WRITE ( Restart_outunit ) Lake_et
+        WRITE ( Restart_outunit ) Lake_InOut_flow
+      ELSE
+        READ ( Restart_inunit ) module_name
+        CALL check_restart(MODNAME, module_name)
+        READ ( Restart_inunit ) Segment_latflow
+        READ ( Restart_inunit ) Lake_latflow
+        READ ( Restart_inunit ) Lake_precip
+        READ ( Restart_inunit ) Lake_et
+        READ ( Restart_inunit ) Lake_InOut_flow
+      ENDIF
+      END SUBROUTINE gsflow_prms2modsim_restart
