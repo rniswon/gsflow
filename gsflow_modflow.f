@@ -723,9 +723,8 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Maxgziter = KKITER
             ENDIF
 !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
-            IF ( Model>10 ) THEN
-              IF(IUNIT(44).GT.0.AND.iss==0) CALL MODSIM2SFR(Diversions,
-     +                                                      Idivert)
+            IF ( Model>=10 ) THEN
+              IF(IUNIT(44).GT.0.AND.iss==0) CALL MODSIM2SFR(Diversions)
             ENDIF
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
@@ -733,13 +732,13 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
      1                              IUNIT(22),IUNIT(63),IUNIT(8), 
      2                              IUNIT(55),IGRID)  
-            IF ( Model>10 ) THEN
+            IF ( Model>=10 ) THEN
               IF(IUNIT(44).GT.0 .AND. iss==0) CALL SFR2MODSIM(EXCHANGE)
             ENDIF
             IF(IUNIT(22).GT.0) THEN
                 CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
      1                                     IUNIT(44),IUNIT(55),IGRID)
-                IF(Model>10 .AND. iss==0) CALL LAK2MODSIM(DELTAVOL,
+                IF(Model>=10 .AND. iss==0) CALL LAK2MODSIM(DELTAVOL,
      1                                                    LAKESTAGE)
             ENDIF
             IF(IUNIT(50).GT.0) THEN
