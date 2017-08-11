@@ -56,7 +56,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !***********************************************************************
 C
       SUBROUTINE MFNWT_INIT(AFR, Diversions, Idivert,EXCHANGE,DELTAVOL,
-     &                      LAKESTAGE, Nlakeshold)  !BIND(C,NAME="MFNWT_INIT")
+     &                      LAKEVOL, Nlakeshold)  !BIND(C,NAME="MFNWT_INIT")
 C      
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_INIT
 C
@@ -82,7 +82,7 @@ C1------USE package modules.
       INTEGER, INTENT(INOUT) :: Nlakeshold
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
       DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*),
-     +                                   LAKESTAGE(*)
+     +                                   LAKEVOL(*)
 ! Functions
       INTRINSIC DBLE
       INTEGER, EXTERNAL :: numchars
@@ -429,7 +429,7 @@ C7------SIMULATE EACH STRESS PERIOD.
 
       ! run SS if needed, read to current stress period, read restart if needed
       CALL SET_STRESS_DATES(AFR, Diversions, Idivert, EXCHANGE,DELTAVOL,
-     +                      LAKESTAGE)
+     +                      LAKEVOL)
       CALL SETCONVFACTORS()
 
       Delt_save = DELT
@@ -609,7 +609,7 @@ C     RUN THE MODFLOW SOLVER ROUTINE WITH THE LATEST VALUES OF
 C     ISEG UPDATED BY MODSIM.
 C     *************************************************************
       SUBROUTINE MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, 
-     &                     DELTAVOL,LAKESTAGE)
+     &                     DELTAVOL,LAKEVOL)
      &           BIND(C,NAME="MFNWT_RUN")
 C
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_RUN
@@ -638,7 +638,7 @@ c     USE LMGMODULE
       INTEGER I
       LOGICAL, INTENT(IN) :: AFR
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*), EXCHANGE(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(*), LAKESTAGE(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(*), LAKEVOL(*)
       INTEGER, INTENT(IN) :: Idivert(*)
 !      CHARACTER*16 TEXT
 !      DATA TEXT /'            HEAD'/
@@ -739,7 +739,7 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
                 CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
      1                                     IUNIT(44),IUNIT(55),IGRID)
                 IF(Model>=10 .AND. iss==0) CALL LAK2MODSIM(DELTAVOL,
-     1                                                    LAKESTAGE)
+     1                                                    LAKEVOL)
             ENDIF
             IF(IUNIT(50).GT.0) THEN
               IF (IUNIT(1).GT.0) THEN
@@ -1709,7 +1709,7 @@ C
 !     READ AND PREPARE INFORMATION FOR STRESS PERIOD.
 !***********************************************************************
       SUBROUTINE SET_STRESS_DATES(AFR, Diversions, Idivert, 
-     &    EXCHANGE, DELTAVOL, LAKESTAGE)
+     &    EXCHANGE, DELTAVOL, LAKEVOL)
       USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
@@ -1723,7 +1723,7 @@ C
       INTEGER, INTENT(IN) :: Idivert(*)
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
       DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*),
-     &                                   LAKESTAGE(*)
+     &                                   LAKEVOL(*)
       EXTERNAL :: RESTART1READ
       INTEGER, EXTERNAL :: compute_julday, control_integer_array
 !      DOUBLE PRECISION, EXTERNAL :: compute_julday
@@ -1785,7 +1785,7 @@ C
             Steady_state = 1
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
             CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL,
-     +                     LAKESTAGE)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+     +                     LAKEVOL)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
             CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
             Steady_state = 0
             IF ( ICNVG==0 ) THEN
