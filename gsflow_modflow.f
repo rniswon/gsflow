@@ -428,7 +428,8 @@ C7------SIMULATE EACH STRESS PERIOD.
       ENDIF
 
       ! run SS if needed, read to current stress period, read restart if needed
-      CALL SET_STRESS_DATES(AFR, Diversions, Idivert, EXCHANGE,DELTAVOL)
+      CALL SET_STRESS_DATES(AFR, Diversions, Idivert, EXCHANGE,DELTAVOL,
+     +                      LAKESTAGE)
       CALL SETCONVFACTORS()
 
       Delt_save = DELT
