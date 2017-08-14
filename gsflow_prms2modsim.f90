@@ -2,6 +2,7 @@
 !     Compute PRMS inflows and outflows for MODSIM lakes and segments
 !***********************************************************************
       MODULE GSFPRMS2MODSIM
+      USE PRMS_MODULE, ONLY: Numlakes
       IMPLICIT NONE
 !   Module Variables
       CHARACTER(LEN=18), SAVE :: MODNAME
@@ -13,17 +14,19 @@
 !     ******************************************************************
 !     Mapping module to convert PRMS states for use by MODSIM
 !     ******************************************************************
-      INTEGER FUNCTION gsflow_prms2modsim()
-      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file
+      INTEGER FUNCTION gsflow_prms2modsim(Lake_In_Out_vol)
+      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file, Numlakes
       IMPLICIT NONE
+! Arguments
+      DOUBLE PRECISION :: Lake_In_Out_vol(Numlakes)
 ! Functions
-      INTEGER, EXTERNAL :: prms2modsimdecl, prms2modsiminit !, prms2modsimrun
+      INTEGER, EXTERNAL :: prms2modsimdecl, prms2modsiminit, prms2modsimrun
       EXTERNAL :: gsflow_prms2modsim_restart
 !***********************************************************************
       gsflow_prms2modsim = 0
 
       IF ( Process(:3)=='run' ) THEN
-!        gsflow_prms2modsim = prms2modsimrun()
+        gsflow_prms2modsim = prms2modsimrun(Lake_In_Out_vol)
       ELSEIF ( Process(:4)=='decl' ) THEN
         gsflow_prms2modsim = prms2modsimdecl()
       ELSEIF ( Process(:4)=='init' ) THEN
@@ -50,7 +53,7 @@
 !***********************************************************************
       prms2modsimdecl = 0
 
-      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2017-08-08 16:11:00Z'
+      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2017-08-14 08:50:00Z'
       CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
       MODNAME = 'gsflow_prms2modsim'
 
@@ -179,6 +182,7 @@
           Lake_InOut_flow(ilake) = Lake_InOut_flow(ilake) + Lake_latflow(ilake) + Lake_precip(ilake) - Lake_et(ilake)
         ENDIF
       ENDDO
+! need different array to pass back to MODSIM to avoid circular dependences.
       DO i = 1, Numlakes
         Lake_In_Out_vol(i) = Lake_InOut_flow(i)
       ENDDO
