@@ -28,10 +28,12 @@
 C-------ASSIGN VERSION NUMBER AND DATE
       CHARACTER*40 VERSION,VERSION2,VERSION3
       CHARACTER*5 MFVNAM
-      PARAMETER (VERSION='1.1.2, 9/15/2016')
+C      CHARACTER*10 MFVNAM
+      PARAMETER (VERSION='1.1.3, 8/01/2017')
       PARAMETER (VERSION2='1.11.0 08/08/2013')
       PARAMETER (VERSION3='1.04.0 09/15/2016')
       PARAMETER (MFVNAM='-NWT')
+C      PARAMETER (MFVNAM='-NWT-SWR1')
       INTEGER, SAVE :: IBDT(8)
 !   Control Parameters
       INTEGER, SAVE :: Modflow_time_zero(6)
@@ -41,7 +43,7 @@ C-------ASSIGN VERSION NUMBER AND DATE
 C     ******************************************************************
 C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER 1.1.2, 9/15/2016
+!rgn------NEW VERSION NUMBER 1.1.3, 8/01/2017
 C     ******************************************************************
 C
       INTEGER FUNCTION gsflow_modflow()
@@ -78,7 +80,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-06-29 10:31:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-08-15 09:09:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -611,6 +613,7 @@ C7C2----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
             KKITER = KITER
             IF ( IUNIT(63).EQ.0 ) ITREAL2 = KITER
             IF(IUNIT(62).GT.0) CALL GWF2UPWUPDATE(2,Igrid)
+      
 C
 C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
             CALL GWF2BAS7FM(IGRID)
@@ -665,6 +668,7 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Sziters = Sziters + 1
               Maxgziter = KKITER
             ENDIF
+
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
      2                           IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
@@ -750,11 +754,11 @@ c            END IF
 !     1              KKITER,KKSTP,KKPER,ICNVG,HNOFLO,IGRID)
 !            ENDIF
 ! Calculate new heads using Newton solver
-            IF(IUNIT(63).GT.0 ) 
+          IF(IUNIT(63).GT.0 ) 
      1          CALL GWF2NWT1FM(KKITER,ICNVG,KSTP,KPER,Mxiter,
      2                          IUNIT(22),IGRID)
-            IF ( IUNIT(63).GT.0 )ITREAL2 = ITREAL
-            IF(IERR.EQ.1) CALL USTOP(' ')
+          IF ( IUNIT(63).GT.0 )ITREAL2 = ITREAL
+          IF(IERR.EQ.1) CALL USTOP(' ')
 C
 C-------ENSURE CONVERGENCE OF SWR - BASEFLOW CHANGES LESS THAN TOLF - JDH
 !gsf        IF(IUNIT(64).GT.0) THEN
@@ -774,7 +778,7 @@ C7C2C---IF CONVERGENCE CRITERION HAS BEEN MET STOP ITERATING.
           END DO
           KITER = MXITER
 C
-  33      CONTINUE
+   33     CONTINUE
           IF(IUNIT(62).GT.0 ) CALL GWF2UPWUPDATE(2,Igrid)
 C
 C7C3----DETERMINE WHICH OUTPUT IS NEEDED.
@@ -1121,12 +1125,10 @@ C10-----END OF PROGRAM.
         WRITE (Logunt, *) 'FAILED TO MEET SOLVER CONVERGENCE CRITERIA ',
      1          NCVGERR,' TIME(S)'
       ELSE
-        PRINT '(A)', 'Normal termination of simulation'
+        WRITE(*,*) ' Normal termination of simulation'
         WRITE (Logunt, '(A)') 'Normal termination of simulation'
       END IF
-
 !gsf  CALL USTOP(' ')
-C
       IF ( Model.EQ.2 ) CALL USTOP(' ')
 
  9001 FORMAT (' Number of time steps:', I7,
@@ -1141,8 +1143,8 @@ C
      &        '; mxsziter reached:', I4, /)
  9007 FORMAT (A, 10I5, /, 10(28X, 10I5, /))
 
-      END FUNCTION gsfclean
-!
+C
+      END
       SUBROUTINE GETNAMFIL(FNAME)
 C     ******************************************************************
 C     GET THE NAME OF THE NAME FILE
@@ -1186,22 +1188,21 @@ C        CALL GETCL(COMLIN)
 !        IF (FNAME(:1).EQ.' ') GOTO 15
 !      ENDIF
       nc = numchars(FNAME)
-      INQUIRE (FILE=FNAME(:nc),EXIST=EXISTS)
-      IF (.NOT.EXISTS) THEN
-  16    PRINT '(/,A,A,/)', 'Name File does not exist: ', FNAME(:nc)
+        INQUIRE (FILE=FNAME(:nc),EXIST=EXISTS)
+        IF(.NOT.EXISTS) THEN
+   15   PRINT '(/,A,A,/)', 'Name File does not exist: ', FNAME(:nc)
         PRINT *, ' Enter a different Name File path or "quit": '
         READ (*,'(A)') FNAME
         IF ( FNAME(:4)=='quit' .OR. FNAME(:4)=='QUIT'
      &       .OR. FNAME(:1)==' ' ) CALL USTOP(' ')
         nc = numchars(FNAME)
-        INQUIRE ( FILE=FNAME(:nc), EXIST=EXISTS )
-        IF ( .NOT.EXISTS ) GO TO 16
+        INQUIRE ( FILE=FNAME(:nc),EXIST=EXISTS )
+        IF (.NOT.EXISTS) GOTO 15
         PRINT *, ' '
-      ENDIF
+        ENDIF
 C
       RETURN
-      END SUBROUTINE GETNAMFIL
-
+      END
       SUBROUTINE GLO1BAS6ET(IOUT,IBDT,IPRTIM)
 C     ******************************************************************
 C     Get end time and calculate elapsed time
@@ -1347,7 +1348,7 @@ C7------SIMULATE EACH STRESS PERIOD.
 C
 C7B-----READ AND PREPARE INFORMATION FOR STRESS PERIOD.
 C----------READ USING PACKAGE READ AND PREPARE MODULES.
-        IF(IUNIT(2).GT.0) CALL GWF2WEL7RP(IUNIT(2),KKPER,IGRID)
+        IF(IUNIT(2).GT.0) CALL GWF2WEL7RP(IUNIT(2),KPER,IGRID)
 !gsf    IF(IUNIT(3).GT.0) CALL GWF2DRN7RP(IUNIT(3),IGRID)
 !gsf    IF(IUNIT(4).GT.0) CALL GWF2RIV7RP(IUNIT(4),IGRID)
 !gsf    IF(IUNIT(5).GT.0) CALL GWF2EVT7RP(IUNIT(5),IGRID)
