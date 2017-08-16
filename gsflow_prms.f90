@@ -12,7 +12,7 @@
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
-      INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Numlakes
+      INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Nlake_hrus
       INTEGER, SAVE :: Ntemp, Nrain, Nsol, Nsegment, Ndepl, Nobs, Nevap, Ndeplval
       INTEGER, SAVE :: Starttime(6), Endtime(6)
       INTEGER, SAVE :: Start_year, Start_month, Start_day, End_year, End_month, End_day
@@ -87,7 +87,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-07-07 17:15:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-08-16 09:18:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -832,8 +832,8 @@
       IF ( decldim('ngw', 1, MAXDIM, 'Number of GWRs')/=0 ) CALL read_error(7, 'ngw')
       IF ( decldim('nhru', 1, MAXDIM, 'Number of HRUs')/=0 ) CALL read_error(7, 'nhru')
       IF ( decldim('nssr', 1, MAXDIM, 'Number of subsurface reservoirs')/=0 ) CALL read_error(7, 'nssr')
-      IF ( decldim('nlake', 0, MAXDIM, 'Number of lake HRUs')/=0 ) CALL read_error(7, 'nlake')
-      IF ( decldim('numlakes', 0, MAXDIM, 'Number of lakes')/=0 ) CALL read_error(7, 'numlakes')
+      IF ( decldim('nlake', 0, MAXDIM, 'Number of lakes')/=0 ) CALL read_error(7, 'nlake')
+      IF ( decldim('nlake_hrus', 0, MAXDIM, 'Number of lake HRUs')/=0 ) CALL read_error(7, 'nlake_hrus')
 
 ! Time-series data stations, need to know if in Data File
       IF ( decldim('nrain', 0, MAXDIM, 'Number of precipitation-measurement stations')/=0 ) CALL read_error(7, 'nrain')
@@ -916,9 +916,9 @@
       Nlake = getdim('nlake')
       IF ( Nlake==-1 ) CALL read_error(7, 'nlake')
 
-      Numlakes = getdim('numlakes')
-      IF ( Numlakes==-1 ) CALL read_error(7, 'numlakes')
-      IF ( Nlake>0 .AND. Numlakes==0 ) Numlakes = Nlake
+      Nlake_hrus = getdim('nlake_hrus')
+      IF ( Nlake_hrus==-1 ) CALL read_error(7, 'nlake_hrus')
+      IF ( Nlake>0 .AND. Nlake_hrus==0 ) Nlake_hrus = Nlake
 
       Ndepl = getdim('ndepl')
       IF ( Ndepl==-1 ) CALL read_error(7, 'ndepl')
@@ -1000,7 +1000,7 @@
         IF ( Ntemp==0 ) Ntemp = 1
         IF ( Nrain==0 ) Nrain = 1
         IF ( Nlake==0 ) Nlake = 1
-        IF ( Numlakes==0 ) Numlakes = 1
+        IF ( Nlake_hrus==0 ) Nlake_hrus = 1
         IF ( Nsol==0 ) Nsol = 1
         IF ( Nobs==0 ) Nobs = 1
         IF ( Ncascade==0 ) Ncascade = 1
