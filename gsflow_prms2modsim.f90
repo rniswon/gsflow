@@ -2,7 +2,6 @@
 !     Compute PRMS inflows and outflows for MODSIM lakes and segments
 !***********************************************************************
       MODULE GSFPRMS2MODSIM
-      USE PRMS_MODULE, ONLY: Numlakes
       IMPLICIT NONE
 !   Module Variables
       CHARACTER(LEN=18), SAVE :: MODNAME
@@ -15,10 +14,10 @@
 !     Mapping module to convert PRMS states for use by MODSIM
 !     ******************************************************************
       INTEGER FUNCTION gsflow_prms2modsim(Lake_In_Out_vol)
-      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file, Numlakes
+      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file, Nlake
       IMPLICIT NONE
 ! Arguments
-      DOUBLE PRECISION :: Lake_In_Out_vol(Numlakes)
+      DOUBLE PRECISION :: Lake_In_Out_vol(Nlake)
 ! Functions
       INTEGER, EXTERNAL :: prms2modsimdecl, prms2modsiminit, prms2modsimrun
       EXTERNAL :: gsflow_prms2modsim_restart
@@ -64,8 +63,7 @@
 !***********************************************************************
       INTEGER FUNCTION prms2modsiminit()
       USE GSFPRMS2MODSIM
-      USE PRMS_MODULE, ONLY: Nsegment, Numlakes, &
-     &    Init_vars_from_file, Numlakes
+      USE PRMS_MODULE, ONLY: Nsegment, Nlake, Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Lake_hru_id
       IMPLICIT NONE
       INTEGER, EXTERNAL :: declvar
@@ -78,9 +76,9 @@
       prms2modsiminit = 0
       ierr = 0
 
-!      IF ( Numlakes/=NLAKES ) THEN ! use MODSIM dimensions
-!        PRINT *, 'ERROR, PRMS dimension numlakes must equal Lake Package NLAKES'
-!        PRINT *, '       nlake=', Numlakes, ' NLAKES=', NLAKES
+!      IF ( Nlake/=NLAKES ) THEN ! use MODSIM dimensions
+!        PRINT *, 'ERROR, PRMS dimension nlake must equal Lake Package NLAKES'
+!        PRINT *, '       nlake=', Nlake, ' NLAKES=', NLAKES
 !        ierr = 1
 !      ENDIF
 
@@ -93,19 +91,19 @@
       IF ( declvar(MODNAME, 'Segment_latflow', 'nsegment', Nsegment, 'double', &
      &     'Lateral flow to each segment', &
      &     'acre-ft', Segment_latflow)/=0 ) CALL read_error(3, 'Segment_latflow')
-      ALLOCATE ( Lake_latflow(Numlakes) )
-      IF ( declvar(MODNAME, 'Lake_latflow', 'numlakes', Numlakes, 'double', &
+      ALLOCATE ( Lake_latflow(Nlake) )
+      IF ( declvar(MODNAME, 'Lake_latflow', 'nlake', Nlake, 'double', &
      &     'Total lateral flow into each lake', &
      &     'acre-ft', Lake_latflow)/=0 ) CALL read_error(3, 'Lake_latflow')
-      ALLOCATE ( Lake_precip(Numlakes) )
-      IF ( declvar(MODNAME, 'Lake_precip', 'numlakes', Numlakes, 'double', &
+      ALLOCATE ( Lake_precip(Nlake) )
+      IF ( declvar(MODNAME, 'Lake_precip', 'nlake', Nlake, 'double', &
      &     'Precipitation into each lake', &
      &     'acre-ft', Lake_precip)/=0 ) CALL read_error(3, 'Lake_precip')
-      ALLOCATE ( Lake_et(Numlakes) )
-      IF ( declvar(MODNAME, 'Lake_et', 'numlakes', Numlakes, 'double', &
+      ALLOCATE ( Lake_et(Nlake) )
+      IF ( declvar(MODNAME, 'Lake_et', 'nlake', Nlake, 'double', &
      &     'Evaporation from each lake', &
      &     'acre-ft', Lake_et)/=0 ) CALL read_error(3, 'Lake_et')
-      ALLOCATE ( Lake_InOut_flow(Numlakes) )
+      ALLOCATE ( Lake_InOut_flow(Nlake) )
       IF ( Init_vars_from_file==0 ) THEN
         Segment_latflow = 0.0D0
         Lake_latflow = 0.0D0
@@ -139,7 +137,7 @@
 !***********************************************************************
       INTEGER FUNCTION prms2modsimrun(Lake_In_Out_vol)
       USE GSFPRMS2MODSIM
-      USE PRMS_MODULE, ONLY: Nsegment, Numlakes
+      USE PRMS_MODULE, ONLY: Nsegment, Nlake
       USE PRMS_BASIN, ONLY: FT2_PER_ACRE, Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_hru_id
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
       USE PRMS_FLOWVARS, ONLY: Hru_actet
@@ -183,7 +181,7 @@
         ENDIF
       ENDDO
 ! need different array to pass back to MODSIM to avoid circular dependences.
-      DO i = 1, Numlakes
+      DO i = 1, Nlake
         Lake_In_Out_vol(i) = Lake_InOut_flow(i)
       ENDDO
  

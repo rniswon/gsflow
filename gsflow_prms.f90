@@ -18,7 +18,7 @@
       INTEGER, INTENT(INOUT) :: Nsegshold, Nlakeshold
       LOGICAL, INTENT(INOUT) :: AFR
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegment)
-      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Numlakes), EXCHANGE(Nsegment), LAKEVOL(Numlakes)
+      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Nlake), EXCHANGE(Nsegment), LAKEVOL(Nlake)
 ! Functions
       INTRINSIC :: DATE_AND_TIME, INT
       INTEGER, EXTERNAL :: check_dims, basin, climateflow, prms_time
@@ -155,7 +155,7 @@
      &         'Index of the grid cell associated with each gravity reservoir', &
      &         'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
         ENDIF
-        IF ( MODSIM_flag==1 ) ALLOCATE ( Lake_In_Out_vol(Numlakes) )
+        IF ( MODSIM_flag==1 ) ALLOCATE ( Lake_In_Out_vol(Nlake) )
 
         Kkiter = 1 ! set for PRMS-only mode
         Have_lakes = 0 ! set for modes when MODFLOW is not active
@@ -198,9 +198,9 @@
 
         IF ( GSFLOW_flag==1 ) THEN
           CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nlakeshold)
-          IF ( Have_lakes==1 .AND. Numlakes/=NLAKES ) THEN
-            PRINT *, 'ERROR, NLAKES not equal to Numlakes'
-            PRINT *, '       NLAKES=', NLAKES, '; Numlakes=', Numlakes
+          IF ( Have_lakes==1 .AND. Nlake/=NLAKES ) THEN
+            PRINT *, 'ERROR, NLAKES not equal to Nlake'
+            PRINT *, '       NLAKES=', NLAKES, '; Nlake=', Nlake
             STOP
           ENDIF
           IF ( Nsegment/=NSS ) THEN

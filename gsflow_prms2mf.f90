@@ -178,7 +178,7 @@
       USE GWFSFRMODULE, ONLY: ISEG, NSS
       USE GWFLAKMODULE, ONLY: NLAKES
       USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col
-      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Numlakes, Print_debug, &
+      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Nlake, Print_debug, &
      &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Init_vars_from_file, Have_lakes
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area, NEARZERO
