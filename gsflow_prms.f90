@@ -979,8 +979,8 @@
       IF ( decldim('ngw', 1, MAXDIM, 'Number of GWRs')/=0 ) CALL read_error(7, 'ngw')
       IF ( decldim('nhru', 1, MAXDIM, 'Number of HRUs')/=0 ) CALL read_error(7, 'nhru')
       IF ( decldim('nssr', 1, MAXDIM, 'Number of subsurface reservoirs')/=0 ) CALL read_error(7, 'nssr')
-      IF ( decldim('nlake', 0, MAXDIM, 'Number of lake HRUs')/=0 ) CALL read_error(7, 'nlake')
-      IF ( decldim('numlakes', 1, MAXDIM, 'Number of lakes')/=0 ) CALL read_error(7, 'numlakes')
+      IF ( decldim('nlake', 0, MAXDIM, 'Number of lakes')/=0 ) CALL read_error(7, 'nlake')
+      IF ( decldim('nlake_hrus', 0, MAXDIM, 'Number of lake HRUs')/=0 ) CALL read_error(7, 'nlake_hrus')
       IF ( decldim('npoigages', 0, MAXDIM, 'Number of POI gages')/=0 ) CALL read_error(7, 'npoigages')
 
 ! Time-series data stations, need to know if in Data File
@@ -1082,8 +1082,9 @@
       Nlake = getdim('nlake')
       IF ( Nlake==-1 ) CALL read_error(7, 'nlake')
 
-      Numlakes = getdim('numlakes')
-      IF ( Numlakes==-1 ) CALL read_error(7, 'numlakes')
+      Nlake_hrus = getdim('nlake_hrus')
+      IF ( Nlake_hrus==-1 ) CALL read_error(7, 'nlake_hrus')
+      IF ( Nlake>0 .AND. Nlake_hrus==0 ) Nlake_hrus = Nlake
 
       Ndepl = getdim('ndepl')
       IF ( Ndepl==-1 ) CALL read_error(7, 'ndepl')
@@ -1128,6 +1129,11 @@
       ENDIF
       IF ( ierr==1 ) STOP
 
+      Stream_order_flag = 0
+      IF ( Nsegment>0 .AND. Strmflow_flag>1 .AND. Model/=0 ) THEN
+        Stream_order_flag = 1 ! strmflow_in_out or muskingum
+      ENDIF
+
       IF ( Nsegment<1 .AND. Model/=99 ) THEN
         IF ( Stream_order_flag==1 .OR. Call_cascade==1 ) THEN
           PRINT *, 'ERROR, streamflow and cascade routing require nsegment > 0, specified as:', Nsegment
@@ -1137,11 +1143,6 @@
 
       Lake_route_flag = 0
       IF ( Nlake>0 .AND. Strmflow_flag==3 .AND. GSFLOW_flag==0 ) Lake_route_flag = 1 ! muskingum_lake
-
-      Stream_order_flag = 0
-      IF ( Strmflow_flag>1 .AND. PRMS_flag==1 .AND. GSFLOW_flag==0 ) THEN
-        Stream_order_flag = 1 ! strmflow_in_out, muskingum, or muskingum_lake
-      ENDIF
 
       IF ( MODSIM_flag==1 ) THEN
         Lake_route_flag = 0
@@ -1196,7 +1197,7 @@
         IF ( Ntemp==0 ) Ntemp = 1
         IF ( Nrain==0 ) Nrain = 1
         IF ( Nlake==0 ) Nlake = 1
-        IF ( Numlakes==0 ) Numlakes = 1
+        IF ( Nlake_hrus==0 ) Nlake_hrus = 1
         IF ( Nsol==0 ) Nsol = 1
         IF ( Nobs==0 ) Nobs = 1
         IF ( Ncascade==0 ) Ncascade = 1
@@ -1338,7 +1339,7 @@
         PRINT *, 'ERROR, module temp_2sta_prms not available, use a different temp_module'
         ierr = 1
       ELSEIF ( Temp_module(:9)/='temp_1sta' .AND. Temp_module(:9)/='temp_laps' &
-     &         .AND. Temp_module(:9)/='temp_dist2' .AND. Temp_module(:9)/='ide_dis' ) THEN
+     &         .AND. Temp_module(:9)/='temp_dist2' .AND. Temp_module(:9)/='ide_dist' ) THEN
         PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
         ierr = 1
       ENDIF
@@ -1401,10 +1402,11 @@
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_prms to ccsolrad'
       ENDIF
 
-      IF ( Srunoff_module(:18)=='srunoff_carea_prms' ) &
-     &     PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_carea_prms to srunoff_carea'
-      IF ( Srunoff_module(:18)=='srunoff_smidx_prms' ) &
-     &     PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_smidx_prms to srunoff_smidx'
+      IF ( Srunoff_module(:18)=='srunoff_carea_prms' ) THEN
+        PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_carea_prms to srunoff_carea'
+      ELSEIF ( Srunoff_module(:18)=='srunoff_smidx_prms' ) THEN
+        PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_smidx_prms to srunoff_smidx'
+      ENDIF
 
       IF ( Strmflow_module(:13)=='strmflow_prms' ) THEN
         PRINT *, 'WARNING, deprecated strmflow_module value, change strmflow_prms to strmflow'

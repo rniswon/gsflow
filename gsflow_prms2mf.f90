@@ -71,7 +71,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-06-21 14:38:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-08-16 09:38:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -210,9 +210,9 @@
       ENDIF
 
       IF ( Have_lakes==1 ) THEN
-        IF ( Numlakes/=NLAKES ) THEN
-          PRINT *, 'ERROR, PRMS dimension numlakes must equal Lake Package NLAKES'
-          PRINT *, '       nlake=', Numlakes, ' NLAKES=', NLAKES
+        IF ( Nlake/=NLAKES ) THEN
+          PRINT *, 'ERROR, PRMS dimension nlake must equal Lake Package NLAKES'
+          PRINT *, '       nlake=', Nlake, ' NLAKES=', NLAKES
           ierr = 1
         ENDIF
       ENDIF
@@ -223,7 +223,7 @@
       ENDIF
 
       IF ( getparam(MODNAME, 'szconverge', 1, 'real', Szconverge)/=0 ) CALL read_error(2, 'szconverge')
-      IF ( Szconverge<NEARZERO ) Szconverge = NEARZERO
+      !IF ( Szconverge<NEARZERO ) Szconverge = NEARZERO
 
       IF ( getparam(MODNAME, 'mnsziter', 1, 'integer', Mnsziter)/=0 ) CALL read_error(2, 'mnsziter')
       IF ( getparam(MODNAME, 'mxsziter', 1, 'integer', Mxsziter)/=0 ) CALL read_error(2, 'mxsziter')
