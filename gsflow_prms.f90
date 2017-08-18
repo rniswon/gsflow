@@ -3,13 +3,13 @@
 !***********************************************************************
       MODULE PRMS_MODULE
       IMPLICIT NONE
-      INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 20
+      INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 32
       INTEGER, PARAMETER :: MAXDIM = 500
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
       CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 4.0.3 06/01/2017'
-      CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Process
+      CHARACTER(LEN=8), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
       INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Nlake_hrus
@@ -65,12 +65,12 @@
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow
       INTEGER, EXTERNAL :: srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, write_climate_hru
-      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, potet_pm_sta
-      EXTERNAL :: module_doc, nsub_summary, basin_summary
+      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, numchars, declvar, declparam, getparam
+      INTEGER, EXTERNAL :: potet_pm_sta
+      EXTERNAL :: module_error, print_module, PRMS_open_output_file
+      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, basin_summary
+      EXTERNAL :: nhru_summary, module_doc, read_error, nsub_summary
       INTEGER, EXTERNAL :: gsflow_modflow, gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
-      INTEGER, EXTERNAL :: declvar, declparam, getparam, numchars
-      EXTERNAL :: module_error, read_error, print_module, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, nhru_summary
 ! Local Variables
       INTEGER :: i, iret, nc
 !***********************************************************************
@@ -87,7 +87,7 @@
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-08-16 09:18:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-08-18 09:35:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -199,10 +199,11 @@
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
+
         nc = numchars(Model_control_file)
         IF ( Print_debug>-1 ) PRINT 9004, 'Using Control File: ', Model_control_file(:nc)
-        WRITE ( Logunt, 9004 ) 'Using Control File: ', Model_control_file(:nc)
         WRITE ( PRMS_output_unit, 9004 ) 'Using Control File: ', Model_control_file(:nc)
+        WRITE ( Logunt, 9004 ) 'Using Control File: ', Model_control_file(:nc)
 
         nc = numchars(Param_file)
         IF ( Print_debug>-1 ) PRINT 9004, 'Using Parameter File: ', Param_file(:nc)
@@ -282,10 +283,10 @@
       ENDIF
 
       IF ( Climate_temp_flag==0 ) THEN
-        IF ( Temp_flag==6 ) THEN
-          call_modules = xyz_dist()
-        ELSEIF ( Temp_combined_flag==1 ) THEN
+        IF ( Temp_combined_flag==1 ) THEN
           call_modules = temp_1sta_laps()
+        ELSEIF ( Temp_flag==6 ) THEN
+          call_modules = xyz_dist()
         ELSEIF ( Temp_flag==3 ) THEN
           call_modules = temp_dist2()
         ELSE !IF ( Temp_flag==5 ) THEN
@@ -475,8 +476,10 @@
         ENDIF
       ENDIF
       IF ( Process_flag==1 ) THEN
-        PRINT '(A)', EQULS
-        WRITE ( PRMS_output_unit, '(A)' ) EQULS
+        IF ( Print_debug>-1 ) THEN
+          PRINT '(A)', EQULS
+          WRITE ( PRMS_output_unit, '(A)' ) EQULS
+        ENDIF
         WRITE ( Logunt, '(A)' ) EQULS
       ELSEIF ( Process_flag==2 ) THEN
         IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
@@ -508,7 +511,7 @@
 ! Functions
       INTEGER, EXTERNAL :: decldim, declfix, call_modules, control_integer_array, control_file_name
       INTEGER, EXTERNAL :: control_string, control_integer, gsflow_modflow
-      EXTERNAL :: read_error, PRMS_open_output_file, PRMS_open_input_file, module_error, check_module_names
+      EXTERNAL :: read_error, PRMS_open_output_file, PRMS_open_input_file, check_module_names, module_error
 ! Local Variables
       ! Maximum values are no longer limits
 ! Local Variables
@@ -623,7 +626,7 @@
       ENDIF
 
       ! Open PRMS module output file
-      IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'prms.out')
+      IF ( control_string(Model_output_file, 'model_output_file')/=0 ) CALL read_error(5, 'model_output_file')
       CALL PRMS_open_output_file(PRMS_output_unit, Model_output_file, 'model_output_file', 0, iret)
       IF ( iret/=0 ) STOP
       IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
@@ -631,12 +634,12 @@
 
       ! Check for restart files
       IF ( Init_vars_from_file==1 ) THEN
-        IF ( control_string(Var_init_file, 'var_init_file')/=0 ) CALL read_error(5, 'restart.in')
+        IF ( control_string(Var_init_file, 'var_init_file')/=0 ) CALL read_error(5, 'var_init_file')
         CALL PRMS_open_input_file(Restart_inunit, Var_init_file, 'var_init_file', 1, iret)
         IF ( iret/=0 ) STOP
       ENDIF
       IF ( Save_vars_to_file==1 ) THEN
-        IF ( control_string(Var_save_file, 'var_save_file')/=0 ) CALL read_error(5, 'restart.out')
+        IF ( control_string(Var_save_file, 'var_save_file')/=0 ) CALL read_error(5, 'var_save_file')
       ENDIF
 
       Temp_module = ' '
@@ -833,7 +836,8 @@
       IF ( decldim('nhru', 1, MAXDIM, 'Number of HRUs')/=0 ) CALL read_error(7, 'nhru')
       IF ( decldim('nssr', 1, MAXDIM, 'Number of subsurface reservoirs')/=0 ) CALL read_error(7, 'nssr')
       IF ( decldim('nlake', 0, MAXDIM, 'Number of lakes')/=0 ) CALL read_error(7, 'nlake')
-      IF ( decldim('nlake_hrus', 0, MAXDIM, 'Number of lake HRUs')/=0 ) CALL read_error(7, 'nlake_hrus')
+      ! nlake_hrus to be added in 5.0.1
+!      IF ( decldim('nlake_hrus', 0, MAXDIM, 'Number of lake HRUs')/=0 ) CALL read_error(7, 'nlake_hrus')
 
 ! Time-series data stations, need to know if in Data File
       IF ( decldim('nrain', 0, MAXDIM, 'Number of precipitation-measurement stations')/=0 ) CALL read_error(7, 'nrain')
@@ -916,9 +920,11 @@
       Nlake = getdim('nlake')
       IF ( Nlake==-1 ) CALL read_error(7, 'nlake')
 
-      Nlake_hrus = getdim('nlake_hrus')
-      IF ( Nlake_hrus==-1 ) CALL read_error(7, 'nlake_hrus')
-      IF ( Nlake>0 .AND. Nlake_hrus==0 ) Nlake_hrus = Nlake
+      ! Nlake_hrus will be added in version 5.0.1
+!      Nlake_hrus = getdim('nlake_hrus')
+!      IF ( Nlake_hrus==-1 ) CALL read_error(7, 'nlake_hrus')
+!      IF ( Nlake>0 .AND. Nlake_hrus==0 ) Nlake_hrus = Nlake
+      Nlake_hrus = Nlake
 
       Ndepl = getdim('ndepl')
       IF ( Ndepl==-1 ) CALL read_error(7, 'ndepl')
@@ -944,7 +950,7 @@
       IF ( Nratetbl==-1 ) CALL read_error(6, 'nratetbl')
 
       Stream_order_flag = 0
-      IF ( Strmflow_flag>1 .AND. Model/=0 ) THEN
+      IF ( Nsegment>0 .AND. Strmflow_flag>1 .AND. Model/=0 ) THEN
         Stream_order_flag = 1 ! strmflow_in_out or muskingum
       ENDIF
 
@@ -1017,7 +1023,7 @@
         Call_cascade = 1
         Stream_order_flag = 1
         Climate_hru_flag = 1
-!        Lake_route_flag = 1
+        Lake_route_flag = 1
       ENDIF
 
       END SUBROUTINE check_dimens
@@ -1121,6 +1127,10 @@
       ELSEIF ( Temp_module(:9)=='temp_2sta' ) THEN
         PRINT *, 'ERROR, module temp_2sta_prms not available, use a different temp_module'
         ierr = 1
+      ELSEIF ( Temp_module(:9)/='temp_1sta' .AND. Temp_module(:9)/='temp_laps' &
+     &         .AND. Temp_module(:9)/='temp_dist2' .AND. Temp_module(:9)/='ide_dist' ) THEN
+        PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
+        ierr = 1
       ENDIF
 
       IF ( Precip_module(:11)=='precip_prms' ) THEN
@@ -1191,6 +1201,11 @@
         PRINT *, 'WARNING, deprecated strmflow_module value, change strmflow_prms to strmflow'
       ELSEIF ( Strmflow_module(:13)=='strmflow_lake' ) THEN
         PRINT *, 'ERROR, module strmflow_lake not available, use a different strmflow_module'
+        ierr = 1
+      ENDIF
+      IF ( Strmflow_module(:15)/='strmflow_in_out' .AND. &
+     &     .AND. Strmflow_module(:8)/='strmflow' .AND. Strmflow_module(:9)/='muskingum' ) THEN
+        PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
         ierr = 1
       ENDIF
       IF ( ierr==1 ) STOP
