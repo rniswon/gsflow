@@ -1204,7 +1204,7 @@
         ierr = 1
       ENDIF
       IF ( Strmflow_module(:15)/='strmflow_in_out' .AND. &
-     &     .AND. Strmflow_module(:8)/='strmflow' .AND. Strmflow_module(:9)/='muskingum' ) THEN
+     &     Strmflow_module(:8)/='strmflow' .AND. Strmflow_module(:9)/='muskingum' ) THEN
         PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
         ierr = 1
       ENDIF
