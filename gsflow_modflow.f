@@ -6,7 +6,7 @@ C
 C     ******************************************************************
 C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER 1.1.2, 9/15/2016
+!rgn------NEW VERSION NUMBER 1.1.3, 8/01/2017
 !rsr------MODIFIED for use in GSFLOW and MODSIM-GSFLOW
 C     ******************************************************************
 
@@ -23,7 +23,7 @@ C     ******************************************************************
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-07-25 12:30:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-08-21 15:49:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -541,7 +541,8 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
           IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
      1                                           IGRID)
           IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
-          IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(22))  !rgn 6/12/12
+          IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(44),IUNIT(22),
+     1                                         KKSTP,KKPER,IGRID)  !rgn 6/12/12
           END IF
 
 C--EDM----RGN THIS IS ALL DONE INSIDE SFR NOW
@@ -728,10 +729,10 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
             ENDIF
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
-     2                           IUNIT(64),IGRID)  
+     2                           IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
      1                              IUNIT(22),IUNIT(63),IUNIT(8), 
-     2                              IUNIT(55),IGRID)  
+     2                              IUNIT(55),IGRID)   !cjm (added IUNIT(8))
             IF ( Model>=10 ) THEN
               IF(IUNIT(44).GT.0 .AND. iss==0) CALL SFR2MODSIM(EXCHANGE)
             ENDIF
