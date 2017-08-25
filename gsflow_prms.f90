@@ -82,19 +82,16 @@
         Process_flag = 0 !(0=run, 1=declare, 2=init, 3=clean, 4=setdims)
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        CALL DATE_AND_TIME(VALUES=Elapsed_time_start)
-        Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
-     &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
+        IF ( Model==1 ) THEN
+          CALL DATE_AND_TIME(VALUES=Elapsed_time_start)
+          Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
+     &                           Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
+        ENDIF
         Process_flag = 1
 
         PRMS_versn = 'gsflow_prms.f90 2017-08-18 09:35:00Z'
 
         IF ( check_dims()/=0 ) STOP
-
-        IF ( Model==0 ) THEN
-          call_modules = gsflow_modflow()
-          IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
-        ENDIF
 
         IF ( Print_debug>-1 ) PRINT 10, PRMS_VERSION
         WRITE ( Logunt, 10 ) PRMS_VERSION
@@ -124,6 +121,12 @@
      &        '     Preprocessing: write_climate_hru, frost_date', /, 68('-'))
   16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 19X, &
      &        'Module', 16X, 'Version Date', /, A)
+
+        IF ( Model==0 ) THEN
+          call_modules = gsflow_modflow()
+          IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
+        ENDIF
+
         IF ( Print_debug>-1 ) THEN
           PRINT 15
           PRINT 9002
@@ -304,10 +307,6 @@
         IF ( call_modules/=0 ) CALL module_error(Precip_module, Arg, call_modules)
       ENDIF
 
-      IF ( Model==6 ) THEN
-        IF ( Process_flag==0 ) RETURN
-      ENDIF
-
 ! frost_date is a pre-process module
       IF ( Model==9 ) THEN
         call_modules = frost_date()
@@ -332,10 +331,6 @@
       ENDIF
       IF ( call_modules/=0 ) CALL module_error(Transp_module, Arg, call_modules)
 
-      IF ( Model==8 ) THEN
-        IF ( Process_flag==0 ) RETURN
-      ENDIF
-
       IF ( Climate_potet_flag==0 ) THEN
         IF ( Et_flag==1 ) THEN
           call_modules = potet_jh()
@@ -358,10 +353,6 @@
       IF ( Model==4 ) THEN
         call_modules = write_climate_hru()
         IF ( call_modules/=0 ) CALL module_error('write_climate_hru', Arg, call_modules)
-        IF ( Process_flag==0 ) RETURN
-      ENDIF
-
-      IF ( Model==7 ) THEN
         IF ( Process_flag==0 ) RETURN
       ENDIF
 
@@ -448,50 +439,47 @@
         IF ( call_modules/=0 ) CALL module_error('subbasin', Arg, call_modules)
       ENDIF
 
-      IF ( Print_debug>-1 ) THEN
-        IF ( Process_flag==3 ) THEN
+      IF ( Process_flag==3 ) THEN
+        IF ( Model==1 ) THEN
           CALL DATE_AND_TIME(VALUES=Elapsed_time_end)
           PRINT 9001
           PRINT 9003, 'start', (Elapsed_time_start(i),i=1,3), (Elapsed_time_start(i),i=5,7)
-          PRINT 9003, 'end', (Elapsed_time_end(i),i=1,3), (Elapsed_time_end(i),i=5,7)
+          PRINT 9003, 'end  ', (Elapsed_time_end(i),i=1,3), (Elapsed_time_end(i),i=5,7)
           Execution_time_end = Elapsed_time_end(5)*3600 + Elapsed_time_end(6)*60 + &
      &                         Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
           Elapsed_time = Execution_time_end - Execution_time_start
           Elapsed_time_minutes = INT(Elapsed_time/60.0)
           PRINT '(A,I5,A,F6.2,A,/)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                               Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
-        ELSEIF ( Process_flag==2 ) THEN
-          IF ( Inputerror_flag==1 ) THEN
-            PRINT '(//,A,//,A,/,A,/,A)', '**Fix input errors in your Parameter File to continue**', &
-     &            '  Set control parameter parameter_check_flag to 0 after', &
-     &            '  all parameter values are valid.'
-            PRINT '(/,A,/,A,/,A,/,A,/,A,/)', &
-     &            'If input errors are related to paramters used for automated', &
-     &            'calibration processes, with CAUTION, set control parameter', &
-     &            'parameter_check_flag to 0. After calibration set the', &
-     &            'parameter_check_flag to 1 to verify that those calibration', &
-     &            'parameters have valid and compatible values.'
-            STOP
-          ENDIF
         ENDIF
-      ENDIF
-      IF ( Process_flag==1 ) THEN
-        IF ( Print_debug>-1 ) THEN
-          PRINT '(A)', EQULS
-          WRITE ( PRMS_output_unit, '(A)' ) EQULS
-        ENDIF
-        WRITE ( Logunt, '(A)' ) EQULS
-      ELSEIF ( Process_flag==2 ) THEN
-        IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
-        IF ( Parameter_check_flag==2 ) STOP
-        PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
-        WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
-      ELSEIF ( Process_flag==3 ) THEN
         WRITE ( PRMS_output_unit,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                                                Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                                      Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         CLOSE ( Logunt )
+      ELSEIF ( Process_flag==1 ) THEN
+        IF ( Model==1 ) THEN
+          PRINT '(A)', EQULS
+          WRITE ( PRMS_output_unit, '(A)' ) EQULS
+          WRITE ( Logunt, '(A)') EQULS
+        ENDIF
+      ELSEIF ( Process_flag==2 ) THEN
+        IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
+        IF ( Inputerror_flag==1 ) THEN
+          PRINT '(//,A,//,A,/,A,/,A)', '**Fix input errors in your Parameter File to continue**', &
+     &          '  Set control parameter parameter_check_flag to 0 after', &
+     &          '  all parameter values are valid.'
+          PRINT '(/,A,/,A,/,A,/,A,/,A,/)', &
+     &          'If input errors are related to paramters used for automated', &
+     &          'calibration processes, with CAUTION, set control parameter', &
+     &          'parameter_check_flag to 0. After calibration set the', &
+     &          'parameter_check_flag to 1 to verify that those calibration', &
+     &          'parameters have valid and compatible values.'
+          STOP
+        ENDIF
+        IF ( Parameter_check_flag==2 ) STOP
+        PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
+        WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
       ENDIF
     4 FORMAT (/, 2(A, I5, 2('/',I2.2)), //, A, /)
  9001 FORMAT (/, 26X, 27('='), /, 26X, 'Normal completion of GSFLOW', /, 26X, 27('='), /)
@@ -529,7 +517,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 1.2.2 06/29/2017', //, &
+     &        25X, 'Version 1.2.2 09/01/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -557,12 +545,6 @@
         Model = 9
       ELSEIF ( Model_mode(:13)=='WRITE_CLIMATE' ) THEN
         Model = 4
-      ELSEIF ( Model_mode(:7)=='CLIMATE' ) THEN
-        Model = 6
-      ELSEIF ( Model_mode(:5)=='POTET' ) THEN
-        Model = 7
-      ELSEIF ( Model_mode(:9)=='TRANSPIRE' ) THEN
-        Model = 8
       ELSEIF ( Model_mode(:13)=='DOCUMENTATION' ) THEN
         Model = 99
       ELSE
@@ -774,8 +756,6 @@
 
       IF ( Strmflow_module(:15)=='strmflow_in_out' ) THEN
         Strmflow_flag = 5
-      ELSEIF ( Strmflow_module(:14)=='muskingum_lake' ) THEN
-        Strmflow_flag = 3
       ELSEIF ( Strmflow_module(:13)=='strmflow_lake' ) THEN
         PRINT '(/,2A)', 'ERROR, invalid strmflow_module value; lakes are not simulated: ', Strmflow_module
         Inputerror_flag = 1
@@ -1126,10 +1106,6 @@
         Temp_module = 'temp_dist2'
       ELSEIF ( Temp_module(:9)=='temp_2sta' ) THEN
         PRINT *, 'ERROR, module temp_2sta_prms not available, use a different temp_module'
-        ierr = 1
-      ELSEIF ( Temp_module(:9)/='temp_1sta' .AND. Temp_module(:9)/='temp_laps' &
-     &         .AND. Temp_module(:9)/='temp_dist2' .AND. Temp_module(:9)/='ide_dist' ) THEN
-        PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
         ierr = 1
       ENDIF
 
