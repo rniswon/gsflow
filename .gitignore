@@ -61,3 +61,10 @@ msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/*
 msds/gsflow_develop_f/gsflow_develop.vfproj.rsregan.user
 msds/gsflow_develop_f/Debug/gsflow_develop.exp
 msds/gsflow_develop_f/gsflow_develop.opensdf
+GSFLOW_1.2.2/data/sagehen/output/gsflow.csv
+GSFLOW_1.2.2/data/sagehen/output/modflow/sagehen.mf.list
+GSFLOW_1.2.2/data/sagehen/output/modflow/sagehen.mfonly.list
+GSFLOW_1.2.2/data/sagehen/windows/basinOut.csv
+GSFLOW_1.2.2/data/sagehen/windows/basinOut_monthly.csv
+GSFLOW_1.2.2/data/sagehen/windows/nsub_test_hortonian_flow.csv
+GSFLOW_1.2.2/data/sagehen/windows/nsub_test_soil_moist.csv
