@@ -2,7 +2,7 @@
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      SUBROUTINE gsflow_prms(Process_mode, AFR, Nsegshold, Nlakeshold, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL) BIND(C,NAME="gsflow_prms")  ! need vectors
+      SUBROUTINE gsflow_prms(Process_mode, AFR, MS_GSF_converge, Nsegshold, Nlakeshold, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL) BIND(C,NAME="gsflow_prms")  ! need vectors
       
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
       
@@ -16,7 +16,7 @@
       !CHARACTER(LEN=*), INTENT(IN) :: Arg
       INTEGER, INTENT(IN) :: Process_mode, Idivert(Nsegment)
       INTEGER, INTENT(INOUT) :: Nsegshold, Nlakeshold
-      LOGICAL, INTENT(INOUT) :: AFR
+      LOGICAL, INTENT(INOUT) :: AFR, MS_GSF_converge
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegment)
       DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Nlake), EXCHANGE(Nsegment), LAKEVOL(Nlake)
 ! Functions
@@ -450,7 +450,7 @@
       ELSEIF ( GSFLOW_flag==1 .OR. MODSIM_flag==1 ) THEN
 
         IF ( Process_flag==0 ) THEN
-          IF ( GSFLOW_flag==1 ) THEN
+          IF ( GSFLOW_flag==1 .AND. .NOT. MS_GSF_converge ) THEN
 ! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST MODSIM-GSFLOW ITERATION
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
             CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL)  !SOLVE GW SW EQUATIONS FOR MODSIM-GSFLOW ITERATION
@@ -479,12 +479,15 @@
           ENDIF
         ENDIF
 
+        IF ( .NOT. MS_GSF_converge ) RETURN
+
         call_modules = gsflow_budget()
         IF ( call_modules/=0 ) CALL module_error('gsflow_budget', Arg, call_modules)
 
         call_modules = gsflow_sum()
         IF ( call_modules/=0 ) CALL module_error('gsflow_sum', Arg, call_modules)
       ENDIF
+
       IF ( MapOutON_OFF>0 ) THEN
         call_modules = map_results()
         IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
