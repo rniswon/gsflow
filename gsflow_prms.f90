@@ -475,16 +475,16 @@
             IF ( call_modules/=0 ) CALL module_error('gsflow_prms2mf', Arg, call_modules)
             call_modules = gsflow_mf2prms()
             IF ( call_modules/=0 ) CALL module_error('gsflow_mf2prms', Arg, call_modules)
-
-            IF ( .NOT. MS_GSF_converge ) THEN
-
-              call_modules = gsflow_budget()
-              IF ( call_modules/=0 ) CALL module_error('gsflow_budget', Arg, call_modules)
-
-              call_modules = gsflow_sum()
-              IF ( call_modules/=0 ) CALL module_error('gsflow_sum', Arg, call_modules)
-            ENDIF
           ENDIF
+        ENDIF
+
+        IF ( MS_GSF_converge .OR. Process_flag/=0 ) THEN
+
+          call_modules = gsflow_budget()
+          IF ( call_modules/=0 ) CALL module_error('gsflow_budget', Arg, call_modules)
+
+          call_modules = gsflow_sum()
+          IF ( call_modules/=0 ) CALL module_error('gsflow_sum', Arg, call_modules)
         ENDIF
       ENDIF
       
