@@ -70,7 +70,7 @@
         Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
 
-        PRMS_versn = 'gsflow_prms.f90 2017-08-09 12:00:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-09-14 11:44:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -246,12 +246,14 @@
           CALL read_parameter_file_dimens()
         ENDIF
       ELSE  !IF ( Process(:5)=='clean' ) THEN
-        IF ( Init_vars_from_file==1 ) CLOSE ( Restart_inunit )
-        IF ( Save_vars_to_file==1 ) THEN
-          nc = numchars(Var_save_file)
-          CALL PRMS_open_output_file(Restart_outunit, Var_save_file(:nc), 'var_save_file', 1, iret)
-          IF ( iret/=0 ) STOP
-          CALL call_modules_restart(0)
+        IF ( PRMS_flag==1 ) THEN ! PRMS is active
+          IF ( Init_vars_from_file==1 ) CLOSE ( Restart_inunit )
+          IF ( Save_vars_to_file==1 ) THEN
+            nc = numchars(Var_save_file)
+            CALL PRMS_open_output_file(Restart_outunit, Var_save_file(:nc), 'var_save_file', 1, iret)
+            IF ( iret/=0 ) STOP
+            CALL call_modules_restart(0)
+          ENDIF
         ENDIF
         IF ( GSFLOW_flag==1 ) CALL MFNWT_CLEAN()
       ENDIF
@@ -269,7 +271,7 @@
       ENDIF
 
 ! All modules must be called for setdims, declare, initialize, and cleanup
-      IF ( Process_flag/=0 ) THEN
+      IF ( Process_flag/=0 .AND. PRMS_flag==1 ) THEN
         call_modules = basin()
         IF ( call_modules/=0 ) CALL module_error('basin', Arg, call_modules)
 
@@ -405,9 +407,8 @@
       call_modules = srunoff()
       IF ( call_modules/=0 ) CALL module_error(Srunoff_module, Arg, call_modules)
 
-    ENDIF ! AFR = TRUE
 ! for PRMS-only and MODSIM-PRMS simulations
-      IF ( PRMS_flag==1 .AND. GSFLOW_flag==0 ) THEN
+      IF ( Model==1 .OR. Model==11 ) THEN
         call_modules = soilzone()
         IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
@@ -415,47 +416,48 @@
         call_modules = gwflow()
         IF ( call_modules/=0 ) CALL module_error('gwflow', Arg, call_modules)
 
-        IF ( Stream_order_flag==1 ) THEN
-          call_modules = routing()
-          IF ( call_modules/=0 ) CALL module_error('routing', Arg, call_modules)
+        IF ( Model==1 ) THEN
+          IF ( Stream_order_flag==1 ) THEN
+            call_modules = routing()
+            IF ( call_modules/=0 ) CALL module_error('routing', Arg, call_modules)
+          ENDIF
+
+          IF ( Strmflow_flag==1 ) THEN
+            call_modules = strmflow()
+          ELSEIF ( Strmflow_flag==4 ) THEN
+            call_modules = muskingum()
+          ELSEIF ( Strmflow_flag==5 ) THEN
+            call_modules = strmflow_in_out()
+          ELSEIF ( Strmflow_flag==3 ) THEN
+            call_modules = muskingum_lake()
+          ENDIF
+          IF ( call_modules/=0 ) CALL module_error(Strmflow_module, Arg, call_modules)
+
+          IF ( Stream_temp_flag>0 ) THEN
+            call_modules = stream_temp()
+            IF ( call_modules/=0 ) CALL module_error('stream_temp', Arg, call_modules)
+          ENDIF
+
+          IF ( Print_debug>-2 ) THEN
+            call_modules = basin_sum()
+            IF ( call_modules/=0 ) CALL module_error('basin_sum', Arg, call_modules)
+          ENDIF
+
+          IF ( Print_debug==1 ) CALL water_balance()
+
+          IF ( CsvON_OFF>0 ) CALL prms_summary()
         ENDIF
-
-        IF ( Strmflow_flag==1 ) THEN
-          call_modules = strmflow()
-        ELSEIF ( Strmflow_flag==4 ) THEN
-          call_modules = muskingum()
-        ELSEIF ( Strmflow_flag==5 ) THEN
-          call_modules = strmflow_in_out()
-        ELSEIF ( Strmflow_flag==3 ) THEN
-          IF ( MODSIM_FLAG==0 ) call_modules = muskingum_lake()
-        ENDIF
-        IF ( call_modules/=0 ) CALL module_error(Strmflow_module, Arg, call_modules)
-
-        IF ( Stream_temp_flag>0 ) THEN
-          call_modules = stream_temp()
-          IF ( call_modules/=0 ) CALL module_error('stream_temp', Arg, call_modules)
-        ENDIF
-
-        IF ( Print_debug>-2 ) THEN
-          call_modules = basin_sum()
-          IF ( call_modules/=0 ) CALL module_error('basin_sum', Arg, call_modules)
-        ENDIF
-
-        IF ( Print_debug==1 ) CALL water_balance()
-
-        IF ( CsvON_OFF>0 ) CALL prms_summary()
-
+      ENDIF
+    ENDIF ! AFR = TRUE
 ! for GSFLOW simulations
 ! TODO below need this for MODSIM-GSFLOW and MODSIM-MODFLOW
-      ELSEIF ( GSFLOW_flag==1 .OR. MODSIM_flag==1 ) THEN
+      IF ( GSFLOW_flag==1 .OR. Model==11 ) THEN
 
         IF ( Process_flag==0 ) THEN
           IF ( GSFLOW_flag==1 .AND. .NOT. MS_GSF_converge ) THEN
 ! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST MODSIM-GSFLOW ITERATION
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
             CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL)  !SOLVE GW SW EQUATIONS FOR MODSIM-GSFLOW ITERATION
-          ELSE
-            call_modules = gsflow_prms2modsim()
           ENDIF
 
 ! The following modules are in the MODFLOW iteration loop
@@ -465,28 +467,33 @@
 
 ! SOILZONE for GSFLOW is in the MODFLOW iteration loop,
 ! only call for declare, initialize, and cleanup.
-          call_modules = soilzone()
-          IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
+          IF ( GSFLOW_flag==1 ) THEN
+            call_modules = soilzone()
+            IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
-          IF ( MODSIM_flag==1 ) THEN
-            call_modules = gsflow_prms2modsim(Lake_In_out_vol)
-            DELTAVOL = Lake_In_out_vol
-          ELSE
             call_modules = gsflow_prms2mf()
             IF ( call_modules/=0 ) CALL module_error('gsflow_prms2mf', Arg, call_modules)
             call_modules = gsflow_mf2prms()
             IF ( call_modules/=0 ) CALL module_error('gsflow_mf2prms', Arg, call_modules)
+
+            IF ( .NOT. MS_GSF_converge ) THEN
+
+              call_modules = gsflow_budget()
+              IF ( call_modules/=0 ) CALL module_error('gsflow_budget', Arg, call_modules)
+
+              call_modules = gsflow_sum()
+              IF ( call_modules/=0 ) CALL module_error('gsflow_sum', Arg, call_modules)
+            ENDIF
           ENDIF
         ENDIF
-
-        IF ( .NOT. MS_GSF_converge ) RETURN
-
-        call_modules = gsflow_budget()
-        IF ( call_modules/=0 ) CALL module_error('gsflow_budget', Arg, call_modules)
-
-        call_modules = gsflow_sum()
-        IF ( call_modules/=0 ) CALL module_error('gsflow_sum', Arg, call_modules)
       ENDIF
+      
+      IF ( Model==11 ) THEN
+        call_modules = gsflow_prms2modsim(Lake_In_out_vol)
+        DELTAVOL = Lake_In_out_vol
+      ENDIF
+
+      !IF ( .NOT. MS_GSF_converge ) RETURN ! ???
 
       IF ( MapOutON_OFF>0 ) THEN
         call_modules = map_results()
@@ -626,6 +633,7 @@
       IF ( Model_mode(:13)=='MODSIM-GSFLOW' ) THEN
         Model = 10
         GSFLOW_flag = 1
+        MODSIM_flag = 1
       ELSEIF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:6)=='gsflow' .OR. Model_mode(:4)=='    ') THEN
         Model = 0
         GSFLOW_flag = 1
@@ -637,12 +645,14 @@
       ELSEIF ( Model_mode(:14)=='MODSIM-MODFLOW' ) THEN
         Model = 12
         PRMS_flag = 0
+        MODSIM_flag = 1
       ELSEIF ( Model_mode(:11)=='MODSIM-PRMS' ) THEN
         Model = 11
         MODSIM_flag = 1
       ELSEIF ( Model_mode(:6)=='MODSIM' ) THEN
         Model = 13
         PRMS_flag = 0
+        MODSIM_flag = 1
       ELSEIF ( Model_mode(:5)=='FROST' ) THEN
         Model = 29
       ELSEIF ( Model_mode(:13)=='WRITE_CLIMATE' ) THEN
