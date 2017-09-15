@@ -409,7 +409,7 @@
 
 ! for PRMS-only and MODSIM-PRMS simulations
       IF ( Model==1 .OR. Model==11 ) THEN
-        call_modules = soilzone()
+        call_modules = soilzone(AFR)
         IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
         ! rsr, need to do something if gwflow_cbh_flag=1
@@ -468,7 +468,7 @@
 ! SOILZONE for GSFLOW is in the MODFLOW iteration loop,
 ! only call for declare, initialize, and cleanup.
           IF ( GSFLOW_flag==1 ) THEN
-            call_modules = soilzone()
+            call_modules = soilzone(AFR)
             IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
             call_modules = gsflow_prms2mf()
@@ -1300,7 +1300,7 @@
       test = intcp()
       test = snowcomp()
       test = srunoff()
-      test = soilzone()
+!      test = soilzone()
       test = gsflow_prms2mf()
       test = gsflow_mf2prms()
       test = gsflow_budget()

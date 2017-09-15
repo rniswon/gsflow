@@ -710,7 +710,7 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
 
 !  Call the PRMS modules that need to be inside the iteration loop
             IF ( Szcheck>0 ) THEN
-              retval = soilzone()
+              retval = soilzone(AFR)
               IF ( retval.NE.0 ) THEN
                 PRINT 9001, 'soilzone', retval
                 RETURN
