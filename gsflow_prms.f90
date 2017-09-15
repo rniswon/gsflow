@@ -8,7 +8,7 @@
       
       USE PRMS_MODULE
       USE PRMS_READ_PARAM_FILE, ONLY: Version_read_parameter_file
-      USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_TIMEADVANCE
+      USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_TIMEADVANCE,MFNWT_OCBUDGET
       USE GWFSFRMODULE, ONLY: NSS
       USE GWFLAKMODULE, ONLY: NLAKES
       IMPLICIT NONE
@@ -480,11 +480,14 @@
 
         IF ( MS_GSF_converge .OR. Process_flag/=0 ) THEN
 
+          IF( Process_flag==0 ) call MFNWT_OCBUDGET()
+          
           call_modules = gsflow_budget()
           IF ( call_modules/=0 ) CALL module_error('gsflow_budget', Arg, call_modules)
 
           call_modules = gsflow_sum()
           IF ( call_modules/=0 ) CALL module_error('gsflow_sum', Arg, call_modules)
+
         ENDIF
       ENDIF
       
