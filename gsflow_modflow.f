@@ -23,7 +23,7 @@ C     ******************************************************************
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-08-21 15:49:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-09-19 11:09:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -1725,12 +1725,14 @@ C
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
       DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*),
      &                                   LAKEVOL(*)
+      ! Functions
+      INTRINSIC :: INT, DBLE
       EXTERNAL :: RESTART1READ
       INTEGER, EXTERNAL :: compute_julday, control_integer_array
 !      DOUBLE PRECISION, EXTERNAL :: compute_julday
 ! Local Variables
-      INTEGER :: i, j
-      DOUBLE PRECISION :: start_jul, mfstrt_jul, plen, time, kstpskip
+      INTEGER :: i, j, mfstrt_jul, start_jul
+      DOUBLE PRECISION :: plen, time, kstpskip
 !***********************************************************************
       ! get modflow_time_zero and determine julian day
       DO j = 1, 6
@@ -1757,7 +1759,7 @@ C
       Stress_dates = 0.0D0
       Stress_dates(1) = compute_julday(Modflow_time_zero(1),
      &                  Modflow_time_zero(2), Modflow_time_zero(3))
-      mfstrt_jul = Stress_dates(1)
+      mfstrt_jul = INT( Stress_dates(1) )
 
       ! determine julian day
       start_jul = compute_julday(Start_year, Start_month, Start_day)
@@ -1809,7 +1811,7 @@ C
       Modflow_skip_stress = 0
       kstpskip = 0.0D0
       Modflow_time_in_stress = 0.0D0
-      Modflow_skip_time = start_jul - mfstrt_jul
+      Modflow_skip_time = DBLE( start_jul - mfstrt_jul )
       time = 0.0D0
       Modflow_time_in_stress = Modflow_skip_time
       DO i = 1, NPER
