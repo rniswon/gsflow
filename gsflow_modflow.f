@@ -56,9 +56,8 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !***********************************************************************
 C
       SUBROUTINE MFNWT_INIT(AFR, Diversions, Idivert,EXCHANGE,DELTAVOL,
-     &                      LAKEVOL, Nlakeshold)  !BIND(C,NAME="MFNWT_INIT")
+     &                      LAKEVOL, Nsegshold, Nlakeshold) 
 C      
-      !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_INIT
 C
 !     ------------------------------------------------------------------
 C        SPECIFICATIONS:
@@ -78,11 +77,13 @@ C1------USE package modules.
       INCLUDE 'openspec.inc'
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      INTEGER, INTENT(IN) :: Idivert(*)
+      INTEGER, INTENT(IN) :: Nsegshold
+      INTEGER, INTENT(IN) :: Idivert(Nsegshold)
       INTEGER, INTENT(INOUT) :: Nlakeshold
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*),
-     +                                   LAKEVOL(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(Nsegshold), 
+     &                                   DELTAVOL(Nlakeshold),
+     +                                   LAKEVOL(Nlakeshold)
 ! Functions
       INTRINSIC DBLE
       INTEGER, EXTERNAL :: numchars
@@ -429,7 +430,7 @@ C7------SIMULATE EACH STRESS PERIOD.
 
       ! run SS if needed, read to current stress period, read restart if needed
       CALL SET_STRESS_DATES(AFR, Diversions, Idivert, EXCHANGE,DELTAVOL,
-     +                      LAKEVOL)
+     +                      LAKEVOL,Nsegshold, Nlakeshold)
       CALL SETCONVFACTORS()
 
       Delt_save = DELT
@@ -610,16 +611,14 @@ C     RUN THE MODFLOW SOLVER ROUTINE WITH THE LATEST VALUES OF
 C     ISEG UPDATED BY MODSIM.
 C     *************************************************************
       SUBROUTINE MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, 
-     &                     DELTAVOL,LAKEVOL)
-     &           BIND(C,NAME="MFNWT_RUN")
+     &                     DELTAVOL,LAKEVOL,Nsegshold, Nlakeshold)
 C
-      !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_RUN
 C
 !     ------------------------------------------------------------------
 !        SPECIFICATIONS:
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model, Kkiter
+      USE PRMS_MODULE, ONLY: Model, Kkiter, Nsegment, Nlake
 C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
@@ -637,10 +636,13 @@ c     USE LMGMODULE
       USE GWFNWTMODULE, ONLY:ITREAL !,ICNVGFLG
       IMPLICIT NONE
       INTEGER I
+      INTEGER, INTENT(IN) :: Nsegshold, Nlakeshold
       LOGICAL, INTENT(IN) :: AFR
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*), EXCHANGE(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(*), LAKEVOL(*)
-      INTEGER, INTENT(IN) :: Idivert(*)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold), 
+     &                                   EXCHANGE(Nsegshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Nlakeshold), 
+     &                                   LAKEVOL(Nlakeshold)
+      INTEGER, INTENT(IN) :: Idivert(Nsegshold)
 !      CHARACTER*16 TEXT
 !      DATA TEXT /'            HEAD'/
 !      CHARACTER*20 FMTOUT, CRADFM
@@ -1710,7 +1712,7 @@ C
 !     READ AND PREPARE INFORMATION FOR STRESS PERIOD.
 !***********************************************************************
       SUBROUTINE SET_STRESS_DATES(AFR, Diversions, Idivert, 
-     &    EXCHANGE, DELTAVOL, LAKEVOL)
+     &    EXCHANGE, DELTAVOL, LAKEVOL,Nsegshold, Nlakeshold)
       USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
@@ -1721,10 +1723,12 @@ C
       IMPLICIT NONE
       ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      INTEGER, INTENT(IN) :: Idivert(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*),
-     &                                   LAKEVOL(*)
+      INTEGER, INTENT(IN) :: Nsegshold, Nlakeshold
+      INTEGER, INTENT(IN) :: Idivert(Nsegshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(Nsegshold), 
+     &                                   DELTAVOL(Nlakeshold),
+     &                                   LAKEVOL(Nlakeshold)
       ! Functions
       INTRINSIC :: INT, DBLE
       EXTERNAL :: RESTART1READ
@@ -1788,7 +1792,7 @@ C
             Steady_state = 1
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
             CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL,
-     +                     LAKEVOL)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+     +                     LAKEVOL,Nsegshold, Nlakeshold)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
             CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
             Steady_state = 0
             IF ( ICNVG==0 ) THEN

@@ -10,11 +10,11 @@
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_CLEAN, MFNWT_TIMEADVANCE, MFNWT_OCBUDGET
       IMPLICIT NONE
 ! Arguments
-      INTEGER, INTENT(IN) :: Process_mode, Idivert(Nsegment)
+      INTEGER, INTENT(IN) :: Process_mode, Idivert(Nsegshold)
       INTEGER, INTENT(INOUT) :: Nsegshold, Nlakeshold
       LOGICAL, INTENT(INOUT) :: AFR, MS_GSF_converge
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegment)
-      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Nlake), EXCHANGE(Nsegment), LAKEVOL(Nlake)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Nlakeshold), EXCHANGE(Nsegshold), LAKEVOL(Nlakeshold)
 ! Functions
       INTRINSIC :: DATE_AND_TIME, INT
       INTEGER, EXTERNAL :: check_dims, basin, climateflow, prms_time
@@ -63,12 +63,12 @@
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
 
-        CALL GSFLOW_decl(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nlakeshold)
+        CALL GSFLOW_decl()
         First_timestep = Timestep
 
       ELSEIF ( Process_flag==2 ) THEN
         Arg = 'init'
-        CALL GSFLOW_init(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nlakeshold)
+        CALL GSFLOW_init(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
 
       ELSEIF ( Process_flag==4 ) THEN
         ! Note, MODFLOW-only doesn't leave setdims
@@ -77,7 +77,7 @@
         Execution_time_start = Elapsed_time_start(5)*3600 + Elapsed_time_start(6)*60 + &
      &                         Elapsed_time_start(7) + Elapsed_time_start(8)*0.001
 
-        dmy = setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nlakeshold) ! if MODFLOW only the execution stops in setdims
+        dmy = setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold) ! if MODFLOW only the execution stops in setdims
 
         IF ( Model==12 .OR. Model==13 ) RETURN ! MODSIM or MODSIM-MODFLOW modes
 
@@ -301,7 +301,7 @@
           IF ( GSFLOW_flag==1 .AND. .NOT. MS_GSF_converge ) THEN
 ! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST MODSIM-GSFLOW ITERATION
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-            CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL)  !SOLVE GW SW EQUATIONS FOR MODSIM-GSFLOW ITERATION
+            CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)  !SOLVE GW SW EQUATIONS FOR MODSIM-GSFLOW ITERATION
           ENDIF
 
 ! The following modules are in the MODFLOW iteration loop
@@ -337,7 +337,7 @@
       
       IF ( Model==11 ) THEN
         call_modules = gsflow_prms2modsim(Lake_In_out_vol)
-        DELTAVOL = Lake_In_out_vol
+!        DELTAVOL = Lake_In_out_vol
       ENDIF
 
       !IF ( .NOT. MS_GSF_converge ) RETURN ! ???
@@ -423,7 +423,7 @@
 !***********************************************************************
 !     declare the dimensions
 !***********************************************************************
-      INTEGER FUNCTION setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nlakeshold)
+      INTEGER FUNCTION setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
       USE PRMS_MODULE
       USE GLOBAL, ONLY: NSTP, NPER
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_OCBUDGET, MFNWT_TIMEADVANCE
@@ -431,10 +431,10 @@
       IMPLICIT NONE
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      INTEGER, INTENT(INOUT) :: Nlakeshold
-      INTEGER, INTENT(IN) :: Idivert(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(*), DELTAVOL(*), LAKEVOL(*)
+      INTEGER, INTENT(INOUT) :: Nsegshold, Nlakeshold
+      INTEGER, INTENT(IN) :: Idivert(Nsegshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(Nsegshold), DELTAVOL(Nlakeshold), LAKEVOL(Nlakeshold)
 ! Functions
       INTEGER, EXTERNAL :: decldim, declfix, control_integer_array
       INTEGER, EXTERNAL :: control_string, control_integer, compute_julday
@@ -563,13 +563,13 @@
         mf_nowtime = startday
         test = gsfdecl()
         IF ( test/=0 ) CALL module_error(MODNAME, 'declare', test)
-        CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nlakeshold)
+        CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
         PRINT *, ' '
         WRITE (Logunt, '(1X)')
         DO WHILE ( Kper_mfo<=Nper )
           IF ( mf_nowtime>endday ) EXIT
           CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-          CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+          CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
           CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
           IF ( mf_timestep==NSTP(Kper_mfo) ) THEN
             Kper_mfo = Kper_mfo + 1
@@ -1502,7 +1502,7 @@
 !***********************************************************************
 !     Code piece from main subroutine for initialize procedure
 !***********************************************************************
-      SUBROUTINE GSFLOW_init(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nlakeshold)
+      SUBROUTINE GSFLOW_init(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
       USE PRMS_MODULE
       USE GWFSFRMODULE, ONLY: NSS
       USE GWFLAKMODULE, ONLY: NLAKES
@@ -1510,9 +1510,9 @@
       IMPLICIT NONE
 ! Arguments
       LOGICAL, INTENT(INOUT) :: AFR
-      INTEGER, INTENT(INOUT) :: Nlakeshold
-      INTEGER, INTENT(IN) :: Idivert(*)
-      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(*), DELTAVOL(*), EXCHANGE(*), LAKEVOL(*)
+      INTEGER, INTENT(INOUT) :: Nsegshold, Nlakeshold
+      INTEGER, INTENT(IN) :: Idivert(Nsegshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold), DELTAVOL(Nlakeshold), EXCHANGE(Nsegshold), LAKEVOL(Nlakeshold)
 ! Functions
       INTEGER, EXTERNAL :: getparam, numchars
       EXTERNAL :: read_error
@@ -1546,7 +1546,7 @@
       ENDIF
 
       IF ( GSFLOW_flag==1 ) THEN
-        CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nlakeshold)
+        CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, NSegshold, Nlakeshold)
         IF ( Have_lakes==1 .AND. Nlake/=NLAKES ) THEN
           PRINT *, 'ERROR, NLAKES not equal to Nlake'
           PRINT *, '       NLAKES=', NLAKES, '; Nlake=', Nlake
