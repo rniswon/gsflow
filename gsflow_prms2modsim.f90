@@ -45,14 +45,14 @@
       INTEGER FUNCTION prms2modsimdecl()
       USE GSFPRMS2MODSIM
       IMPLICIT NONE
-      INTEGER, EXTERNAL :: declparam, declvar
+      INTEGER, EXTERNAL :: declparam
       EXTERNAL read_error, print_module
 ! Save Variables
       CHARACTER(LEN=80), SAVE :: Version_gsflow_prms2modsim
 !***********************************************************************
       prms2modsimdecl = 0
 
-      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2017-08-14 08:50:00Z'
+      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2017-09-27 15:06:00Z'
       CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
       MODNAME = 'gsflow_prms2modsim'
 
@@ -66,8 +66,7 @@
       USE PRMS_MODULE, ONLY: Nsegment, Nlake, Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Lake_hru_id
       IMPLICIT NONE
-      INTEGER, EXTERNAL :: declvar
-      EXTERNAL read_error
+      EXTERNAL read_error, declvar_dble
       INTRINSIC ABS, DBLE
 ! Local Variables
       INTEGER :: i, ii, ierr
@@ -88,21 +87,21 @@
 !      ENDIF
 
       ALLOCATE ( Segment_latflow(Nsegment) )
-      IF ( declvar(MODNAME, 'Segment_latflow', 'nsegment', Nsegment, 'double', &
+      CALL declvar_dble(MODNAME, 'Segment_latflow', 'nsegment', Nsegment, 'double', &
      &     'Lateral flow to each segment', &
-     &     'acre-ft', Segment_latflow)/=0 ) CALL read_error(3, 'Segment_latflow')
+     &     'acre-ft', Segment_latflow)
       ALLOCATE ( Lake_latflow(Nlake) )
-      IF ( declvar(MODNAME, 'Lake_latflow', 'nlake', Nlake, 'double', &
+      CALL declvar_dble(MODNAME, 'Lake_latflow', 'nlake', Nlake, 'double', &
      &     'Total lateral flow into each lake', &
-     &     'acre-ft', Lake_latflow)/=0 ) CALL read_error(3, 'Lake_latflow')
+     &     'acre-ft', Lake_latflow)
       ALLOCATE ( Lake_precip(Nlake) )
-      IF ( declvar(MODNAME, 'Lake_precip', 'nlake', Nlake, 'double', &
+      CALL declvar_dble(MODNAME, 'Lake_precip', 'nlake', Nlake, 'double', &
      &     'Precipitation into each lake', &
-     &     'acre-ft', Lake_precip)/=0 ) CALL read_error(3, 'Lake_precip')
+     &     'acre-ft', Lake_precip)
       ALLOCATE ( Lake_et(Nlake) )
-      IF ( declvar(MODNAME, 'Lake_et', 'nlake', Nlake, 'double', &
+      CALL declvar_dble(MODNAME, 'Lake_et', 'nlake', Nlake, 'double', &
      &     'Evaporation from each lake', &
-     &     'acre-ft', Lake_et)/=0 ) CALL read_error(3, 'Lake_et')
+     &     'acre-ft', Lake_et)
       ALLOCATE ( Lake_InOut_flow(Nlake) )
       IF ( Init_vars_from_file==0 ) THEN
         Segment_latflow = 0.0D0

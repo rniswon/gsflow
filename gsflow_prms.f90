@@ -31,7 +31,7 @@
       INTEGER, EXTERNAL :: strmflow_in_out, muskingum, muskingum_lake, numchars
       INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta !, setup
       EXTERNAL :: module_error, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, basin_summary
+      EXTERNAL :: call_modules_restart, check_bounded_params, water_balance, basin_summary
       EXTERNAL :: prms_summary, nhru_summary, module_doc, convert_params, read_error, nsub_summary
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum, gsflow_prms2modsim
       INTEGER, EXTERNAL :: setdims, stream_temp
@@ -49,7 +49,7 @@
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2017-09-18 15:05:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-09-27 15:05:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -129,6 +129,9 @@
         call_modules = soltab()
         IF ( call_modules/=0 ) CALL module_error('soltab', Arg, call_modules)
 
+        call_modules = obs()
+        IF ( call_modules/=0 ) CALL module_error('obs', Arg, call_modules)
+
 !        call_modules = setup()
 !        IF ( call_modules/=0 ) CALL module_error('setup', Arg, call_modules)
       ENDIF
@@ -136,9 +139,6 @@
     IF ( AFR ) THEN
       call_modules = prms_time()
       IF ( call_modules/=0 ) CALL module_error('prms_time', Arg, call_modules)
-
-      call_modules = obs()
-      IF ( call_modules/=0 ) CALL module_error('obs', Arg, call_modules)
 
       IF ( Water_use_flag==1 ) THEN
         call_modules = water_use_read()
@@ -397,7 +397,7 @@
         WRITE ( Logunt, '(A)' ) EQULS
         IF ( Model==25 ) CALL convert_params()
       ELSEIF ( Process_flag==2 ) THEN
-        IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
+        IF ( Parameter_check_flag>0 ) CALL check_bounded_params()
         IF ( Parameter_check_flag==2 ) STOP
         IF ( Model==25 ) THEN
           CALL convert_params()
@@ -1411,12 +1411,11 @@
 !***********************************************************************
       SUBROUTINE GSFLOW_decl()
       USE PRMS_MODULE
-      USE PRMS_READ_PARAM_FILE, ONLY: Version_read_parameter_file
       IMPLICIT NONE
 ! Functions
       INTRINSIC :: DATE_AND_TIME
-      INTEGER, EXTERNAL :: declvar, declparam
-      EXTERNAL :: read_error
+      INTEGER, EXTERNAL :: declparam
+      EXTERNAL :: read_error, declvar_int
       EXTERNAL :: print_module, read_prms_data_file, call_modules_restart
 !***********************************************************************
       IF ( Print_debug>-2 ) THEN
@@ -1467,8 +1466,8 @@
       CALL read_prms_data_file()
 
       IF ( GSFLOW_flag==1 .OR. Model==99 ) THEN
-        IF ( declvar(MODNAME, 'KKITER', 'one', 1, 'integer', &
-     &       'Current iteration in GSFLOW simulation', 'none', KKITER)/=0 ) CALL read_error(3, 'KKITER')
+        CALL declvar_int(MODNAME, 'KKITER', 'one', 1, 'integer', &
+     &       'Current iteration in GSFLOW simulation', 'none', KKITER)
         ALLOCATE ( Gvr_cell_pct(Nhrucell) )
         IF ( Nhru/=Nhrucell ) THEN
           IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
