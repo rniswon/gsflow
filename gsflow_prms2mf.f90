@@ -71,7 +71,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-08-16 09:38:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-10-02 13:35:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -347,11 +347,11 @@
         icol = Gwc_col(icell)
         IF ( Print_debug>-1 ) THEN
           IF ( Hru_type(ihru)==0 ) THEN
-            IF ( IUZFBND(icol, irow)/=0 ) &
+            IF ( IUZFBND(icol, irow)/=0 .AND. Print_debug>-1 ) &
      &           PRINT *, 'WARNING, HRU inactive & UZF cell active, irow:', irow, 'icell:', icell, ' HRU:', ihru
           ENDIF
           IF ( IUZFBND(icol, irow)==0 ) THEN
-            IF ( Hru_type(ihru)/=0 ) &
+            IF ( Hru_type(ihru)/=0 .AND. Print_debug>-1 ) &
      &           PRINT *, 'WARNING, UZF cell inactive, irow:', irow, ' icell:', icell, ' HRU is active:', ihru
           ENDIF
         ENDIF
@@ -393,7 +393,7 @@
             PRINT *, 'ERROR, HRU to cell mapping is < 0.0', i, pct
             ierr = 1
           ELSEIF ( pct<PCT_CHK ) THEN
-            PRINT *, 'WARNING, active HRU is not mapped to any cell', i, pct
+            IF ( Print_debug>-1 ) PRINT *, 'WARNING, active HRU is not mapped to any cell', i, pct
           ENDIF
           Totalarea = Totalarea + pct*DBLE( Hru_area(i) )
         ELSE
