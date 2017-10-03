@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 09/28/2017'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 10/02/2017'
       CHARACTER(LEN=8), SAVE :: Process, Arg
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
