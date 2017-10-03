@@ -49,7 +49,7 @@
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2017-09-27 15:05:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-09-28 14:31:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -340,7 +340,9 @@
 !        DELTAVOL = Lake_In_out_vol
       ENDIF
 
-      !IF ( .NOT. MS_GSF_converge ) RETURN ! ???
+      IF ( Model==10 ) THEN
+        IF ( Process_flag==0 .AND. .NOT.MS_GSF_converge ) RETURN
+      ENDIF
 
       IF ( MapOutON_OFF>0 ) THEN
         call_modules = map_results()
@@ -357,6 +359,8 @@
         call_modules = subbasin()
         IF ( call_modules/=0 ) CALL module_error('subbasin', Arg, call_modules)
       ENDIF
+
+      IF ( Process_flag==0 ) RETURN
 
       IF ( Print_debug>-1 ) THEN
         IF ( Process_flag==3 ) THEN
@@ -385,8 +389,6 @@
           ENDIF
         ENDIF
       ENDIF
-
-      IF ( Process_flag==0 ) RETURN
 
       IF ( Process_flag==1 ) THEN
         CALL read_parameter_file_params()
