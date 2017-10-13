@@ -88,7 +88,7 @@
       ELSEIF ( Process_flag==3 ) THEN
         Arg = 'clean'
         IF ( PRMS_flag==1 ) THEN ! PRMS is active
-          IF ( Init_vars_from_file==1 ) CLOSE ( Restart_inunit )
+          IF ( Init_vars_from_file>0 ) CLOSE ( Restart_inunit )
           IF ( Save_vars_to_file==1 ) THEN
             nc = numchars(Var_save_file)
             CALL PRMS_open_output_file(Restart_outunit, Var_save_file(:nc), 'var_save_file', 1, iret)
@@ -597,7 +597,7 @@
       IF ( control_string(Param_file, 'param_file')/=0 ) CALL read_error(5, 'param_file')
 
       ! Check for restart files
-      IF ( Init_vars_from_file==1 ) THEN
+      IF ( Init_vars_from_file>0 ) THEN
         IF ( control_string(Var_init_file, 'var_init_file')/=0 ) CALL read_error(5, 'var_init_file')
         CALL PRMS_open_input_file(Restart_inunit, Var_init_file, 'var_init_file', 1, iret)
         IF ( iret/=0 ) STOP
@@ -1571,7 +1571,7 @@
       IF ( Print_debug>-2 ) WRITE ( PRMS_output_unit, 9004 ) 'Using Parameter File: ', Param_file(:nc)
       WRITE ( Logunt, 9004 ) 'Using Parameter File: ', Param_file(:nc)
 
-      IF ( Init_vars_from_file==1 ) THEN
+      IF ( Init_vars_from_file>0 ) THEN
         nc = numchars(Var_init_file)
         IF ( Print_debug>-1 ) PRINT 9004, 'Using var_init_file: ', Var_init_file(:nc)
         WRITE ( Logunt, 9004 ) 'Writing var_init_file: ', Var_init_file(:nc)
