@@ -49,7 +49,7 @@
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2017-09-28 14:31:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-10-03 14:31:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -829,7 +829,7 @@
       IF ( control_integer(BasinOutON_OFF, 'basinOutON_OFF')/=0 ) BasinOutON_OFF = 0
 
       IF ( control_integer(Prms_warmup, 'prms_warmup')/=0 ) Prms_warmup = 0
-      IF ( Subbasin_flag==1 .OR. NhruOutON_OFF==1 .OR. NsubOutON_OFF==1 .OR. BasinOutON_OFF==1 ) THEN
+      IF ( nsubOutON_OFF==1 .OR. NhruOutON_OFF==1 .OR. NsubOutON_OFF==1 .OR. BasinOutON_OFF==1 ) THEN
         IF ( Start_year+Prms_warmup>End_year ) THEN ! change to start full date ???
           PRINT *, 'ERROR, prms_warmup > than simulation time period:', Prms_warmup
           Inputerror_flag = 1
@@ -1023,7 +1023,7 @@
 
       IF ( NsubOutON_OFF==1 .AND. Nsub==0 ) THEN
         NsubOutON_OFF = 0
-        PRINT *, 'nsubOutON_OFF = 1 and nsub = 0, thus nsub_summary not used'
+        IF ( Print_debug>-1 ) PRINT *, 'WARNING, nsubOutON_OFF = 1 and nsub = 0, thus nsub_summary not used'
       ENDIF
 
       IF ( Model==99 .OR. Parameter_check_flag>0 ) CALL check_dimens()
