@@ -34,7 +34,7 @@
       ELSEIF ( Process(:4)=='decl' ) THEN
         gsflow_budget = gsfbuddecl()
       ELSEIF ( Process(:4)=='init' ) THEN
-        IF ( Init_vars_from_file==1 ) CALL gsflow_budget_restart(1)
+        IF ( Init_vars_from_file>0 ) CALL gsflow_budget_restart(1)
         gsflow_budget = gsfbudinit()
       ELSEIF ( Process(:5)=='clean' ) THEN
         IF ( Save_vars_to_file==1 ) CALL gsflow_budget_restart(0)
@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2017-09-27 14:58:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2017-10-18 16:49:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 

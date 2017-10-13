@@ -23,7 +23,7 @@ C     ******************************************************************
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-09-19 11:09:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-10-18 16:50:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -425,7 +425,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       CALL SETMFTIME()
       IF ( GSFLOW_flag==1 ) THEN
         CALL set_cell_values()
-        IF ( Init_vars_from_file==1 ) CALL gsflow_modflow_restart(1)
+        IF ( Init_vars_from_file>0 ) CALL gsflow_modflow_restart(1)
         CALL check_gvr_cell_pct()
       ENDIF
 
@@ -505,7 +505,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       IF ( Kkper_new.NE.KKPER ) THEN
         KPER = Kkper_new
         KKPER = Kkper_new
-        IF ( Init_vars_from_file==1 ) THEN
+        IF ( Init_vars_from_file>0 ) THEN
           IF ( KPER>Modflow_skip_stress+1 ) KSTP = 0
         ELSE
           KSTP = 0
@@ -1839,7 +1839,7 @@ C
 !      Modflow_time_in_stress = Modflow_time_in_stress - time   !RGN
       Modflow_time_in_stress = Modflow_skip_time - kstpskip
       IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
-      IF ( Init_vars_from_file==1 ) THEN
+      IF ( Init_vars_from_file>0 ) THEN
         DO i = 1, Modflow_skip_stress + 1
           KPER = i                   !RGN
           CALL MFNWT_RDSTRESS(KPER)
@@ -1855,7 +1855,7 @@ C
       IF ( KSTP<0 ) KSTP = 0
 
       ! read restart files to Modflow_time_in_stress
-      IF ( Init_vars_from_file==1 ) THEN
+      IF ( Init_vars_from_file>0 ) THEN
         IF ( Iunit(69)==0 ) THEN
           WRITE(Logunt,111)
           PRINT 111
