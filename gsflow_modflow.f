@@ -744,8 +744,8 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
                 CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
      1                                     IUNIT(44),IUNIT(55),IGRID)
                 IF(Model>=10 .AND. iss==0) CALL LAK2MODSIM(DELTAVOL,
-     1                                                    LAKEVOL,
-     2                                            KKITER,KKSTP,KKPER)
+     1                                                    LAKEVOL)  !,
+C     2                                            KKITER,KKSTP,KKPER)
             ENDIF
             IF(IUNIT(50).GT.0) THEN
               IF (IUNIT(1).GT.0) THEN
