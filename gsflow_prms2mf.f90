@@ -46,7 +46,7 @@
       ELSEIF ( Process(:4)=='decl' ) THEN
         gsflow_prms2mf = prms2mfdecl()
       ELSEIF ( Process(:4)=='init' ) THEN
-        IF ( Init_vars_from_file==1 ) CALL gsflow_prms2mf_restart(1)
+        IF ( Init_vars_from_file>0 ) CALL gsflow_prms2mf_restart(1)
         gsflow_prms2mf = prms2mfinit()
       ELSEIF ( Process(:5)=='clean' ) THEN
         IF ( Save_vars_to_file==1 ) CALL gsflow_prms2mf_restart(0)
@@ -421,7 +421,7 @@
       Basin_reach_latflow = 0.0D0
       Net_sz2gw = 0.0D0
       Excess = 0.0 ! dimension ngwcell
-      IF ( Init_vars_from_file==1 ) Sm2gw_grav_older = 0.0 ! dimension nhrucell
+      IF ( Init_vars_from_file==0 ) Sm2gw_grav_older = 0.0 ! dimension nhrucell ??, should this be ==0 ??
       Gw_rejected_grav = 0.0 ! dimension nhrucell
       NTRAIL_CHK = NWAV - 3*NTRAIL + 1
 

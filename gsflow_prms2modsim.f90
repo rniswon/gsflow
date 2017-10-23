@@ -29,7 +29,7 @@
       ELSEIF ( Process(:4)=='decl' ) THEN
         gsflow_prms2modsim = prms2modsimdecl()
       ELSEIF ( Process(:4)=='init' ) THEN
-        IF ( Init_vars_from_file==1 ) CALL gsflow_prms2modsim_restart(1)
+        IF ( Init_vars_from_file>0 ) CALL gsflow_prms2modsim_restart(1)
         gsflow_prms2modsim = prms2modsiminit()
       ELSEIF ( Process(:5)=='clean' ) THEN
         IF ( Save_vars_to_file==1 ) CALL gsflow_prms2modsim_restart(0)
@@ -52,7 +52,7 @@
 !***********************************************************************
       prms2modsimdecl = 0
 
-      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2017-09-27 15:06:00Z'
+      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2017-10-18 16:08:00Z'
       CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
       MODNAME = 'gsflow_prms2modsim'
 
