@@ -873,10 +873,14 @@ C7C2C---IF CONVERGENCE CRITERION HAS BEEN MET STOP ITERATING.
           KITER = MXITER
 C
    33     CONTINUE
+C       PRINT 9002, KKPER, KKSTP,KKITER, Maxgziter
       !move above and executed when AFR = TRUE
           IF(IUNIT(62).GT.0 ) CALL GWF2UPWUPDATE(2,Igrid)
  9001 FORMAT ('ERROR in ', A, ' module, arg = run.',
-     &        ' Called from gsfrun.', /, 'Return val =', I2)
+     &        ' Called from gsfrun.', /, 'Return val =', I2)     
+ !9002 FORMAT('Stress:', I3, '; Step:', I6,
+ !    &       /, 18X, 'MF iterations:', I9,
+ !    &       '; SZ iterations:', I7, /)
 
       END SUBROUTINE MFNWT_RUN
 C
