@@ -421,7 +421,7 @@
       Basin_reach_latflow = 0.0D0
       Net_sz2gw = 0.0D0
       Excess = 0.0 ! dimension ngwcell
-      IF ( Init_vars_from_file==0 ) Sm2gw_grav_older = 0.0 ! dimension nhrucell ??, should this be ==0 ??
+      IF ( Init_vars_from_file==0 ) Sm2gw_grav_older = 0.0 ! dimension nhrucell ??, should this be = 0, was = 1 ??
       Gw_rejected_grav = 0.0 ! dimension nhrucell
       NTRAIL_CHK = NWAV - 3*NTRAIL + 1
 
