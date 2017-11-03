@@ -5,8 +5,8 @@
 !   Local Variables
       INTEGER, SAVE :: Nreach
       INTEGER, SAVE :: Vbnm_index(14)
-      DOUBLE PRECISION, SAVE :: Gw_bnd_in, Gw_bnd_out, Well_in, Well_out, Basin_actetgw
-!      REAL, SAVE, ALLOCATABLE :: Fluxchange(:)
+      DOUBLE PRECISION, SAVE :: Gw_bnd_in, Gw_bnd_out, Well_in, Well_out, Basin_actetgw, Basin_fluxchange
+      REAL, SAVE, ALLOCATABLE :: Fluxchange(:)
       CHARACTER(LEN=13), SAVE :: MODNAME
 !   Declared Variables
       DOUBLE PRECISION, SAVE :: Total_pump, Total_pump_cfs, StreamExchng2Sat_Q, Stream2Unsat_Q, Sat_S
@@ -175,7 +175,7 @@
 !***********************************************************************
       INTEGER FUNCTION gsfbudinit()
       USE GSFBUDGET
-      USE PRMS_MODULE, ONLY: Init_vars_from_file
+      USE PRMS_MODULE, ONLY: Init_vars_from_file, Nhru
       USE GWFSFRMODULE, ONLY: NSTRM
       USE GLOBAL, ONLY: IUNIT
       USE GWFUZFMODULE, ONLY: UZTSRAT
@@ -217,8 +217,9 @@
 !  Set the volume budget indicies to -1 anytime "init" is called.
 !  This will make "run" figure out the vbnm order.
       Vbnm_index = -1
-!      ALLOCATE ( Fluxchange(Nhru) )
-!      Fluxchange = 0.0
+      ALLOCATE ( Fluxchange(Nhru) )
+      Fluxchange = 0.0
+      Basin_fluxchange = 0.0D0
 
       END FUNCTION gsfbudinit
 
@@ -228,13 +229,13 @@
 !***********************************************************************
       INTEGER FUNCTION gsfbudrun()
       USE GSFBUDGET
-      USE GSFMODFLOW, ONLY: Mfq2inch_conv, Mfl2_to_acre, Szcheck, ICNVG, &
-     &    Mfvol2inch_conv, Mfl3t_to_cfs, Mfl_to_inch, Gwc_col, Gwc_row, Have_lakes
+      USE GSFMODFLOW, ONLY: Mfq2inch_conv, Mfl2_to_acre, Cellarea, &
+     &    Mfvol2inch_conv, Mfl3t_to_cfs, Mfl_to_inch, Gwc_col, Gwc_row, Have_lakes, ICNVG !, Szcheck, ICNVG
 !Warning, modifies Gw_rejected_grav, Gw_rejected_grav
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
 !Warning, modifies Gw2sm_grav
-      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id !, Print_debug
-      USE GLOBAL, ONLY: DELR, DELC !, IUNIT
+      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Gvr_cell_pct !, Print_debug
+!      USE GLOBAL, ONLY: IUNIT, DELR, DELC
       USE GWFBASMODULE, ONLY: VBVL, DELT
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET, UZOLSFLX, UZFLWT
       USE GWFLAKMODULE, ONLY: EVAP, SURFA
@@ -249,13 +250,13 @@
 !Warning, modifies Basin_soil_moist, Basin_ssstor
       USE PRMS_SRUNOFF, ONLY: Basin_sroff
       USE PRMS_SOILZONE, ONLY: Pref_flow_stor, Gravity_stor_res, Hrucheck, Gvr_hru_id, &
-     &    Basin_pref_stor, Basin_slstor, Gvr2sm, Basin_gvr2sm, Gw2sm_grav, &
-     &    Gw_rejected, Gw2sm_grav_save, Basin_szreject, Gvr_hru_pct_adjusted
+     &    Basin_pref_stor, Basin_slstor, Gvr2sm, Basin_gvr2sm, Gw2sm_grav, Basin_pref_flow_infil, Pref_flow_in, &
+     &    Gw_rejected, Gw2sm_grav_save, Basin_szreject, Gvr_hru_pct_adjusted, Gvr2pfr, Basin_gvr2pfr
       IMPLICIT NONE
 ! Functions
       INTRINSIC :: ABS, SNGL
-      EXTERNAL MODFLOW_GET_STORAGE_BCF, MODFLOW_GET_STORAGE_LPF
-      EXTERNAL MODFLOW_GET_STORAGE_UPW
+!      EXTERNAL MODFLOW_GET_STORAGE_BCF, MODFLOW_GET_STORAGE_LPF
+!      EXTERNAL MODFLOW_GET_STORAGE_UPW
       EXTERNAL MODFLOW_VB_DECODE, getStreamFlow, getPump
 !     EXTERNAL getHeads, print_date
 ! Local Variables
@@ -275,15 +276,16 @@
         Gw2sm(i) = 0.0
         Gw_rejected(i) = 0.0
         Actet_gw(i) = 0.0
-        Slow_stor(i) = 0.0
+        Slow_stor(i) = 0.0 !shouldn't be reset if any cells of hru inactive and hru active
         Uzf_infil_map(i) = 0.0
         Sat_recharge(i) = 0.0
         Mfoutflow_to_gvr(i) = 0.0
-!        Fluxchange(i) = 0.0
+        Fluxchange(i) = 0.0
       ENDDO
       Streamflow_sfr = 0.0
+      Basin_fluxchange = 0.0D0
 
-      IF ( ICNVG==1 .OR. Szcheck==0 ) Gw2sm_grav_save = Gw2sm_grav
+!      IF ( ICNVG==1 .OR. Szcheck==0 ) Gw2sm_grav_save = Gw2sm_grav
 
       DO i = 1, Nhrucell
         ihru = Gvr_hru_id(i)
@@ -291,9 +293,13 @@
         IF ( icell==0 ) CYCLE
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
+!        IF ( Hrucheck(ihru)/=1 ) then
+!            print *, Hrucheck(ihru), 'hrucheck=0 and cell active', ihru, SEEPOUT(icol,irow)
+!            endif
         pct = SNGL( Gvr_hru_pct_adjusted(i) )
-        Uzf_infil_map(ihru) = Uzf_infil_map(ihru) + UZOLSFLX(icol, irow)*pct*DELR(icol)*DELC(irow)*DELT
-        Sat_recharge(ihru) = Sat_recharge(ihru) + UZFLWT(icol, irow)*pct
+        ! which need gvr_cell_pct ???
+        Uzf_infil_map(ihru) = Uzf_infil_map(ihru) + UZOLSFLX(icol, irow)*Gvr_cell_pct(i)*pct*Cellarea(icell)*DELT
+        Sat_recharge(ihru) = Sat_recharge(ihru) + UZFLWT(icol, irow)*Gvr_hru_pct_adjusted(i)
         Mfoutflow_to_gvr(ihru) = Mfoutflow_to_gvr(ihru) + (SEEPOUT(icol,irow)+GWET(icol,irow))*pct
         IF ( Hrucheck(ihru)/=1 ) CYCLE ! don't compute the rest if inactive or lake HRU, not sure about 3 variable prior
 !-----------------------------------------------------------------------
@@ -310,23 +316,23 @@
         !IF ( gwdisch<0.0 ) PRINT *, 'seepout problem, < 0.0:', gwdisch
 ! flux equals current minus last GW discharge used with soilzone, usually iteration before convergence
         flux_change = gwdisch - Gw2sm_grav_save(i)
-!        Fluxchange(Ihru) = Fluxchange(Ihru) + flux_change*pct
-        IF ( ABS(flux_change)<NEARZERO ) flux_change = 0.0
+        Fluxchange(Ihru) = Fluxchange(Ihru) + flux_change*pct
+!        IF ( ABS(flux_change)<NEARZERO ) flux_change = 0.0
         !Gw_rejected_grav includes rejected soil_to_gw
-        Gw_rejected_grav(i) = Gw_rejected_grav(i) + Excess(icell)*Mfl_to_inch + REJ_INF(icol, irow)*Mfq2inch_conv(i) - flux_change
+        Gw_rejected_grav(i) = Gw_rejected_grav(i) + Excess(icell)*Mfl_to_inch + REJ_INF(icol, irow)*Mfq2inch_conv(i) !- flux_change
         Gw_rejected(ihru) = Gw_rejected(ihru) + Gw_rejected_grav(i)*pct
         Gw2sm_grav(i) = gwdisch ! set in mf2prms
         Gw2sm(ihru) = Gw2sm(ihru) + gwdisch*pct
-        Gravity_stor_res(i) = Gravity_stor_res(i) + Gw_rejected_grav(i)
-        IF ( ABS(Gravity_stor_res(i))<NEARZERO ) Gravity_stor_res(i) = 0.0
+        Gravity_stor_res(i) = Gravity_stor_res(i) + Gw_rejected_grav(i) + flux_change
+!        IF ( ABS(Gravity_stor_res(i))<NEARZERO ) Gravity_stor_res(i) = 0.0
 
-        IF ( Gravity_stor_res(i)<-NEARZERO ) THEN
+        IF ( Gravity_stor_res(i)<0.0 ) THEN
           iupdate = 1
-          deficit = -Gravity_stor_res(i)*pct
+          deficit = -Gravity_stor_res(i)*pct ! make deficit positive number
           !IF ( Gravity_stor_res(i)<-0.001 ) then
           !  print *, deficit, Ihru, i, Gravity_stor_res(i)
           !endif
-          IF ( ABS(deficit)>NEARZERO ) THEN
+!          IF ( ABS(deficit)>NEARZERO ) THEN
             !rsr, where does deficit go in water budget, tiny numbers may not be real as MF budget calculation is slightly different than during transient
             ! first try removing from pref_flow_stor, then ET, then soil_moist
             !IF ( Gravity_stor_res(i)<-0.005 ) THEN
@@ -337,22 +343,25 @@
             IF ( Pref_flow_stor(ihru)>deficit ) THEN
               !IF ( deficit>NEARZERO ) PRINT *, 'pref', Pref_flow_stor(ihru), deficit, ihru
               Pref_flow_stor(ihru) = Pref_flow_stor(ihru) - deficit
+              Gvr2pfr(ihru) = Gvr2pfr(ihru) - deficit ! this could become negative
+              Pref_flow_in(ihru) = Pref_flow_in(ihru) - deficit
               !Gw_rejected(ihru) = Gw_rejected(ihru) - deficit
             ELSEIF ( Soil_moist(ihru)*Hru_frac_perv(ihru)>deficit ) THEN
               Soil_moist(ihru) = Soil_moist(ihru) - deficit/Hru_frac_perv(ihru)
-              IF ( Gvr2sm(ihru)>deficit ) THEN
-                Gvr2sm(ihru) = Gvr2sm(ihru) - deficit
-              ELSE
-                !print *, 'gvr2sm budget deficit', Gvr2sm(ihru), deficit
-                Gvr2sm(ihru) = 0.0
-              ENDIF
+!              IF ( Gvr2sm(ihru)>deficit ) THEN
+                Gvr2sm(ihru) = Gvr2sm(ihru) - deficit ! this could become negative
+!              ELSE
+!                print *, 'gvr2sm budget deficit', Gvr2sm(ihru), deficit
+!                Gvr2sm(ihru) = 0.0
+!              ENDIF
               !IF ( Soil_moist(ihru)<0.0 ) PRINT *, 'budget deficit soil_moist issue', Soil_moist(ihru), ihru
               !Gw_rejected(ihru) = Gw_rejected(ihru) + deficit
             ELSE
-              Soil_moist(ihru) = Soil_moist(ihru) + Gravity_stor_res(i)
+              Soil_moist(ihru) = Soil_moist(ihru) - deficit/Hru_frac_perv(ihru) ! this will be negative
+              Gvr2sm(ihru) = Gvr2sm(ihru) - deficit ! this could become negative
               !PRINT *, 'set to 0 negative storage in GVR:', i, Gravity_stor_res(i)
             ENDIF
-          ENDIF
+!          ENDIF
           Gravity_stor_res(i) = 0.0
         ENDIF
 
@@ -365,6 +374,8 @@
         Basin_soil_moist = 0.0D0
         Basin_pref_stor = 0.0D0
         Basin_gvr2sm = 0.0D0
+        Basin_gvr2pfr = 0.0D0
+        Basin_pref_flow_infil = 0.0D0
       ENDIF
       Basin_ssstor = 0.0D0
       Basin_gw2sm = 0.0D0
@@ -373,6 +384,7 @@
       Basin_actetgw = 0.0D0
       Basin_actet = 0.0D0
       Basin_slstor = 0.0D0
+      Basin_fluxchange = 0.0D0
       DO ii = 1, Active_hrus
         i = Hru_route_order(ii)
         harea = Hru_area(i)
@@ -409,6 +421,8 @@
           Basin_soil_moist = Basin_soil_moist + Soil_moist(i)*Hru_perv(i)
           Basin_pref_stor = Basin_pref_stor + Pref_flow_stor(i)*harea
           Basin_gvr2sm = Basin_gvr2sm + Gvr2sm(i)*harea
+          Basin_gvr2pfr = Basin_gvr2pfr + Gvr2pfr(i)*harea
+          Basin_pref_flow_infil = Basin_pref_flow_infil + Pref_flow_in(i)*harea
         ENDIF
         Actet_tot_gwsz(i) = Hru_actet(i) + Actet_gw(i)
         !rsr, need to adjust hru_actet for UZF
@@ -418,18 +432,19 @@
         Basin_gw2sm = Basin_gw2sm + Gw2sm(i)*harea
         Ssres_stor(i) = Slow_stor(i) + Pref_flow_stor(i)
         !IF ( ABS(Ssres_stor(i))<CLOSEZERO .AND. ssres_stor(i)>0.0 ) print*, ssres_stor(i), i, ' small'
-        IF ( Ssres_stor(i)<-CLOSEZERO ) THEN
+!        IF ( Ssres_stor(i)<-CLOSEZERO ) THEN
           !IF ( Print_debug>-1 ) THEN
           !  PRINT *, 'small negative ssres_stor, set to zero', i, Ssres_stor(i)
           !  CALL print_date(1)
           !ENDIF
-          Ssres_stor(i) = 0.0
-          Slow_stor(i) = 0.0
-          Pref_flow_stor(i) = 0.0
-        ENDIF
+!          Ssres_stor(i) = 0.0
+!          Slow_stor(i) = 0.0
+!          Pref_flow_stor(i) = 0.0
+!        ENDIF
         Basin_ssstor = Basin_ssstor + Ssres_stor(i)*harea
         Basin_szreject = Basin_szreject + Gw_rejected(i)*harea
         Basin_slstor = Basin_slstor + Slow_stor(i)*harea
+        Basin_fluxchange = Basin_fluxchange + Fluxchange(i)*harea
       ENDDO
 
       Basin_actet = Basin_actet*Basin_area_inv
@@ -439,10 +454,13 @@
       Basin_szreject = Basin_szreject*Basin_area_inv
       Basin_lakeevap = Basin_lakeevap*Basin_area_inv
       Basin_slstor = Basin_slstor*Basin_area_inv
+      Basin_fluxchange = Basin_fluxchange*Basin_area_inv
       IF ( iupdate==1 ) THEN
         Basin_soil_moist = Basin_soil_moist*Basin_area_inv
         Basin_pref_stor = Basin_pref_stor*Basin_area_inv
         Basin_gvr2sm = Basin_gvr2sm*Basin_area_inv
+        Basin_gvr2pfr = Basin_gvr2pfr*Basin_area_inv
+        Basin_pref_flow_infil = Basin_pref_flow_infil*Basin_area_inv
       ENDIF
 
       !IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()

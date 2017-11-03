@@ -6,7 +6,7 @@
       INTEGER, PARAMETER :: ITDIM = 80
       INTEGER, SAVE :: Convfail_cnt, Steady_state, Ncells
       INTEGER, SAVE :: IGRID, KKPER, ICNVG, NSOL, IOUTS
-      INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters, Nszchanging
+      INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters !, Nszchanging
       INTEGER, SAVE :: Mfiter_cnt(ITDIM), Iter_cnt(ITDIM), Iterations
       INTEGER, SAVE :: Szcheck, Sziters, INUNIT, KPER, NCVGERR
       INTEGER, SAVE :: Have_lakes, Max_sziters, Maxgziter
@@ -171,7 +171,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       IOUTS = 432
       IGRID=1
       NSOL=1
-      Stopcount = 0
+!      Stopcount = 0
       Have_lakes = 0
       INUNIT = 200
       NCVGERR=0
@@ -437,7 +437,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       Sziters = 0
       KPER = 1
 
-      Nszchanging = 0
+!      Nszchanging = 0
       Convfail_cnt = 0
       Max_iters = 0
       Max_sziters = 0
@@ -598,7 +598,7 @@ C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
    25     FORMAT(' Solving:  Stress period: ',i5,4x,
      &       'Time step:',I6,4x,'Groundwater-Flow Eqn.')
    26     FORMAT('Skipping:  Stress period: ',i5,4x,
-     &       'Time step: ',i5)
+     &       'Time step:',I6)
           ENDIF
 C
 C7C2----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
@@ -967,7 +967,7 @@ C
       IF(IUNIT(52).NE.0) CALL GWF2MNW17OT(IGRID)
 
       IF ( gsflag==1 ) THEN
-        IF ( Szcheck==-1 .OR. Szcheck==1 ) Nszchanging = Nszchanging + 1
+!        IF ( Szcheck==-1 .OR. Szcheck==1 ) Nszchanging = Nszchanging + 1
         II = MIN(ITDIM, Maxgziter)
         Iter_cnt(II) = Iter_cnt(II) + 1
         IF ( Maxgziter.GT.Max_sziters ) Max_sziters = Maxgziter
@@ -1078,6 +1078,7 @@ c      IF(IUNIT(14).GT.0) CALL LMG7DA(IGRID)
 !gsf  IF(IUNIT(39).GT.0) CALL GWF2ETS7DA(IGRID)
 !gsf  IF(IUNIT(40).GT.0) CALL GWF2DRT7DA(IGRID)
 !      IF(IUNIT(42).GT.0) CALL GMG7DA(IGRID)
+!gsf  IF(IUNIT(59).GT.0) CALL PCGN2DA(IGRID)
       IF(IUNIT(44).GT.0) CALL GWF2SFR7DA(IGRID)
       IF(IUNIT(46).GT.0) CALL GWF2GAG7DA(IGRID)
       IF(IUNIT(50).GT.0) CALL GWF2MNW27DA(IGRID)
@@ -1108,10 +1109,14 @@ C
         WRITE ( Logunt, 9001 ) istep, Convfail_cnt, Iterations, Sziters,
      &          FLOAT(Iterations)/FLOAT(istep),
      &          FLOAT(Sziters)/FLOAT(istep), Max_iters, Max_sziters
-        IF ( Nszchanging>0 .OR. Stopcount>0 ) THEN
-          PRINT 9005, Nszchanging, Stopcount
-          WRITE (Logunt, 9005) Nszchanging, Stopcount
+        IF ( Stopcount>0 ) THEN
+          PRINT 9005, Stopcount
+          WRITE (Logunt, 9005) Stopcount
         ENDIF
+!        IF ( Nszchanging>0 .OR. Stopcount>0 ) THEN
+!          PRINT 9005, Nszchanging, Stopcount
+!          WRITE (Logunt, 9005) Nszchanging, Stopcount
+!        ENDIF
         WRITE (Logunt, 9003) 'MF iteration distribution:', Mfiter_cnt
         WRITE (Logunt, '(/)')
         WRITE (Logunt, 9007) 'SZ computation distribution:', Iter_cnt
@@ -1128,6 +1133,8 @@ C10-----END OF PROGRAM.
         WRITE(*,*) ' Normal termination of simulation'
         WRITE (Logunt, '(A)') 'Normal termination of simulation'
       END IF
+      CLOSE (Logunt)
+
 !gsf  CALL USTOP(' ')
       IF ( Model.EQ.2 ) CALL USTOP(' ')
 
@@ -1139,12 +1146,14 @@ C10-----END OF PROGRAM.
      &        ' Maximum MF iterations:', I6,
      &        ';  Maximum SZ iterations:', I8, /)
  9003 FORMAT (A, 2X, 10I5, /, 10(28X, 10I5, /))
- 9005 FORMAT (' Steps SZ changing when MF converged:', I5,
-     &        '; mxsziter reached:', I4, /)
+ 9005 FORMAT ('mxsziter reached:', I4, /)
+! 9005 FORMAT (' Steps SZ changing when MF converged:', I5,
+!     &        '; mxsziter reached:', I4, /)
  9007 FORMAT (A, 10I5, /, 10(28X, 10I5, /))
 
 C
-      END
+      END FUNCTION gsfclean
+!
       SUBROUTINE GETNAMFIL(FNAME)
 C     ******************************************************************
 C     GET THE NAME OF THE NAME FILE
@@ -1691,17 +1700,39 @@ C
       IMPLICIT NONE
       INTRINSIC DBLE
 ! Local Variables
-      INTEGER :: icell, i, irow, icol
+      INTEGER :: icell, ierr, i, irow, icol
       DOUBLE PRECISION :: pctdiff
       DOUBLE PRECISION, ALLOCATABLE :: cell_pct(:)
 !***********************************************************************
       ALLOCATE ( cell_pct(Ngwcell) )
       cell_pct = 0.0D0
+      ierr = 0
       DO i = 1, Nhrucell
         icell = Gvr_cell_id(i)
-        IF ( icell>0 )
-     &       cell_pct(icell) = cell_pct(icell) + DBLE( Gvr_cell_pct(i) )  !rgn 6/21/17
+        IF ( icell==0 ) THEN
+          PRINT *, 'ERROR, gvr_cell_id = 0 for gvr:', i
+          PRINT *, 'Be sure gvr_cell_id is in the Parameter File'
+          ierr = 1
+          CYCLE
+        ENDIF
+        IF ( icell>Ngwcell ) THEN
+          PRINT *, 'ERROR, gvr_cell_id > ngwcell for gvr:', i
+          ierr = 1
+          CYCLE
+        ENDIF
+        IF ( Gvr_cell_pct(i)<=0.0D0 ) THEN
+          ierr = 1
+          PRINT *, 'ERROR, gvr_cell_pct <= 0, cell:', i
+          CYCLE
+        ENDIF
+!        cell_temp_pct(i) = Gvr_cell_pct(i)
+        cell_pct(icell) = cell_pct(icell) + DBLE( Gvr_cell_pct(i) )
       ENDDO
+
+      IF ( ierr==1 ) THEN
+        PRINT *, 'ERROR, check gsflow.log for messages'
+        STOP
+      ENDIF
 
       Ncells = 0
       Totalarea_mf = 0.0D0
