@@ -322,7 +322,7 @@
           ENDIF
         ENDIF
 
-        IF ( MS_GSF_converge .OR. Process_flag/=0 ) THEN
+        IF ( MS_GSF_converge .OR. Process_flag/=0 .OR. Model==0) THEN
 
           IF ( Process_flag==0 ) CALL MFNWT_OCBUDGET()
 
