@@ -89,7 +89,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-08-18 09:35:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-11-01 11:53:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -517,7 +517,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 1.2.2 09/01/2017', //, &
+     &        25X, 'Version 1.2.2 11/01/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -825,8 +825,8 @@
       IF ( decldim('ntemp', 0, MAXDIM, 'Number of air-temperature-measurement stations')/=0 ) CALL read_error(7, 'ntemp')
       IF ( decldim('nobs', 0, MAXDIM, 'Number of streamflow-measurement stations')/=0 ) CALL read_error(7, 'nobs')
       IF ( decldim('nevap', 0, MAXDIM, 'Number of pan-evaporation data sets')/=0 ) CALL read_error(7, 'nevap')
-      IF ( decldim('nratetbl', 0, MAXDIM, 'Number of rating-table data sets for lake elevations') &
-     &     /=0 ) CALL read_error(7, 'nratetbl')
+!      IF ( decldim('nratetbl', 0, MAXDIM, 'Number of rating-table data sets for lake elevations') &
+!     &     /=0 ) CALL read_error(7, 'nratetbl')
 
 ! depletion curves
       IF ( decldim('ndepl', 1, MAXDIM, 'Number of snow-depletion curves')/=0 ) CALL read_error(7, 'ndelp')
@@ -926,8 +926,9 @@
       Ngwcell = getdim('ngwcell')
       IF ( Ngwcell==-1 ) CALL read_error(6, 'ngwcell')
 
-      Nratetbl = getdim('nratetbl')
-      IF ( Nratetbl==-1 ) CALL read_error(6, 'nratetbl')
+!      Nratetbl = getdim('nratetbl')
+!      IF ( Nratetbl==-1 ) CALL read_error(6, 'nratetbl')
+      Nratetbl = 0
 
       Stream_order_flag = 0
       IF ( Nsegment>0 .AND. Strmflow_flag>1 .AND. Model/=0 ) THEN
@@ -1145,43 +1146,48 @@
 
       IF ( Et_module(:13)=='potet_jh_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_jh_prms to potet_jh'
+        Et_module = 'potet_jh'
       ELSEIF ( Et_module(:14)=='potet_pan_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_pan_prms to potet_pan'
+        Et_module = 'potet_pan'
       ELSEIF ( Et_module(:15)=='potet_epan_prms' ) THEN
         PRINT *, 'ERROR, deprecated et_module value, change potet_epan_prms to potet_pan'
         ierr = 1
       ELSEIF ( Et_module(:20)=='potet_hamon_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_hamon_hru_prms to potet_hamon_hru'
+        Et_module = 'potet_hamon'
       ELSEIF ( Et_module(:16)=='potet_hamon_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_hamon_prms to potet_hamon'
-        ierr = 1
+        Et_module = 'potet_hamon'
       ENDIF
 
       IF ( Solrad_module(:17)=='ddsolrad_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ddsolrad_hru_prms to ddsolrad'
+        solrad_module = 'ddsolrad'
       ELSEIF ( Solrad_module(:17)=='ccsolrad_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_hru_prms to ccsolrad'
+        solrad_module = 'ccsolrad'
       ELSEIF ( Solrad_module(:13)=='ddsolrad_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ddsolrad_prms to ddsolrad'
+        solrad_module = 'ddsolrad'
       ELSEIF ( Solrad_module(:13)=='ccsolrad_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_prms to ccsolrad'
+        solrad_module = 'ccsolrad'
       ENDIF
 
       IF ( Srunoff_module(:18)=='srunoff_carea_prms' ) THEN
         PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_carea_prms to srunoff_carea'
+        srunoff_module = 'srunoff_carea'
       ELSEIF ( Srunoff_module(:18)=='srunoff_smidx_prms' ) THEN
         PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_smidx_prms to srunoff_smidx'
+        srunoff_module = 'srunoff_smidx'
       ENDIF
 
       IF ( Strmflow_module(:13)=='strmflow_prms' ) THEN
         PRINT *, 'WARNING, deprecated strmflow_module value, change strmflow_prms to strmflow'
+        strmflow_module = 'strmflow'
       ELSEIF ( Strmflow_module(:13)=='strmflow_lake' ) THEN
         PRINT *, 'ERROR, module strmflow_lake not available, use a different strmflow_module'
-        ierr = 1
-      ENDIF
-      IF ( Strmflow_module(:15)/='strmflow_in_out' .AND. &
-     &     Strmflow_module(:8)/='strmflow' .AND. Strmflow_module(:9)/='muskingum' ) THEN
-        PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
         ierr = 1
       ENDIF
       IF ( ierr==1 ) STOP
