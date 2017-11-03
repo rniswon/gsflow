@@ -9,7 +9,7 @@
       INTEGER, SAVE :: NTRAIL_CHK, Nlayp1
       ! Number of stream reaches in each stream segment
       INTEGER, SAVE, ALLOCATABLE :: Numreach_segment(:)
-      REAL, SAVE, ALLOCATABLE :: Sm2gw_grav_older(:), Excess(:)
+      REAL, SAVE, ALLOCATABLE :: Excess(:) !, Sm2gw_grav_older(:)
       DOUBLE PRECISION, SAVE :: Totalarea
       CHARACTER(LEN=14), SAVE :: MODNAME
 !   Declared Variables
@@ -113,7 +113,7 @@
 !     &     'decimal fraction', Segment_pct_area)/=0 ) CALL read_error(3, 'segment_pct_area')
 
       ! Allocate local arrays
-      ALLOCATE ( Excess(Ngwcell), Sm2gw_grav_older(Nhrucell) )
+      ALLOCATE ( Excess(Ngwcell) ) !, Sm2gw_grav_older(Nhrucell) )
 
 ! Declared Parameters
         ! should be change code so that flow to each reach is computed, either based on a
@@ -179,7 +179,7 @@
       USE GWFLAKMODULE, ONLY: NLAKES
       USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes
       USE PRMS_MODULE, ONLY: Nhru, Nsegment, Nlake, Print_debug, &
-     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Init_vars_from_file
+     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt !, Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area, NEARZERO
       USE PRMS_SOILZONE, ONLY: Gvr_hru_id, Gvr_hru_pct_adjusted
@@ -420,7 +420,7 @@
       Basin_reach_latflow = 0.0D0
       Net_sz2gw = 0.0D0
       Excess = 0.0 ! dimension ngwcell
-      IF ( Init_vars_from_file==1 ) Sm2gw_grav_older = 0.0 ! dimension nhrucell
+      !IF ( Init_vars_from_file==0 ) Sm2gw_grav_older = 0.0 ! dimension nhrucell
       Gw_rejected_grav = 0.0 ! dimension nhrucell
       NTRAIL_CHK = NWAV - 3*NTRAIL + 1
 
@@ -451,15 +451,15 @@
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
       USE PRMS_FLOWVARS, ONLY: Hru_actet
       USE PRMS_SRUNOFF, ONLY: Hortonian_lakes
-      USE PRMS_SOILZONE, ONLY: Sm2gw_grav_old, Sm2gw_grav, Lakein_sz, Hrucheck, Gvr_hru_id, Unused_potet, Gvr_hru_pct_adjusted
+      USE PRMS_SOILZONE, ONLY: Sm2gw_grav, Lakein_sz, Hrucheck, Gvr_hru_id, Unused_potet, Gvr_hru_pct_adjusted !, Sm2gw_grav_old
       IMPLICIT NONE
 ! FUNCTIONS AND SUBROUTINES
       INTEGER, EXTERNAL :: toStream
       EXTERNAL Bin_percolation
 ! Local Variables
       INTEGER :: irow, icol, ik, jk, ibndcheck, ii, ilake
-      INTEGER :: j, icell, ihru, icheck, maxdiff_cell, is_draining
-      REAL :: seep, diff, diff2, maxdiff
+      INTEGER :: j, icell, ihru, icheck, is_draining !, maxdiff_cell
+      REAL :: seep !, diff, diff2, maxdiff
 !***********************************************************************
       prms2mfrun = 0
 
@@ -506,8 +506,8 @@
       Cell_drain_rate = 0.0 ! should just be active cells
       is_draining = 0
 
-      maxdiff = 0.0
-      maxdiff_cell = 0
+      !maxdiff = 0.0
+      !maxdiff_cell = 0
       DO j = 1, Nhrucell
         ihru = Gvr_hru_id(j)
         IF ( Hrucheck(ihru)==0 ) CYCLE
@@ -541,22 +541,22 @@
 !-----------------------------------------------------------------------
 ! Convert drainage from inches to MF Length/Time
 !-----------------------------------------------------------------------
-              IF ( icheck==0 ) THEN
+!             IF ( icheck==0 ) THEN
 !rsr, check to see if current infiltration is within a tolerance of
 !     the last iteration, if so, stop recomputing soil zone states
-                diff = ABS(seep-Sm2gw_grav_old(j))
-                IF ( diff>Szconverge ) THEN
+!                diff = ABS(seep-Sm2gw_grav_old(j))
+!                IF ( diff>Szconverge ) THEN
 !rsr, check to see if current infiltration is equal to (within a
 !     tolerance) of the iteration before last (i.e, solution is likely
 !     oscillating), if so, stop recomputing soil zone states
-                  diff2 = ABS(seep-Sm2gw_grav_older(j))
-                  IF ( diff2>SZ_CHK ) THEN
-                    icheck = 1
-                    maxdiff = diff
-                    maxdiff_cell = icell
-                  ENDIF
-                ENDIF
-              ENDIF
+!                  diff2 = ABS(seep-Sm2gw_grav_older(j))
+!                  IF ( diff2>SZ_CHK ) THEN
+!                    icheck = 1
+!                    maxdiff = diff
+!                    maxdiff_cell = icell
+!                  ENDIF
+!                ENDIF
+!              ENDIF
               Cell_drain_rate(icell) = Cell_drain_rate(icell) + seep*Gvr2cell_conv(j)
               IF ( is_draining==0 ) THEN
                 IF ( Cell_drain_rate(icell)>0.0 ) is_draining = 1
@@ -582,15 +582,15 @@
           Unused_potet(ihru) = Unused_potet(ihru) - Unused_potet(ihru)*Gvr_hru_pct_adjusted(j)
           IF ( Unused_potet(ihru)<0.0 ) Unused_potet(ihru) = 0.0
         ENDIF
-        Sm2gw_grav_older(j) = Sm2gw_grav_old(j)
+!        Sm2gw_grav_older(j) = Sm2gw_grav_old(j)
       ENDDO
 ! check if current iteration changed insignificantly or was oscillating
       IF ( icheck==1 ) THEN
         IF ( KKITER==Mxsziter ) THEN
           Stopcount = Stopcount + 1
           Szcheck = -1
-          WRITE (Logunt, *) 'Mxsziter reached', Stopcount, &
-     &                      'Change still significant in cell:', maxdiff_cell, maxdiff
+          WRITE (Logunt, *) 'Mxsziter reached', Stopcount !, &
+!     &                      'Change still significant in cell:', maxdiff_cell, maxdiff
         ENDIF
       ELSEIF ( KKITER==Mxsziter ) THEN
         Szcheck = 0
@@ -737,7 +737,7 @@
 !***********************************************************************
       SUBROUTINE gsflow_prms2mf_restart(In_out)
       USE PRMS_MODULE, ONLY: Restart_outunit, Restart_inunit
-      USE GSFPRMS2MF, ONLY: Sm2gw_grav_older, MODNAME
+      USE GSFPRMS2MF, ONLY: MODNAME !, Sm2gw_grav_older
       IMPLICIT NONE
       ! Argument
       INTEGER, INTENT(IN) :: In_out
@@ -747,10 +747,10 @@
 !***********************************************************************
       IF ( In_out==0 ) THEN
         WRITE ( Restart_outunit ) MODNAME
-        WRITE ( Restart_outunit ) Sm2gw_grav_older
+!        WRITE ( Restart_outunit ) Sm2gw_grav_older
       ELSE
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
-        READ ( Restart_inunit ) Sm2gw_grav_older
+!        READ ( Restart_inunit ) Sm2gw_grav_older
       ENDIF
       END SUBROUTINE gsflow_prms2mf_restart
