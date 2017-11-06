@@ -18,7 +18,6 @@
       DOUBLE PRECISION, SAVE :: Cumvol_gwbndot, Rate_gwbndot
       DOUBLE PRECISION, SAVE :: Cum_surfstor, Basin_convert
       DOUBLE PRECISION, SAVE :: Cum_delstore, Rate_delstore
-      DOUBLE PRECISION, SAVE :: Rate_farout, Cumvol_farout
       DOUBLE PRECISION, SAVE :: Last_basin_soil_moist, Last_basin_ssstor
       DOUBLE PRECISION, SAVE :: Rate_strmin, Rate_wellin, Rate_wellot
       DOUBLE PRECISION, SAVE :: Rate_surfstor, Last_Grav_S
@@ -109,7 +108,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = 'gsflow_sum.f90 2017-05-15 10:13:00Z'
+      Version_gsflow_sum = 'gsflow_sum.f90 2017-11-03 10:10:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -447,7 +446,6 @@
       Cumvol_strmot = 0.0D0
       Cumvol_gwbndot = 0.0D0
       Cumvol_wellot = 0.0D0
-      Cumvol_farout = 0.0D0
       Cum_delstore = 0.0D0
       Cum_surfstor = 0.0D0
       Cum_soilstor = 0.0D0
@@ -494,7 +492,6 @@
       Rate_uzstor = 0.0D0
       Rate_satstor = 0.0D0
       Rate_pweqv = 0.0D0
-      Rate_farout = 0.0D0
       SoilDrainage2Unsat_Q = 0.0D0
       Ave_SoilDrainage2Unsat_Q = 0.0D0
       Lake2Sat_Q = 0.0D0
@@ -561,9 +558,8 @@
       USE GSFMODFLOW, ONLY: Mfl3t_to_cfs, KKSTP, KKPER, Maxgziter
 !      USE GSFPRMS2MF, ONLY: Net_sz2gw
       USE GSFBUDGET, ONLY: NetBoundaryFlow2Sat_Q, Gw_bnd_in, Gw_bnd_out, Well_in, &
-     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S
+     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S, Basin_actetgw, Basin_fluxchange
 !      USE GSFPRMS2MF, ONLY: Basin_reach_latflow
-      USE GSFBUDGET, ONLY: Basin_actetgw
       USE GWFUZFMODULE, ONLY: UZTSRAT
       USE GWFSFRMODULE, ONLY: SFRUZBD, STRMDELSTOR_RATE, SFRRATIN, SFRRATOUT, IRTFLG, TOTSPFLOW
       USE GWFLAKMODULE, ONLY: TOTGWIN_LAK, TOTGWOT_LAK, TOTDELSTOR_LAK, &
@@ -698,6 +694,7 @@
       RechargeUnsat2Sat_Q = UZTSRAT(3)
       !?? doesn't match basin_gw2sm from budget
       Basinseepout = UZTSRAT(5)
+!      print *, 'seep', Basinseepout, Sat2Grav_Q, Basinseepout - Sat2Grav_Q, Basin_fluxchange*Basin_convert
       SoilDrainage2Unsat_Q = UZTSRAT(1)
       Unsat_dS = UZTSRAT(4)
 
@@ -752,7 +749,7 @@
         IF ( ABS(gvf)>ERRCHK ) WRITE (BALUNT, *) 'gravflow', gvf, &
      &       Basin_slowflow, Basin_prefflow, Basin_ssflow
 
-        szin = Basin_infil + Basin_gw2sm + Basin_szreject
+        szin = Basin_infil + Basin_gw2sm + Basin_szreject + Basin_fluxchange
         szdstor = Last_basin_soil_moist + Last_basin_ssstor &
      &            - Basin_soil_moist - Basin_ssstor
         szout = Basin_sz2gw + Basin_ssflow + Basin_lakeinsz + &
@@ -767,7 +764,7 @@
      &                        Last_basin_ssstor, Basin_soil_moist, &
      &                        Basin_ssstor, Basin_sz2gw, Basin_ssflow, &
      &                        Basin_lakeinsz, Basin_dunnian, &
-     &                        Basin_perv_et, Basin_soil_to_gw, Basin_swale_et
+     &                        Basin_perv_et, Basin_soil_to_gw, Basin_swale_et, Basin_fluxchange
             WRITE (BALUNT, *) KKITER, Maxgziter
           ENDIF
         ENDIF
@@ -1017,7 +1014,7 @@
       DOUBLE PRECISION :: ratediff, cum_error, rate_error, cum_percent
       DOUBLE PRECISION :: rate_out, rate_percent, temp
       CHARACTER(LEN=18) :: text1, text2, text3, text4, text5, text6
-      CHARACTER(LEN=18) :: text7, text8, text9, text10, text11, text12
+      CHARACTER(LEN=18) :: text7, text8, text9, text10, text11
       CHARACTER(LEN=18) :: val1, val2
 !***********************************************************************
       text1 = '     PRECIPITATION'
@@ -1031,7 +1028,6 @@
       text9 = '    SATURATED ZONE'
       text10 ='             LAKES'
       text11 ='           STREAMS'
-      text12 =' FAR-FIELD OUTFLOW'
       WRITE (Gsf_unt, 9001) Nowmonth, Nowday, Nowyear, Nstep, Kkper, Kkstp, KKITER
 !
 !1------PRINT CUMULATIVE VOLUMES AND RATES FOR INFLOW.
@@ -1095,7 +1091,7 @@
       ! rsr, need lake pipeline in???
 !     &            + Cumvol_lakin - Cumvol_lakeppt
       cumvol_out = Cumvol_et + Cumvol_strmot + Cumvol_gwbndot + &
-     &             Cumvol_wellot + Cumvol_farout
+     &             Cumvol_wellot
       ! rsr, need lake pipeline out???
 !     &             + Cumvol_lakot - Cumvol_lakeevap - Cumvol_uzfet
       cumdiff = cumvol_in - cumvol_out
@@ -1103,10 +1099,10 @@
 !4------INFLOW RATE MINUS OUTFLOW RATE.
 !      rate_in = Rate_precip + Rate_strmin + Rate_gwbndin + Rate_wellin + Rate_lakin
 !      rate_out = Rate_et + Rate_strmot + Rate_gwbndot + Rate_wellot +
-!     &           Rate_lakot + Rate_farout
+!     &           Rate_lakot
 
       rate_in = Rate_precip + Rate_strmin + Rate_gwbndin + Rate_wellin
-      rate_out = Rate_et + Rate_strmot + Rate_gwbndot + Rate_wellot + Rate_farout
+      rate_out = Rate_et + Rate_strmot + Rate_gwbndot + Rate_wellot
       ratediff = rate_in - rate_out
 !
 !5------PRINT CUMULATIVE AND RATE DIFFERENCES.
@@ -1212,7 +1208,7 @@
       DOUBLE PRECISION :: absval
 !***********************************************************************
       absval = ABS(Val)
-      IF ( absval<1.0D-5 ) THEN
+      IF ( absval<1.0D-8 ) THEN
 !       WRITE (Strng, '(I18)') INT(Val)
         Strng = ' '
       ELSEIF ( absval>BIG .OR. absval<SMALL ) THEN
