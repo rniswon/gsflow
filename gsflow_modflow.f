@@ -23,13 +23,13 @@ C     ******************************************************************
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-10-18 16:50:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-11-03 10:36:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
       WRITE (*,1) MFVNAM,VERSION(:17),VERSION2(:17),VERSION3
       WRITE ( Logunt, 1 ) MFVNAM,VERSION(:17),VERSION2(:17),VERSION3
-    1 FORMAT (/,31X,'MODFLOW',A,/,
+    1 FORMAT (/,28X,'MODFLOW',A,/,
      &'  U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
      &' GROUNDWATER-FLOW MODEL',/,25X,'WITH NEWTON FORMULATION',
      &  /,25X,'VERSION ',A/,14X,'BASED ON MODFLOW-2005 VERSION ',A,/,
@@ -415,7 +415,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       Sziters = 0
       KPER = 1
 
-      Nszchanging = 0
+!      Nszchanging = 0
       Convfail_cnt = 0
       Max_iters = 0
       Max_sziters = 0
@@ -604,7 +604,7 @@ C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
    25     FORMAT(' Solving:  Stress period: ',i5,4x,
      &       'Time step:',I6,4x,'Groundwater-Flow Eqn.')
    26     FORMAT('Skipping:  Stress period: ',i5,4x,
-     &       'Time step: ',i5)
+     &       'Time step:',I6)
           ENDIF
       END SUBROUTINE MFNWT_TIMEADVANCE
 
@@ -1140,7 +1140,7 @@ C
       IF(IUNIT(52).NE.0) CALL GWF2MNW17OT(IGRID)
 
       IF ( gsflag==1 ) THEN
-        IF ( Szcheck==-1 .OR. Szcheck==1 ) Nszchanging = Nszchanging + 1
+!        IF ( Szcheck==-1 .OR. Szcheck==1 ) Nszchanging = Nszchanging + 1
         II = MIN(ITDIM, Maxgziter)
         Iter_cnt(II) = Iter_cnt(II) + 1
         IF ( Maxgziter.GT.Max_sziters ) Max_sziters = Maxgziter
@@ -1285,6 +1285,7 @@ C9------LAST BECAUSE IT DEALLOCATES IUNIT.
       IF(IUNIT(39).GT.0) CALL GWF2ETS7DA(IGRID)
       IF(IUNIT(40).GT.0) CALL GWF2DRT7DA(IGRID)
 !      IF(IUNIT(42).GT.0) CALL GMG7DA(IGRID)
+!gsf  IF(IUNIT(59).GT.0) CALL PCGN2DA(IGRID)
       IF(IUNIT(44).GT.0) CALL GWF2SFR7DA(IGRID)
       IF(IUNIT(46).GT.0) CALL GWF2GAG7DA(IGRID)
       IF(IUNIT(50).GT.0) CALL GWF2MNW27DA(IGRID)
@@ -1315,10 +1316,14 @@ C
         WRITE ( Logunt, 9001 ) istep, Convfail_cnt, Iterations, Sziters,
      &          FLOAT(Iterations)/FLOAT(istep),
      &          FLOAT(Sziters)/FLOAT(istep), Max_iters, Max_sziters
-        IF ( Nszchanging>0 .OR. Stopcount>0 ) THEN
-          PRINT 9005, Nszchanging, Stopcount
-          WRITE (Logunt, 9005) Nszchanging, Stopcount
+        IF ( Stopcount>0 ) THEN
+          PRINT 9005, Stopcount
+          WRITE (Logunt, 9005) Stopcount
         ENDIF
+!        IF ( Nszchanging>0 .OR. Stopcount>0 ) THEN
+!          PRINT 9005, Nszchanging, Stopcount
+!          WRITE (Logunt, 9005) Nszchanging, Stopcount
+!        ENDIF
         WRITE (Logunt, 9003) 'MF iteration distribution:', Mfiter_cnt
         WRITE (Logunt, '(/)')
         WRITE (Logunt, 9007) 'SZ computation distribution:', Iter_cnt
@@ -1335,6 +1340,7 @@ C10-----END OF PROGRAM.
         WRITE(*,*) ' Normal termination of simulation'
         WRITE (Logunt, '(A)') 'Normal termination of simulation'
       END IF
+      CLOSE (Logunt)
 
 !gsf  CALL USTOP(' ')
 C
@@ -1348,8 +1354,9 @@ C
      &        ' Maximum MF iterations:', I6,
      &        ';  Maximum SZ iterations:', I8, /)
  9003 FORMAT (A, 2X, 10I5, /, 10(28X, 10I5, /))
- 9005 FORMAT (' Steps SZ changing when MF converged:', I5,
-     &        '; mxsziter reached:', I4, /)
+ 9005 FORMAT ('mxsziter reached:', I4, /)
+! 9005 FORMAT (' Steps SZ changing when MF converged:', I5,
+!     &        '; mxsziter reached:', I4, /)
  9007 FORMAT (A, 10I5, /, 10(28X, 10I5, /))
 
       END SUBROUTINE MFNWT_CLEAN
@@ -1524,7 +1531,7 @@ C     Write times to file if requested
       ENDIF
 C
       RETURN
-      END
+      END SUBROUTINE GLO1BAS6ET
 
 !***********************************************************************
 !     READ AND PREPARE INFORMATION FOR STRESS PERIOD.

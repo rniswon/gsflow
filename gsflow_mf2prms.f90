@@ -8,7 +8,7 @@
 !     ******************************************************************
       INTEGER FUNCTION gsflow_mf2prms()
       USE GSFMODFLOW, ONLY: Mfq2inch_conv, Gwc_col, Gwc_row
-      USE PRMS_SOILZONE, ONLY: Hrucheck, Gvr_hru_id, Gw2sm_grav, Gw2sm_grav_save
+      USE PRMS_SOILZONE, ONLY: Hrucheck, Gvr_hru_id, Gw2sm_grav !, Gw2sm_grav_save
       USE GWFUZFMODULE, ONLY: SEEPOUT
       USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id
       IMPLICIT NONE
@@ -29,13 +29,13 @@
             IF ( icell==0 ) CYCLE
             irow = Gwc_row(icell)
             icol = Gwc_col(icell)
-            Gw2sm_grav_save(i) = Gw2sm_grav(i)
+            !Gw2sm_grav_save(i) = Gw2sm_grav(i)
             Gw2sm_grav(i) = SEEPOUT(icol, irow)*Mfq2inch_conv(i)
           ENDIF
         ENDDO
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2016-06-21 14:37:00Z'
+        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2017-11-03 14:37:00Z'
         CALL print_module(Version_gsflow_mf2prms, 'GSFLOW MODFLOW to PRMS      ', 90)
 !        MODNAME = 'gsflow_mf2prms'
       ENDIF
