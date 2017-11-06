@@ -1,4 +1,3 @@
-
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
@@ -31,7 +30,7 @@
       INTEGER, EXTERNAL :: strmflow_in_out, muskingum, muskingum_lake, numchars
       INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta !, setup
       EXTERNAL :: module_error, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, check_bounded_params, water_balance, basin_summary
+      EXTERNAL :: call_modules_restart, check_bounded_params, water_balance, basin_summary, nsegment_summary
       EXTERNAL :: prms_summary, nhru_summary, module_doc, convert_params, read_error, nsub_summary
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum, gsflow_prms2modsim
       INTEGER, EXTERNAL :: setdims, stream_temp
@@ -49,7 +48,7 @@
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2017-10-03 14:31:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-11-03 14:31:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -322,7 +321,7 @@
           ENDIF
         ENDIF
 
-        IF ( MS_GSF_converge .OR. Process_flag/=0 ) THEN
+        IF ( MS_GSF_converge .OR. Process_flag/=0 .OR. Model==0 ) THEN
 
           IF ( Process_flag==0 ) CALL MFNWT_OCBUDGET()
 
@@ -355,6 +354,8 @@
 
       IF ( BasinOutON_OFF==1 ) CALL basin_summary()
 
+      IF ( NsegmentOutON_OFF==1 ) CALL nsegment_summary()
+
       IF ( Subbasin_flag==1 ) THEN
         call_modules = subbasin()
         IF ( call_modules/=0 ) CALL module_error('subbasin', Arg, call_modules)
@@ -367,7 +368,7 @@
           CALL DATE_AND_TIME(VALUES=Elapsed_time_end)
           PRINT 9001
           PRINT 9003, 'start', (Elapsed_time_start(i),i=1,3), (Elapsed_time_start(i),i=5,7)
-          PRINT 9003, 'end', (Elapsed_time_end(i),i=1,3), (Elapsed_time_end(i),i=5,7)
+          PRINT 9003, 'end  ', (Elapsed_time_end(i),i=1,3), (Elapsed_time_end(i),i=5,7)
           Execution_time_end = Elapsed_time_end(5)*3600 + Elapsed_time_end(6)*60 + &
      &                         Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
           Elapsed_time = Execution_time_end - Execution_time_start
@@ -459,7 +460,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 07/17/2017', //, &
+     &        22X, 'Version 1.2 MODSIM 11/03/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -828,8 +829,11 @@
 ! basin_summary
       IF ( control_integer(BasinOutON_OFF, 'basinOutON_OFF')/=0 ) BasinOutON_OFF = 0
 
+! nsegment_summary
+      IF ( control_integer(NsegmentOutON_OFF, 'nsegmentOutON_OFF')/=0 ) NsegmentOutON_OFF = 0
+
       IF ( control_integer(Prms_warmup, 'prms_warmup')/=0 ) Prms_warmup = 0
-      IF ( nsubOutON_OFF==1 .OR. NhruOutON_OFF==1 .OR. NsubOutON_OFF==1 .OR. BasinOutON_OFF==1 ) THEN
+      IF ( nsubOutON_OFF==1 .OR. NhruOutON_OFF==1 .OR. NsubOutON_OFF==1 .OR. BasinOutON_OFF==1 .OR. NsegmentOutON_OFF==1 ) THEN
         IF ( Start_year+Prms_warmup>End_year ) THEN ! change to start full date ???
           PRINT *, 'ERROR, prms_warmup > than simulation time period:', Prms_warmup
           Inputerror_flag = 1
@@ -1026,6 +1030,11 @@
         IF ( Print_debug>-1 ) PRINT *, 'WARNING, nsubOutON_OFF = 1 and nsub = 0, thus nsub_summary not used'
       ENDIF
 
+      IF ( NsegmentOutON_OFF==1 .AND. Nsegment==0 ) THEN
+        NsegmentOutON_OFF = 0
+        IF ( Print_debug>-1 ) PRINT *, 'WARNING, nsegmentOutON_OFF = 1 and nsegment = 0, thus nsegment_summary not used'
+      ENDIF
+
       IF ( Model==99 .OR. Parameter_check_flag>0 ) CALL check_dimens()
 
       check_dims = Inputerror_flag
@@ -1114,7 +1123,7 @@
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow, srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, strmflow_in_out
       INTEGER, EXTERNAL :: write_climate_hru, muskingum, muskingum_lake
-      EXTERNAL :: nhru_summary, prms_summary, water_balance, nsub_summary, basin_summary
+      EXTERNAL :: nhru_summary, prms_summary, water_balance, nsub_summary, basin_summary, nsegment_summary
       INTEGER, EXTERNAL :: dynamic_param_read, water_use_read, potet_pm_sta
       INTEGER, EXTERNAL :: stream_temp !, setup
       EXTERNAL :: precip_temp_grid
@@ -1172,6 +1181,7 @@
       CALL nhru_summary()
       CALL nsub_summary()
       CALL basin_summary()
+      CALL nsegment_summary()
       CALL prms_summary()
       CALL water_balance()
       test = subbasin()
@@ -1205,10 +1215,6 @@
         Temp_module = 'temp_dist2'
       ELSEIF ( Temp_module(:9)=='temp_2sta' ) THEN
         PRINT *, 'ERROR, module temp_2sta_prms not available, use a different temp_module'
-        ierr = 1
-      ELSEIF ( Temp_module(:9)/='temp_1sta' .AND. Temp_module(:9)/='temp_laps' &
-     &         .AND. Temp_module(:9)/='temp_dist2' .AND. Temp_module(:9)/='ide_dist' ) THEN
-        PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
         ierr = 1
       ENDIF
 
@@ -1248,43 +1254,48 @@
 
       IF ( Et_module(:13)=='potet_jh_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_jh_prms to potet_jh'
+        Et_module = 'potet_jh'
       ELSEIF ( Et_module(:14)=='potet_pan_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_pan_prms to potet_pan'
+        Et_module = 'potet_pan'
       ELSEIF ( Et_module(:15)=='potet_epan_prms' ) THEN
         PRINT *, 'ERROR, deprecated et_module value, change potet_epan_prms to potet_pan'
         ierr = 1
       ELSEIF ( Et_module(:20)=='potet_hamon_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_hamon_hru_prms to potet_hamon_hru'
+        Et_module = 'potet_hamon'
       ELSEIF ( Et_module(:16)=='potet_hamon_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_hamon_prms to potet_hamon'
-        ierr = 1
+        Et_module = 'potet_hamon'
       ENDIF
 
       IF ( Solrad_module(:17)=='ddsolrad_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ddsolrad_hru_prms to ddsolrad'
+        solrad_module = 'ddsolrad'
       ELSEIF ( Solrad_module(:17)=='ccsolrad_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_hru_prms to ccsolrad'
+        solrad_module = 'ccsolrad'
       ELSEIF ( Solrad_module(:13)=='ddsolrad_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ddsolrad_prms to ddsolrad'
+        solrad_module = 'ddsolrad'
       ELSEIF ( Solrad_module(:13)=='ccsolrad_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_prms to ccsolrad'
+        solrad_module = 'ccsolrad'
       ENDIF
 
       IF ( Srunoff_module(:18)=='srunoff_carea_prms' ) THEN
         PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_carea_prms to srunoff_carea'
+        srunoff_module = 'srunoff_carea'
       ELSEIF ( Srunoff_module(:18)=='srunoff_smidx_prms' ) THEN
         PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_smidx_prms to srunoff_smidx'
+        srunoff_module = 'srunoff_smidx'
       ENDIF
 
       IF ( Strmflow_module(:13)=='strmflow_prms' ) THEN
         PRINT *, 'WARNING, deprecated strmflow_module value, change strmflow_prms to strmflow'
+        strmflow_module = 'strmflow'
       ELSEIF ( Strmflow_module(:13)=='strmflow_lake' ) THEN
         PRINT *, 'ERROR, module strmflow_lake not available, use a different strmflow_module, such as muskingum_lake'
-        ierr = 1
-      ENDIF
-      IF ( Strmflow_module(:15)/='strmflow_in_out' .AND. Strmflow_module(:14)/='muskingum_lake' &
-     &     .AND. Strmflow_module(:8)/='strmflow' .AND. Strmflow_module(:9)/='muskingum' ) THEN
-        PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
         ierr = 1
       ENDIF
       IF ( ierr==1 ) STOP
@@ -1455,7 +1466,7 @@
      &        '                    muskingum_lake', /, &
      &        '    Output Summary: basin_sum, subbasin, map_results, prms_summary,', /, &
      &        '                    nhru_summary, nsub_summary, water_balance', /, &
-     &        '                    basin_summary', /, &
+     &        '                    basin_summary, nsegment_summary', /, &
      &        'Stream Temperature: stream_temp', /, &
      &        '     Preprocessing: write_climate_hru, frost_date', /, 68('-'))
   16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 19X, &
