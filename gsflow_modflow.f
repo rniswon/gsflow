@@ -6,7 +6,7 @@
       INTEGER, PARAMETER :: ITDIM = 80
       INTEGER, SAVE :: Convfail_cnt, Steady_state, Ncells
       INTEGER, SAVE :: IGRID, KKPER, ICNVG, NSOL, IOUTS
-      INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters !, Nszchanging
+      INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters
       INTEGER, SAVE :: Mfiter_cnt(ITDIM), Iter_cnt(ITDIM), Iterations
       INTEGER, SAVE :: Szcheck, Sziters, INUNIT, KPER, NCVGERR
       INTEGER, SAVE :: Have_lakes, Max_sziters, Maxgziter
@@ -80,7 +80,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-08-15 09:09:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-11-08 12:24:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -116,7 +116,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model,
+      USE PRMS_MODULE, ONLY: Model, Mxsziter,
      &    EQULS, Logunt, Init_vars_from_file, Kper_mfo
 C1------USE package modules.
       USE GLOBAL
@@ -171,7 +171,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       IOUTS = 432
       IGRID=1
       NSOL=1
-!      Stopcount = 0
+      Stopcount = 0
       Have_lakes = 0
       INUNIT = 200
       NCVGERR=0
@@ -437,7 +437,6 @@ C7------SIMULATE EACH STRESS PERIOD.
       Sziters = 0
       KPER = 1
 
-!      Nszchanging = 0
       Convfail_cnt = 0
       Max_iters = 0
       Max_sziters = 0
@@ -449,6 +448,9 @@ C7------SIMULATE EACH STRESS PERIOD.
         CALL set_cell_values()
         IF ( Init_vars_from_file==1 ) CALL gsflow_modflow_restart(1)
         CALL check_gvr_cell_pct()
+        ! make the default number of soilzone iterations equal to the
+        ! maximum MF iterations, which is a good practice using NWT and cells=nhru
+        IF ( Mxsziter<1 ) Mxsziter = MXITER
       ENDIF
 
       ! run SS if needed, read to current stress period, read restart if needed
@@ -475,7 +477,7 @@ C
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
       USE PRMS_MODULE, ONLY: Model, Kper_mfo, Print_debug, Kkiter,
-     &    Timestep, Logunt, Init_vars_from_file
+     &    Timestep, Logunt, Init_vars_from_file, Mxsziter
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
 C1------USE package modules.
       USE GLOBAL
@@ -654,19 +656,24 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
 !     1                              IUNIT(44),IUNIT(52),IUNIT(55),IGRID)
 
 !  Call the PRMS modules that need to be inside the iteration loop
-            IF ( Szcheck>0 ) THEN
-              retval = soilzone()
-              IF ( retval.NE.0 ) THEN
-                PRINT 9001, 'soilzone', retval
-                RETURN
+            IF ( Model==0 ) THEN
+              IF ( Szcheck>0 ) THEN
+                retval = soilzone()
+                IF ( retval.NE.0 ) THEN
+                  PRINT 9001, 'soilzone', retval
+                  RETURN
+                ENDIF
+                retval = gsflow_prms2mf()
+                IF ( retval.NE.0 ) THEN
+                  PRINT 9001, 'gsflow_prms2mf', retval
+                  RETURN
+                ENDIF
+                Sziters = Sziters + 1
+                Maxgziter = KKITER
+                IF ( KKITER==Mxsziter ) Szcheck = 0 ! stop calling soilzone in iteration loop
+              ELSE
+                IF ( KKITER==Mxsziter+1 ) Stopcount = Stopcount + 1
               ENDIF
-              retval = gsflow_prms2mf()
-              IF ( retval.NE.0 ) THEN
-                PRINT 9001, 'gsflow_prms2mf', retval
-                RETURN
-              ENDIF
-              Sziters = Sziters + 1
-              Maxgziter = KKITER
             ENDIF
 
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
@@ -967,7 +974,6 @@ C
       IF(IUNIT(52).NE.0) CALL GWF2MNW17OT(IGRID)
 
       IF ( gsflag==1 ) THEN
-!        IF ( Szcheck==-1 .OR. Szcheck==1 ) Nszchanging = Nszchanging + 1
         II = MIN(ITDIM, Maxgziter)
         Iter_cnt(II) = Iter_cnt(II) + 1
         IF ( Maxgziter.GT.Max_sziters ) Max_sziters = Maxgziter
@@ -1113,10 +1119,6 @@ C
           PRINT 9005, Stopcount
           WRITE (Logunt, 9005) Stopcount
         ENDIF
-!        IF ( Nszchanging>0 .OR. Stopcount>0 ) THEN
-!          PRINT 9005, Nszchanging, Stopcount
-!          WRITE (Logunt, 9005) Nszchanging, Stopcount
-!        ENDIF
         WRITE (Logunt, 9003) 'MF iteration distribution:', Mfiter_cnt
         WRITE (Logunt, '(/)')
         WRITE (Logunt, 9007) 'SZ computation distribution:', Iter_cnt
@@ -1133,7 +1135,6 @@ C10-----END OF PROGRAM.
         WRITE(*,*) ' Normal termination of simulation'
         WRITE (Logunt, '(A)') 'Normal termination of simulation'
       END IF
-      CLOSE (Logunt)
 
 !gsf  CALL USTOP(' ')
       IF ( Model.EQ.2 ) CALL USTOP(' ')
@@ -1147,8 +1148,6 @@ C10-----END OF PROGRAM.
      &        ';  Maximum SZ iterations:', I8, /)
  9003 FORMAT (A, 2X, 10I5, /, 10(28X, 10I5, /))
  9005 FORMAT ('mxsziter reached:', I4, /)
-! 9005 FORMAT (' Steps SZ changing when MF converged:', I5,
-!     &        '; mxsziter reached:', I4, /)
  9007 FORMAT (A, 10I5, /, 10(28X, 10I5, /))
 
 C

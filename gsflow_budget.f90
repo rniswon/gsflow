@@ -11,10 +11,10 @@
 !   Declared Variables
       DOUBLE PRECISION, SAVE :: Total_pump, Total_pump_cfs, StreamExchng2Sat_Q, Stream2Unsat_Q, Sat_S
       DOUBLE PRECISION, SAVE :: Stream_inflow, Basin_gw2sm, NetBoundaryFlow2Sat_Q
-      DOUBLE PRECISION, SAVE :: Unsat_S, Sat_dS, LakeExchng2Sat_Q, Lake2Unsat_Q
+      DOUBLE PRECISION, SAVE :: Unsat_S, Sat_dS, LakeExchng2Sat_Q, Lake2Unsat_Q, Basin_szreject
       REAL, SAVE, ALLOCATABLE :: Reach_cfs(:), Reach_wse(:), Streamflow_sfr(:)
-      REAL, SAVE, ALLOCATABLE :: Gw2sm(:), Actet_gw(:), Actet_tot_gwsz(:)
-      REAL, SAVE, ALLOCATABLE :: Uzf_infil_map(:), Sat_recharge(:), Mfoutflow_to_gvr(:)
+      REAL, SAVE, ALLOCATABLE :: Gw2sm(:), Actet_gw(:), Actet_tot_gwsz(:), Gw_rejected(:)
+!      REAL, SAVE, ALLOCATABLE :: Uzf_infil_map(:), Sat_recharge(:), Mfoutflow_to_gvr(:)
       END MODULE GSFBUDGET
 
 !     ******************************************************************
@@ -133,6 +133,10 @@
      &     'Basin average water exfiltrated from unsaturated and saturated zones and added to soil zone', &
      &     'inches', Basin_gw2sm)/=0) CALL read_error(3, 'basin_gw2sm')
 
+      IF ( declvar(MODNAME, 'basin_szreject', 'one', 1, 'double', &
+     &     'Basin average recharge from SZ and rejected by UZF', &
+     &     'inches', Basin_szreject)/=0) CALL read_error(3, 'basin_szreject')
+
       ALLOCATE (Gw2sm(Nhru))
       IF ( declvar(MODNAME, 'gw2sm', 'nhru', Nhru, 'real', &
      &     'HRU average water exfiltrated from groundwater model and added back to soil zone', &
@@ -153,20 +157,25 @@
      &     'Streamflow as computed by SFR for each segment', &
      &     'cfs', Streamflow_sfr)/=0 ) CALL read_error(3, 'streamflow_sfr')
 
-      ALLOCATE ( Uzf_infil_map(Nhru) )
-      IF ( declvar(MODNAME, 'uzf_infil_map', 'nhru', Nhru, 'real', &
-     &     'HRU total gravity drainage to UZF cells', 'L3', &
-     &     Uzf_infil_map)/=0 ) CALL read_error(3, 'uzf_infil_map')
+      ALLOCATE ( Gw_rejected(Nhru) )
+      IF ( declvar(MODNAME, 'gw_rejected', 'nhru', Nhru, 'real', &
+     &     'HRU average recharge rejected by UZF', 'inches', &
+     &     Gw_rejected)/=0 ) CALL read_error(3, 'gw_rejected')
 
-      ALLOCATE ( Sat_recharge(Nhru) )
-      IF ( declvar(MODNAME, 'sat_recharge', 'nhru', Nhru, 'real', &
-     &     'HRU total recharge to the saturated zone', 'L3', &
-     &     Sat_recharge)/=0 ) CALL read_error(3, 'sat_recharge')
+!      ALLOCATE ( Uzf_infil_map(Nhru) )
+!      IF ( declvar(MODNAME, 'uzf_infil_map', 'nhru', Nhru, 'real', &
+!     &     'HRU total gravity drainage to UZF cells', 'L3', &
+!     &     Uzf_infil_map)/=0 ) CALL read_error(3, 'uzf_infil_map')
 
-      ALLOCATE ( Mfoutflow_to_gvr(Nhru) )
-      IF ( declvar(MODNAME, 'mfoutflow_to_gvr', 'nhru', Nhru, 'real', &
-     &     'MODFLOW total discharge and ET to each HRU', 'L3', &
-     &     Mfoutflow_to_gvr)/=0 ) CALL read_error(3, 'mfoutflow_to_gvr')
+!      ALLOCATE ( Sat_recharge(Nhru) )
+!      IF ( declvar(MODNAME, 'sat_recharge', 'nhru', Nhru, 'real', &
+!     &     'HRU total recharge to the saturated zone', 'L3', &
+!     &     Sat_recharge)/=0 ) CALL read_error(3, 'sat_recharge')
+
+!      ALLOCATE ( Mfoutflow_to_gvr(Nhru) )
+!      IF ( declvar(MODNAME, 'mfoutflow_to_gvr', 'nhru', Nhru, 'real', &
+!     &     'MODFLOW total discharge and ET to each HRU', 'L3', &
+!     &     Mfoutflow_to_gvr)/=0 ) CALL read_error(3, 'mfoutflow_to_gvr')
 
       END FUNCTION gsfbuddecl
 
@@ -205,9 +214,9 @@
         Lake2Unsat_Q = 0.0D0
         Stream_inflow = 0.0D0
         Basin_gw2sm = 0.0D0
-        Uzf_infil_map = 0.0 ! dimension nhru
-        Sat_recharge = 0.0 ! dimension nhru
-        Mfoutflow_to_gvr = 0.0 ! dimension nhru
+!        Uzf_infil_map = 0.0 ! dimension nhru
+!        Sat_recharge = 0.0 ! dimension nhru
+!        Mfoutflow_to_gvr = 0.0 ! dimension nhru
         Gw2sm = 0.0 ! dimension nhru
         Actet_gw = 0.0 ! dimension nhru
         Actet_tot_gwsz = 0.0 ! dimension nhru
@@ -220,6 +229,8 @@
       ALLOCATE ( Fluxchange(Nhru) )
       Fluxchange = 0.0
       Basin_fluxchange = 0.0D0
+      Basin_szreject = 0.0D0
+      Gw_rejected = 0.0
 
       END FUNCTION gsfbudinit
 
@@ -229,20 +240,20 @@
 !***********************************************************************
       INTEGER FUNCTION gsfbudrun()
       USE GSFBUDGET
-      USE GSFMODFLOW, ONLY: Mfq2inch_conv, Mfl2_to_acre, Cellarea, &
-     &    Mfvol2inch_conv, Mfl3t_to_cfs, Mfl_to_inch, Gwc_col, Gwc_row, Have_lakes, ICNVG !, Szcheck, ICNVG
+      USE GSFMODFLOW, ONLY: Mfq2inch_conv, Mfl2_to_acre, & !, Cellarea, &
+     &    Mfvol2inch_conv, Mfl3t_to_cfs, Mfl_to_inch, Gwc_col, Gwc_row, Have_lakes
 !Warning, modifies Gw_rejected_grav, Gw_rejected_grav
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
 !Warning, modifies Gw2sm_grav
-      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Gvr_cell_pct !, Print_debug
+      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id !, Gvr_cell_pct, Print_debug
 !      USE GLOBAL, ONLY: IUNIT, DELR, DELC
       USE GWFBASMODULE, ONLY: VBVL, DELT
-      USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET, UZOLSFLX, UZFLWT
+      USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET !, UZOLSFLX, UZFLWT
       USE GWFLAKMODULE, ONLY: EVAP, SURFA
 !Warning, modifies Basin_gwflow_cfs, Basin_cfs, Basin_cms, Basin_stflow,
 !                  Basin_ssflow_cfs, Basin_sroff_cfs
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Active_area, &
-     &    Hru_perv, Hru_frac_perv, Basin_area_inv, Hru_area, NEARZERO, CLOSEZERO, Lake_hru_id, Lake_area
+     &    Hru_perv, Hru_frac_perv, Basin_area_inv, Hru_area, NEARZERO, Lake_hru_id, Lake_area
       USE PRMS_FLOWVARS, ONLY: Basin_ssflow, Basin_lakeevap, Hru_actet, &
      &    Basin_actet, Basin_soil_moist, Basin_ssstor, Ssres_stor, &
      &    Slow_stor, Soil_moist, Basin_ssflow_cfs, Basin_sroff_cfs, Basin_gwflow_cfs
@@ -250,8 +261,8 @@
 !Warning, modifies Basin_soil_moist, Basin_ssstor
       USE PRMS_SRUNOFF, ONLY: Basin_sroff
       USE PRMS_SOILZONE, ONLY: Pref_flow_stor, Gravity_stor_res, Hrucheck, Gvr_hru_id, &
-     &    Basin_pref_stor, Basin_slstor, Gvr2sm, Basin_gvr2sm, Gw2sm_grav, Basin_pref_flow_infil, Pref_flow_in, &
-     &    Gw_rejected, Gw2sm_grav_save, Basin_szreject, Gvr_hru_pct_adjusted, Gvr2pfr, Basin_gvr2pfr
+     &    Basin_pref_stor, Basin_slstor, Gvr2sm, Basin_gvr2sm, Gw2sm_grav, Pref_flow_in, &
+     &    Gw2sm_grav_save, Gvr_hru_pct_adjusted, Gvr2pfr, Basin_gvr2pfr
       IMPLICIT NONE
 ! Functions
       INTRINSIC :: ABS, SNGL
@@ -276,16 +287,13 @@
         Gw2sm(i) = 0.0
         Gw_rejected(i) = 0.0
         Actet_gw(i) = 0.0
-        Slow_stor(i) = 0.0 !shouldn't be reset if any cells of hru inactive and hru active
-        Uzf_infil_map(i) = 0.0
-        Sat_recharge(i) = 0.0
-        Mfoutflow_to_gvr(i) = 0.0
+        Slow_stor(i) = 0.0 !shouldn't be reset if any cells of HRU inactive and HRU active
+!        Uzf_infil_map(i) = 0.0
+!        Sat_recharge(i) = 0.0
+!        Mfoutflow_to_gvr(i) = 0.0
         Fluxchange(i) = 0.0
       ENDDO
       Streamflow_sfr = 0.0
-      Basin_fluxchange = 0.0D0
-
-!      IF ( ICNVG==1 .OR. Szcheck==0 ) Gw2sm_grav_save = Gw2sm_grav
 
       DO i = 1, Nhrucell
         ihru = Gvr_hru_id(i)
@@ -298,9 +306,9 @@
 !            endif
         pct = SNGL( Gvr_hru_pct_adjusted(i) )
         ! which need gvr_cell_pct ???
-        Uzf_infil_map(ihru) = Uzf_infil_map(ihru) + UZOLSFLX(icol, irow)*Gvr_cell_pct(i)*pct*Cellarea(icell)*DELT
-        Sat_recharge(ihru) = Sat_recharge(ihru) + UZFLWT(icol, irow)*Gvr_hru_pct_adjusted(i)
-        Mfoutflow_to_gvr(ihru) = Mfoutflow_to_gvr(ihru) + (SEEPOUT(icol,irow)+GWET(icol,irow))*pct
+!        Uzf_infil_map(ihru) = Uzf_infil_map(ihru) + UZOLSFLX(icol, irow)*Gvr_cell_pct(i)*pct*Cellarea(icell)*DELT
+!        Sat_recharge(ihru) = Sat_recharge(ihru) + UZFLWT(icol, irow)*Gvr_hru_pct_adjusted(i)
+!        Mfoutflow_to_gvr(ihru) = Mfoutflow_to_gvr(ihru) + (SEEPOUT(icol,irow)+GWET(icol,irow))*pct
         IF ( Hrucheck(ihru)/=1 ) CYCLE ! don't compute the rest if inactive or lake HRU, not sure about 3 variable prior
 !-----------------------------------------------------------------------
 ! Add any excess infiltration to Gw_rejected array
@@ -375,7 +383,6 @@
         Basin_pref_stor = 0.0D0
         Basin_gvr2sm = 0.0D0
         Basin_gvr2pfr = 0.0D0
-        Basin_pref_flow_infil = 0.0D0
       ENDIF
       Basin_ssstor = 0.0D0
       Basin_gw2sm = 0.0D0
@@ -422,7 +429,6 @@
           Basin_pref_stor = Basin_pref_stor + Pref_flow_stor(i)*harea
           Basin_gvr2sm = Basin_gvr2sm + Gvr2sm(i)*harea
           Basin_gvr2pfr = Basin_gvr2pfr + Gvr2pfr(i)*harea
-          Basin_pref_flow_infil = Basin_pref_flow_infil + Pref_flow_in(i)*harea
         ENDIF
         Actet_tot_gwsz(i) = Hru_actet(i) + Actet_gw(i)
         !rsr, need to adjust hru_actet for UZF
@@ -460,7 +466,6 @@
         Basin_pref_stor = Basin_pref_stor*Basin_area_inv
         Basin_gvr2sm = Basin_gvr2sm*Basin_area_inv
         Basin_gvr2pfr = Basin_gvr2pfr*Basin_area_inv
-        Basin_pref_flow_infil = Basin_pref_flow_infil*Basin_area_inv
       ENDIF
 
       !IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()
@@ -865,9 +870,9 @@
         WRITE ( Restart_outunit ) Actet_gw
         WRITE ( Restart_outunit ) Actet_tot_gwsz
         WRITE ( Restart_outunit ) Streamflow_sfr
-        WRITE ( Restart_outunit ) Uzf_infil_map
-        WRITE ( Restart_outunit ) Sat_recharge
-        WRITE ( Restart_outunit ) Mfoutflow_to_gvr
+!        WRITE ( Restart_outunit ) Uzf_infil_map
+!        WRITE ( Restart_outunit ) Sat_recharge
+!        WRITE ( Restart_outunit ) Mfoutflow_to_gvr
         WRITE ( Restart_outunit ) Reach_cfs
         WRITE ( Restart_outunit ) Reach_wse
       ELSE
@@ -880,9 +885,9 @@
         READ ( Restart_inunit ) Actet_gw
         READ ( Restart_inunit ) Actet_tot_gwsz
         READ ( Restart_inunit ) Streamflow_sfr
-        READ ( Restart_inunit ) Uzf_infil_map
-        READ ( Restart_inunit ) Sat_recharge
-        READ ( Restart_inunit ) Mfoutflow_to_gvr
+!        READ ( Restart_inunit ) Uzf_infil_map
+!        READ ( Restart_inunit ) Sat_recharge
+!        READ ( Restart_inunit ) Mfoutflow_to_gvr
         READ ( Restart_inunit ) Reach_cfs
         READ ( Restart_inunit ) Reach_wse
       ENDIF

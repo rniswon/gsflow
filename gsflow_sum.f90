@@ -108,7 +108,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = 'gsflow_sum.f90 2017-11-03 10:10:00Z'
+      Version_gsflow_sum = 'gsflow_sum.f90 2017-11-08 12:26:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -556,9 +556,8 @@
       INTEGER FUNCTION gsfsumrun()
       USE GSFSUM
       USE GSFMODFLOW, ONLY: Mfl3t_to_cfs, KKSTP, KKPER, Have_lakes, Maxgziter
-!      USE GSFPRMS2MF, ONLY: Net_sz2gw
-      USE GSFBUDGET, ONLY: NetBoundaryFlow2Sat_Q, Gw_bnd_in, Gw_bnd_out, Well_in, &
-     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S, Basin_actetgw, Basin_fluxchange
+      USE GSFBUDGET, ONLY: NetBoundaryFlow2Sat_Q, Gw_bnd_in, Gw_bnd_out, Well_in, Basin_szreject, &
+     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S, Basin_actetgw
 !      USE GSFPRMS2MF, ONLY: Basin_reach_latflow
       USE GWFUZFMODULE, ONLY: UZTSRAT
       USE GWFSFRMODULE, ONLY: SFRUZBD, STRMDELSTOR_RATE, SFRRATIN, SFRRATOUT, IRTFLG, TOTSPFLOW
@@ -582,7 +581,7 @@
       USE PRMS_SOILZONE, ONLY: Basin_lakeprecip, Basin_dunnian, &
      &    Basin_slowflow, Basin_prefflow, Basin_lakeinsz, &
      &    Basin_cap_infil_tot, Basin_pref_flow_infil, Basin_sz2gw, &
-     &    Basin_sm2gvr, Basin_gvr2sm, Basin_gvr2pfr, Basin_dunnian,  Basin_dncascadeflow, Basin_szreject
+     &    Basin_sm2gvr, Basin_gvr2sm, Basin_gvr2pfr, Basin_dunnian,  Basin_dncascadeflow
       IMPLICIT NONE
       INTRINSIC DBLE
 ! Local variables
@@ -694,7 +693,7 @@
       RechargeUnsat2Sat_Q = UZTSRAT(3)
       !?? doesn't match basin_gw2sm from budget
       Basinseepout = UZTSRAT(5)
-!      print *, 'seep', Basinseepout, Sat2Grav_Q, Basinseepout - Sat2Grav_Q, Basin_fluxchange*Basin_convert
+      !print *, Sat2Grav_Q, Basinseepout, Sat2Grav_Q - Basinseepout !rsr, not sure why these don't match
       SoilDrainage2Unsat_Q = UZTSRAT(1)
       Unsat_dS = UZTSRAT(4)
 
@@ -749,7 +748,7 @@
         IF ( ABS(gvf)>ERRCHK ) WRITE (BALUNT, *) 'gravflow', gvf, &
      &       Basin_slowflow, Basin_prefflow, Basin_ssflow
 
-        szin = Basin_infil + Basin_gw2sm + Basin_szreject + Basin_fluxchange
+        szin = Basin_infil + Basin_gw2sm + Basin_szreject
         szdstor = Last_basin_soil_moist + Last_basin_ssstor &
      &            - Basin_soil_moist - Basin_ssstor
         szout = Basin_sz2gw + Basin_ssflow + Basin_lakeinsz + &
@@ -764,7 +763,7 @@
      &                        Last_basin_ssstor, Basin_soil_moist, &
      &                        Basin_ssstor, Basin_sz2gw, Basin_ssflow, &
      &                        Basin_lakeinsz, Basin_dunnian, &
-     &                        Basin_perv_et, Basin_soil_to_gw, Basin_swale_et, Basin_fluxchange
+     &                        Basin_perv_et, Basin_soil_to_gw, Basin_swale_et
             WRITE (BALUNT, *) KKITER, Maxgziter
           ENDIF
         ENDIF

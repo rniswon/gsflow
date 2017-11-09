@@ -9,7 +9,7 @@
       INTEGER, SAVE :: NTRAIL_CHK, Nlayp1
       ! Number of stream reaches in each stream segment
       INTEGER, SAVE, ALLOCATABLE :: Numreach_segment(:)
-      REAL, SAVE, ALLOCATABLE :: Excess(:) !, Sm2gw_grav_older(:)
+      REAL, SAVE, ALLOCATABLE :: Excess(:)
       DOUBLE PRECISION, SAVE :: Totalarea
       CHARACTER(LEN=14), SAVE :: MODNAME
 !   Declared Variables
@@ -20,8 +20,6 @@
       REAL, SAVE, ALLOCATABLE :: Cell_drain_rate(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Segment_pct_area(:)
 !   Declared Parameters
-      INTEGER, SAVE :: Mnsziter, Mxsziter
-      REAL, SAVE :: Szconverge
 !     INTEGER, SAVE, ALLOCATABLE :: Local_reachid(:)
 !     INTEGER, SAVE, ALLOCATABLE :: Reach_segment(:)
       REAL, SAVE, ALLOCATABLE :: Gvr_hru_pct(:)
@@ -58,7 +56,7 @@
 !     prms2mfdecl - set up parameters
 !   Declared Parameters
 !     gvr_hru_id, gvr_cell_id, gvr_hru_pct
-!     hru_area, mxsziter, szconverge, mnsziter
+!     hru_area, mxsziter
 !***********************************************************************
       INTEGER FUNCTION prms2mfdecl()
       USE GSFPRMS2MF
@@ -71,7 +69,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-08-16 09:38:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-11-08 12:23:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -95,7 +93,7 @@
       ALLOCATE (Cell_drain_rate(Ngwcell))
       IF ( declvar(MODNAME, 'cell_drain_rate', 'ngwcell', Ngwcell, 'real', &
      &     'Recharge rate for each cell', &
-     &     'L3/T', Cell_drain_rate)/=0 ) CALL read_error(3, 'Cell_drain_rate')
+     &     'L/T', Cell_drain_rate)/=0 ) CALL read_error(3, 'Cell_drain_rate')
 
       IF ( declvar(MODNAME, 'basin_reach_latflow', 'one', 1, 'double', &
      &     'Lateral flow into all reaches in basin', &
@@ -113,7 +111,7 @@
 !     &     'decimal fraction', Segment_pct_area)/=0 ) CALL read_error(3, 'segment_pct_area')
 
       ! Allocate local arrays
-      ALLOCATE ( Excess(Ngwcell) ) !, Sm2gw_grav_older(Nhrucell) )
+      ALLOCATE ( Excess(Ngwcell) )
 
 ! Declared Parameters
         ! should be change code so that flow to each reach is computed, either based on a
@@ -125,24 +123,6 @@
 !      &      'Proportion of each segment that contributes flow to a stream reach', &
 !      &      'Proportion of each segment that contributes flow to a stream reach', &
 !      &      'decimal fraction')/=0 ) CALL read_error(1, 'segment_reach_fraction')
-
-      IF ( declparam(MODNAME, 'szconverge', 'one', 'real', &
-     &     '1.0E-8', '1.0E-15', '1.0E-1', &
-     &     'Significant difference for checking soilzone states', &
-     &     'Significant difference for checking soilzone states', &
-     &     'inches')/=0 ) CALL read_error(1, 'szconverge')
-
-      IF ( declparam(MODNAME, 'mnsziter', 'one', 'integer', &
-     &     '0', '0', '5000', &
-     &     'Minimum number of iterations soilzone states are computed', &
-     &     'Minimum number of iterations soilzone states are computed', &
-     &     'none')/=0 ) CALL read_error(1, 'mnsziter')
-
-      IF ( declparam(MODNAME, 'mxsziter', 'one', 'integer', &
-     &     '0', '0', '5000', &
-     &     'Maximum number of iterations soilzone states are computed', &
-     &     'Maximum number of iterations soilzone states are computed', &
-     &     'none')/=0 ) CALL read_error(1, 'mxsziter')
 
 !     ALLOCATE (Local_reachid(Nreach))
 !     IF ( decl param(MODNAME, 'local_reachid', 'nreach', 'integer', &
@@ -179,11 +159,11 @@
       USE GWFLAKMODULE, ONLY: NLAKES
       USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes
       USE PRMS_MODULE, ONLY: Nhru, Nsegment, Nlake, Print_debug, &
-     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt !, Init_vars_from_file
+     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Mxsziter !, Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
-     &    Basin_area_inv, Hru_area, NEARZERO
+     &    Basin_area_inv, Hru_area
       USE PRMS_SOILZONE, ONLY: Gvr_hru_id, Gvr_hru_pct_adjusted
-      USE GLOBAL, ONLY: NLAY, MXITER, NROW, NCOL
+      USE GLOBAL, ONLY: NLAY, NROW, NCOL
       USE GWFUZFMODULE, ONLY: IUZFBND
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
@@ -222,20 +202,7 @@
         ierr = 1
       ENDIF
 
-      IF ( getparam(MODNAME, 'szconverge', 1, 'real', Szconverge)/=0 ) CALL read_error(2, 'szconverge')
-      !IF ( Szconverge<NEARZERO ) Szconverge = NEARZERO
-
-      IF ( getparam(MODNAME, 'mnsziter', 1, 'integer', Mnsziter)/=0 ) CALL read_error(2, 'mnsziter')
-      IF ( getparam(MODNAME, 'mxsziter', 1, 'integer', Mxsziter)/=0 ) CALL read_error(2, 'mxsziter')
-      ! make the default number of soilzone iterations equal to the
-      ! maximum MF iterations, which is a good practice using NWT and cells=nhru
-      IF ( Mxsziter<1 ) Mxsziter = MXITER
-      ! make the default number of soilzone iterations equal to the
-      ! maximum MF iterations, which is a good practice using NWT and cells=nhru
-      IF ( Mnsziter<1 ) Mnsziter = MXITER
-      IF ( Mnsziter<3 ) Mnsziter = 3
-      IF ( Mnsziter>Mxsziter ) Mxsziter = Mnsziter
-      WRITE (Logunt, '(/, A,F10.7,A,I4,A,I4,/)') 'szconverge =', Szconverge, ', mxsziter =', Mxsziter, ', mnsziter =', Mnsziter
+      WRITE (Logunt, '(/, A,I4,/)') 'mxsziter =', Mxsziter
       WRITE (Logunt, '(A,D15.7)') 'Tolerance check for gvr_hru_pct:', PCT_CHK
 
       IF ( Nhru/=Nhrucell ) THEN
@@ -420,7 +387,6 @@
       Basin_reach_latflow = 0.0D0
       Net_sz2gw = 0.0D0
       Excess = 0.0 ! dimension ngwcell
-      !IF ( Init_vars_from_file==0 ) Sm2gw_grav_older = 0.0 ! dimension nhrucell
       Gw_rejected_grav = 0.0 ! dimension nhrucell
       NTRAIL_CHK = NWAV - 3*NTRAIL + 1
 
@@ -441,36 +407,27 @@
       INTEGER FUNCTION prms2mfrun()
       USE GSFPRMS2MF
       USE GSFMODFLOW, ONLY: Gvr2cell_conv, Acre_inches_to_mfl3, &
-     &    Inch_to_mfl_t, Gwc_row, Gwc_col, Szcheck, Have_lakes, Stopcount, Mft_to_days
+     &    Inch_to_mfl_t, Gwc_row, Gwc_col, Have_lakes, Mft_to_days
       USE GLOBAL, ONLY: IBOUND
 !     USE GLOBAL, ONLY: IOUT
       USE GWFUZFMODULE, ONLY: IUZFBND, NWAVST, PETRATE, IGSFLOW, FINF
       USE GWFLAKMODULE, ONLY: RNF, EVAPLK, PRCPLK, NLAKES
-      USE PRMS_MODULE, ONLY: KKITER, Nhrucell, Gvr_cell_id, Logunt
+      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
       USE PRMS_FLOWVARS, ONLY: Hru_actet
       USE PRMS_SRUNOFF, ONLY: Hortonian_lakes
-      USE PRMS_SOILZONE, ONLY: Sm2gw_grav, Lakein_sz, Hrucheck, Gvr_hru_id, Unused_potet, Gvr_hru_pct_adjusted !, Sm2gw_grav_old
+      USE PRMS_SOILZONE, ONLY: Sm2gw_grav, Lakein_sz, Hrucheck, Gvr_hru_id, Unused_potet, Gvr_hru_pct_adjusted
       IMPLICIT NONE
 ! FUNCTIONS AND SUBROUTINES
       INTEGER, EXTERNAL :: toStream
       EXTERNAL Bin_percolation
 ! Local Variables
       INTEGER :: irow, icol, ik, jk, ibndcheck, ii, ilake
-      INTEGER :: j, icell, ihru, icheck, is_draining !, maxdiff_cell
-      REAL :: seep !, diff, diff2, maxdiff
+      INTEGER :: j, icell, ihru
+      REAL :: seep
 !***********************************************************************
       prms2mfrun = 0
-
-! gsflow sets to current iteration
-      IF ( KKITER<Mnsziter ) THEN
-        icheck = -2
-        Szcheck = 2
-      ELSE
-        icheck = 0
-        Szcheck = 1
-      ENDIF
 
 !-----------------------------------------------------------------------
 ! Add runoff to stream reaches
@@ -504,10 +461,7 @@
 !-----------------------------------------------------------------------
       PETRATE = 0.0 ! should just be active cells
       Cell_drain_rate = 0.0 ! should just be active cells
-      is_draining = 0
 
-      !maxdiff = 0.0
-      !maxdiff_cell = 0
       DO j = 1, Nhrucell
         ihru = Gvr_hru_id(j)
         IF ( Hrucheck(ihru)==0 ) CYCLE
@@ -541,26 +495,7 @@
 !-----------------------------------------------------------------------
 ! Convert drainage from inches to MF Length/Time
 !-----------------------------------------------------------------------
-!             IF ( icheck==0 ) THEN
-!rsr, check to see if current infiltration is within a tolerance of
-!     the last iteration, if so, stop recomputing soil zone states
-!                diff = ABS(seep-Sm2gw_grav_old(j))
-!                IF ( diff>Szconverge ) THEN
-!rsr, check to see if current infiltration is equal to (within a
-!     tolerance) of the iteration before last (i.e, solution is likely
-!     oscillating), if so, stop recomputing soil zone states
-!                  diff2 = ABS(seep-Sm2gw_grav_older(j))
-!                  IF ( diff2>SZ_CHK ) THEN
-!                    icheck = 1
-!                    maxdiff = diff
-!                    maxdiff_cell = icell
-!                  ENDIF
-!                ENDIF
-!              ENDIF
               Cell_drain_rate(icell) = Cell_drain_rate(icell) + seep*Gvr2cell_conv(j)
-              IF ( is_draining==0 ) THEN
-                IF ( Cell_drain_rate(icell)>0.0 ) is_draining = 1
-              ENDIF
             ELSE ! ELSEIF ( NWAVST(icol, irow)>=NTRAIL_CHK ) THEN
 !              WRITE (IOUT, *) '--WARNING-- Too many waves in UZF cell'
 !              WRITE (IOUT, *) ' col =', icol, ' row =', irow, 'numwaves=', NTRAIL_CHK
@@ -582,22 +517,7 @@
           Unused_potet(ihru) = Unused_potet(ihru) - Unused_potet(ihru)*Gvr_hru_pct_adjusted(j)
           IF ( Unused_potet(ihru)<0.0 ) Unused_potet(ihru) = 0.0
         ENDIF
-!        Sm2gw_grav_older(j) = Sm2gw_grav_old(j)
       ENDDO
-! check if current iteration changed insignificantly or was oscillating
-      IF ( icheck==1 ) THEN
-        IF ( KKITER==Mxsziter ) THEN
-          Stopcount = Stopcount + 1
-          Szcheck = -1
-          WRITE (Logunt, *) 'Mxsziter reached', Stopcount !, &
-!     &                      'Change still significant in cell:', maxdiff_cell, maxdiff
-        ENDIF
-      ELSEIF ( KKITER==Mxsziter ) THEN
-        Szcheck = 0
-        IF ( icheck==-2 ) Szcheck = -2
-      ELSEIF ( icheck==0 ) THEN
-        Szcheck = 0
-      ENDIF
  
 !-----------------------------------------------------------------------
 ! Bin precolation in cell_drain_rate
@@ -607,7 +527,7 @@
       Net_sz2gw = 0.0D0
       Excess = 0.0
       FINF = 0.0
-      IF ( is_draining==1 ) CALL Bin_percolation()
+      CALL Bin_percolation()
 
       END FUNCTION prms2mfrun
 
@@ -737,7 +657,7 @@
 !***********************************************************************
       SUBROUTINE gsflow_prms2mf_restart(In_out)
       USE PRMS_MODULE, ONLY: Restart_outunit, Restart_inunit
-      USE GSFPRMS2MF, ONLY: MODNAME !, Sm2gw_grav_older
+      USE GSFPRMS2MF, ONLY: MODNAME
       IMPLICIT NONE
       ! Argument
       INTEGER, INTENT(IN) :: In_out
@@ -747,10 +667,8 @@
 !***********************************************************************
       IF ( In_out==0 ) THEN
         WRITE ( Restart_outunit ) MODNAME
-!        WRITE ( Restart_outunit ) Sm2gw_grav_older
       ELSE
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
-!        READ ( Restart_inunit ) Sm2gw_grav_older
       ENDIF
       END SUBROUTINE gsflow_prms2mf_restart
