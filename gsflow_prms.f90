@@ -48,7 +48,7 @@
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2017-11-03 14:31:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-11-09 15:08:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -460,7 +460,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 11/03/2017', //, &
+     &        22X, 'Version 1.2 MODSIM 11/10/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -1481,6 +1481,11 @@
       IF ( GSFLOW_flag==1 .OR. Model==99 ) THEN
         CALL declvar_int(MODNAME, 'KKITER', 'one', 1, 'integer', &
      &       'Current iteration in GSFLOW simulation', 'none', KKITER)
+        IF ( declparam(MODNAME, 'mxsziter', 'one', 'integer', &
+     &       '0', '0', '5000', &
+     &       'Maximum number of iterations soilzone states are computed', &
+     &       'Maximum number of iterations soilzone states are computed', &
+     &       'none')/=0 ) CALL read_error(1, 'mxsziter')
         ALLOCATE ( Gvr_cell_pct(Nhrucell) )
         IF ( Nhru/=Nhrucell ) THEN
           IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
@@ -1539,6 +1544,7 @@
         ELSE
           IF ( getparam(MODNAME, 'gvr_cell_pct', Nhrucell, 'real', Gvr_cell_pct)/=0 ) CALL read_error(2, 'gvr_cell_pct')
         ENDIF
+        IF ( getparam(MODNAME, 'mxsziter', 1, 'integer', Mxsziter)/=0 ) CALL read_error(2, 'mxsziter')
       ENDIF
       IF ( MapOutON_OFF>0 .OR. GSFLOW_flag==1 ) THEN
         IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')

@@ -23,7 +23,7 @@ C     ******************************************************************
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-11-03 10:36:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-11-09 12:23:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -63,7 +63,7 @@ C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model, GSFLOW_flag, Have_lakes,
+      USE PRMS_MODULE, ONLY: Model, Mxsziter, GSFLOW_flag, Have_lakes,
      &    EQULS, Logunt, Init_vars_from_file, Kper_mfo
 C1------USE package modules.
       USE GLOBAL
@@ -415,7 +415,6 @@ C7------SIMULATE EACH STRESS PERIOD.
       Sziters = 0
       KPER = 1
 
-!      Nszchanging = 0
       Convfail_cnt = 0
       Max_iters = 0
       Max_sziters = 0
@@ -427,6 +426,9 @@ C7------SIMULATE EACH STRESS PERIOD.
         CALL set_cell_values()
         IF ( Init_vars_from_file>0 ) CALL gsflow_modflow_restart(1)
         CALL check_gvr_cell_pct()
+        ! make the default number of soilzone iterations equal to the
+        ! maximum MF iterations, which is a good practice using NWT and cells=nhru
+        IF ( Mxsziter<1 ) Mxsziter = MXITER
       ENDIF
 
       ! run SS if needed, read to current stress period, read restart if needed
@@ -620,7 +622,7 @@ C
 !        SPECIFICATIONS:
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model, Kkiter, Nsegment, Nlake
+      USE PRMS_MODULE, ONLY: Model, Kkiter, GSFLOW_flag, Mxsziter
 C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
@@ -713,24 +715,30 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
 !     1                              IUNIT(44),IUNIT(52),IUNIT(55),IGRID)
 
 !  Call the PRMS modules that need to be inside the iteration loop
-            IF ( Szcheck>0 ) THEN
-              retval = soilzone(AFR)
-              IF ( retval.NE.0 ) THEN
-                PRINT 9001, 'soilzone', retval
-                RETURN
+            IF ( GSFLOW_flag==1 ) THEN
+              IF ( Szcheck>0 ) THEN
+                retval = soilzone(AFR)
+                IF ( retval.NE.0 ) THEN
+                  PRINT 9001, 'soilzone', retval
+                  RETURN
+                ENDIF
+                retval = gsflow_prms2mf()
+                IF ( retval.NE.0 ) THEN
+                  PRINT 9001, 'gsflow_prms2mf', retval
+                  RETURN
+                ENDIF
+                Sziters = Sziters + 1
+                Maxgziter = KKITER
+                IF ( KKITER==Mxsziter ) Szcheck = 0 ! stop calling soilzone in iteration loop
+              ELSEIF ( iss==0 ) THEN
+                IF ( KKITER==Mxsziter+1 ) Stopcount = Stopcount + 1
               ENDIF
-              retval = gsflow_prms2mf()
-              IF ( retval.NE.0 ) THEN
-                PRINT 9001, 'gsflow_prms2mf', retval
-                RETURN
-              ENDIF
-              Sziters = Sziters + 1
-              Maxgziter = KKITER
             ENDIF
 !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
             IF ( Model>=10 ) THEN
               IF(IUNIT(44).GT.0.AND.iss==0) CALL MODSIM2SFR(Diversions)
             ENDIF
+
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
      2                           IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
@@ -1140,7 +1148,6 @@ C
       IF(IUNIT(52).NE.0) CALL GWF2MNW17OT(IGRID)
 
       IF ( gsflag==1 ) THEN
-!        IF ( Szcheck==-1 .OR. Szcheck==1 ) Nszchanging = Nszchanging + 1
         II = MIN(ITDIM, Maxgziter)
         Iter_cnt(II) = Iter_cnt(II) + 1
         IF ( Maxgziter.GT.Max_sziters ) Max_sziters = Maxgziter
@@ -1259,6 +1266,7 @@ C9------LAST BECAUSE IT DEALLOCATES IUNIT.
       IF(IUNIT(9).GT.0) CALL SIP7DA(IGRID)
       IF(IUNIT(10).GT.0) CALL DE47DA(IGRID)
       IF(IUNIT(13).GT.0) CALL PCG7DA(IGRID)
+c      IF(IUNIT(14).GT.0) CALL LMG7DA(IGRID)
 !      IF(IUNIT(59).GT.0) CALL PCGN2DA(IGRID)
       IF(IUNIT(63).GT.0) THEN    
         IF(LINMETH.EQ.1) THEN
