@@ -153,7 +153,7 @@
      &     'inches', Actet_tot_gwsz)/=0 ) CALL read_error(3, 'actet_tot_gwsz')
 
       ALLOCATE (Streamflow_sfr(Nsegment))
-      IF ( declvar(MODNAME, 'streamflow_sfr', 'nsegment', Nhru, 'real', &
+      IF ( declvar(MODNAME, 'streamflow_sfr', 'nsegment', Nsegment, 'real', &
      &     'Streamflow as computed by SFR for each segment', &
      &     'cfs', Streamflow_sfr)/=0 ) CALL read_error(3, 'streamflow_sfr')
 
