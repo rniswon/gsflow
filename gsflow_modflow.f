@@ -671,7 +671,7 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
                 Sziters = Sziters + 1
                 Maxgziter = KKITER
                 IF ( KKITER==Mxsziter ) Szcheck = 0 ! stop calling soilzone in iteration loop
-              ELSE
+              ELSEIF ( iss==0 ) THEN
                 IF ( KKITER==Mxsziter+1 ) Stopcount = Stopcount + 1
               ENDIF
             ENDIF
