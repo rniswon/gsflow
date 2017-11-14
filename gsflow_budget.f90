@@ -69,31 +69,31 @@
       IF ( declvar(MODNAME, 'NetBoundaryFlow2Sat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate to the saturated zone along the external boundary'// &
      &     ' (negative value is flow out of model domain)', &
-     &     'L3', NetBoundaryFlow2Sat_Q)/=0 ) CALL read_error(3, 'NetBoundaryFlow2Sat_Q')
+     &     'L3/T', NetBoundaryFlow2Sat_Q)/=0 ) CALL read_error(3, 'NetBoundaryFlow2Sat_Q')
 
       IF ( declvar(MODNAME, 'StreamExchng2Sat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of exchange betweeen streams and the saturated'// &
      &     ' zone (value is equal to Strm2UZGW minus SatDisch2Stream_Q, where a'// &
      &     ' negative value indicates a net loss from streams)', &
-     &     'L3', StreamExchng2Sat_Q)/=0 ) CALL read_error(3, 'StreamExchng2Sat_Q')
+     &     'L3/T', StreamExchng2Sat_Q)/=0 ) CALL read_error(3, 'StreamExchng2Sat_Q')
 
       IF ( declvar(MODNAME, 'Stream2Unsat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate betweeen streams and the unsaturated'// &
      &     ' zone (value is equal to Strm2UZGW minus SatDisch2Stream_Q, where a'// &
      &     ' negative value indicates a net loss from streams)', &
-     &     'L3', Stream2Unsat_Q)/=0 ) CALL read_error(3, 'Stream2Unsat_Q')
+     &     'L3/T', Stream2Unsat_Q)/=0 ) CALL read_error(3, 'Stream2Unsat_Q')
 
       IF ( declvar(MODNAME, 'LakeExchng2Sat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of exchange betweeen lakes and the saturated'// &
      &     ' zone (value is equal to Strm2UZGW minus SatDisch2Stream_Q, where a'// &
      &     ' negative value indicates a net loss from streams)', &
-     &     'L3', LakeExchng2Sat_Q)/=0 ) CALL read_error(3, 'LakeExchng2Sat_Q')
+     &     'L3/T', LakeExchng2Sat_Q)/=0 ) CALL read_error(3, 'LakeExchng2Sat_Q')
 
       IF ( declvar(MODNAME, 'Lake2Unsat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate betweeen lakes and the unsaturated'// &
      &     ' zone (value is equal to Strm2UZGW minus SatDisch2Stream_Q, where a'// &
      &     ' negative value indicates a net loss from streams)', &
-     &     'L3', Lake2Unsat_Q)/=0 ) CALL read_error(3, 'Lake2Unsat_Q')
+     &     'L3/T', Lake2Unsat_Q)/=0 ) CALL read_error(3, 'Lake2Unsat_Q')
 
       IF ( declvar(MODNAME, 'stream_inflow', 'one', 1, 'double', &
      &     'Specified volumetric stream inflow rate into model ', &

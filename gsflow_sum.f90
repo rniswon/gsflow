@@ -382,7 +382,7 @@
 
       IF ( declvar(MODNAME, 'NetWellFlow_Q', 'one', 1, 'double', &
      &     'Net volumetric flow rate of groundwater injection or removal from wells ', &
-     &     'L3', NetWellFlow_Q)/=0 ) CALL read_error(1, 'NetWellFlow_Q')
+     &     'L3/T', NetWellFlow_Q)/=0 ) CALL read_error(1, 'NetWellFlow_Q')
 
       IF ( declvar(MODNAME, 'BoundaryStreamFlow_Q', 'one', 1, 'double', &
      &     'Volumetric specified streamflow into the model domain to SFR', &
