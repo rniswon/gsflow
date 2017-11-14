@@ -97,7 +97,7 @@
 
       IF ( declvar(MODNAME, 'stream_inflow', 'one', 1, 'double', &
      &     'Specified volumetric stream inflow rate into model ', &
-     &     'L3', Stream_inflow)/=0 ) CALL read_error(3, 'stream_inflow')
+     &     'L3/T', Stream_inflow)/=0 ) CALL read_error(3, 'stream_inflow')
 
       IF ( declvar(MODNAME, 'Unsat_S', 'one', 1, 'double', &
      &     'Volume of water in the unsaturated zone', &
