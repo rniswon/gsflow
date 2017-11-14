@@ -90,7 +90,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-11-08 11:37:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-11-14 15:20:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -151,8 +151,8 @@
           IF ( Nhru/=Nhrucell ) THEN
             IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
      &           '0.0', '0.0', '1.0', &
-     &           'Proportion of the MODFLOW cell associated with each GVR', &
-     &           'Proportion of the MODFLOW cell area associated with each gravity reservoir', &
+     &           'Proportion of the grid cell associated with each GVR', &
+     &           'Proportion of the grid cell area associated with each gravity reservoir', &
      &           'decimal fraction')/=0 ) CALL read_error(1, 'gvr_cell_pct')
           ENDIF
         ENDIF
@@ -526,7 +526,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 1.2.2 11/10/2017', //, &
+     &        25X, 'Version 1.2.2 12/01/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -1008,7 +1008,7 @@
         IF ( Nhrucell==0 ) Nhrucell = 1
         IF ( Ngwcell==0 ) Ngwcell = 1
         IF ( Nsegment==0 ) Nsegment = 1
-        IF ( Nratetbl==0 ) Nratetbl = 4
+!        IF ( Nratetbl==0 ) Nratetbl = 4
         Subbasin_flag = 1
         Cascade_flag = 1
         Cascadegw_flag = 1
