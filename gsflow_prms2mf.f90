@@ -31,11 +31,10 @@
 !           Produces cell_drain in MODFLOW units.
 !     ******************************************************************
       INTEGER FUNCTION gsflow_prms2mf()
-      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file
+      USE PRMS_MODULE, ONLY: Process
       IMPLICIT NONE
 ! Functions
       INTEGER, EXTERNAL :: prms2mfdecl, prms2mfinit, prms2mfrun
-      EXTERNAL :: gsflow_prms2mf_restart
 !***********************************************************************
       gsflow_prms2mf = 0
 
@@ -44,10 +43,7 @@
       ELSEIF ( Process(:4)=='decl' ) THEN
         gsflow_prms2mf = prms2mfdecl()
       ELSEIF ( Process(:4)=='init' ) THEN
-        IF ( Init_vars_from_file==1 ) CALL gsflow_prms2mf_restart(1)
         gsflow_prms2mf = prms2mfinit()
-      ELSEIF ( Process(:5)=='clean' ) THEN
-        IF ( Save_vars_to_file==1 ) CALL gsflow_prms2mf_restart(0)
       ENDIF
 
       END FUNCTION gsflow_prms2mf
@@ -69,7 +65,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-11-08 12:23:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-11-15 14:24:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -159,7 +155,7 @@
       USE GWFLAKMODULE, ONLY: NLAKES
       USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes
       USE PRMS_MODULE, ONLY: Nhru, Nsegment, Nlake, Print_debug, &
-     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Mxsziter !, Init_vars_from_file
+     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Mxsziter
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area
       USE PRMS_SOILZONE, ONLY: Gvr_hru_id, Gvr_hru_pct_adjusted
@@ -425,7 +421,6 @@
 ! Local Variables
       INTEGER :: irow, icol, ik, jk, ibndcheck, ii, ilake
       INTEGER :: j, icell, ihru
-      REAL :: seep
 !***********************************************************************
       prms2mfrun = 0
 
@@ -461,11 +456,11 @@
 !-----------------------------------------------------------------------
       PETRATE = 0.0 ! should just be active cells
       Cell_drain_rate = 0.0 ! should just be active cells
+      Gw_rejected_grav = Sm2gw_grav ! assume all is rejected to start with
 
       DO j = 1, Nhrucell
         ihru = Gvr_hru_id(j)
         IF ( Hrucheck(ihru)==0 ) CYCLE
-        Gw_rejected_grav(j) = 0.0
         icell = Gvr_cell_id(j)
         IF ( icell==0 ) CYCLE
         irow = Gwc_row(icell)
@@ -488,24 +483,24 @@
 ! If UZF cell is inactive OR if too many waves then dump water back into
 ! the soilzone
 !-----------------------------------------------------------------------
-        seep = Sm2gw_grav(j)
-        IF ( seep>0.0 ) THEN
-          IF ( ibndcheck/=0 ) THEN
+        IF ( ibndcheck/=0 ) THEN
+          IF ( Sm2gw_grav(j)>0.0 ) THEN
             IF ( NWAVST(icol, irow)<NTRAIL_CHK ) THEN
 !-----------------------------------------------------------------------
 ! Convert drainage from inches to MF Length/Time
 !-----------------------------------------------------------------------
-              Cell_drain_rate(icell) = Cell_drain_rate(icell) + seep*Gvr2cell_conv(j)
-            ELSE ! ELSEIF ( NWAVST(icol, irow)>=NTRAIL_CHK ) THEN
+              Cell_drain_rate(icell) = Cell_drain_rate(icell) + Sm2gw_grav(j)*Gvr2cell_conv(j)
+              Gw_rejected_grav(j) = 0.0
+!            ELSE ! ELSEIF ( NWAVST(icol, irow)>=NTRAIL_CHK ) THEN
 !              WRITE (IOUT, *) '--WARNING-- Too many waves in UZF cell'
 !              WRITE (IOUT, *) ' col =', icol, ' row =', irow, 'numwaves=', NTRAIL_CHK
 !              PRINT *, '--WARNING-- Too many waves in UZF cell: col =', &
 !     &                 icol, 'row =', irow, 'cell=', icell, 'numwaves=', NTRAIL_CHK
-              Gw_rejected_grav(j) = seep
+!              Gw_rejected_grav(j) = Sm2gw_grav(j)
             ENDIF
-          ELSE
-!            PRINT *, 'inactive uzf cell', icol, irow, icell, seep, j, ihru
-            Gw_rejected_grav(j) = seep
+!          ELSE
+!            PRINT *, 'inactive uzf cell', icol, irow, icell, Sm2gw_grav(j), j, ihru
+!            Gw_rejected_grav(j) = Sm2gw_grav(j)
           ENDIF
         ENDIF
 !-----------------------------------------------------------------------
@@ -651,24 +646,3 @@
       ENDDO
 
       END SUBROUTINE Bin_percolation
-
-!***********************************************************************
-!     Write to or read from restart file
-!***********************************************************************
-      SUBROUTINE gsflow_prms2mf_restart(In_out)
-      USE PRMS_MODULE, ONLY: Restart_outunit, Restart_inunit
-      USE GSFPRMS2MF, ONLY: MODNAME
-      IMPLICIT NONE
-      ! Argument
-      INTEGER, INTENT(IN) :: In_out
-      EXTERNAL check_restart
-      ! Local Variable
-      CHARACTER(LEN=14) :: module_name
-!***********************************************************************
-      IF ( In_out==0 ) THEN
-        WRITE ( Restart_outunit ) MODNAME
-      ELSE
-        READ ( Restart_inunit ) module_name
-        CALL check_restart(MODNAME, module_name)
-      ENDIF
-      END SUBROUTINE gsflow_prms2mf_restart

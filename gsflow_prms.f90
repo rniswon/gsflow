@@ -66,12 +66,12 @@
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow
       INTEGER, EXTERNAL :: srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, write_climate_hru
-      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, numchars, declvar, declparam, getparam
-      INTEGER, EXTERNAL :: potet_pm_sta
-      EXTERNAL :: module_error, print_module, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, basin_summary
-      EXTERNAL :: nhru_summary, module_doc, read_error, nsub_summary, nsegment_summary
+      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, potet_pm_sta
+      EXTERNAL :: module_doc, nsub_summary, nsegment_summary, basin_summary
       INTEGER, EXTERNAL :: gsflow_modflow, gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
+      INTEGER, EXTERNAL :: declvar, declparam, getparam, numchars
+      EXTERNAL :: module_error, read_error, print_module, PRMS_open_output_file
+      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, nhru_summary
 ! Local Variables
       INTEGER :: i, iret, nc
 !***********************************************************************
@@ -1038,7 +1038,7 @@
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, strmflow_in_out
       INTEGER, EXTERNAL :: write_climate_hru, muskingum, potet_pm_sta
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
-      EXTERNAL :: nhru_summary, water_balance, nsub_summary, basin_summary
+      EXTERNAL :: nhru_summary, water_balance, nsub_summary, basin_summary, nsegment_summary
 ! Local variable
       INTEGER :: test
 !**********************************************************************
@@ -1086,6 +1086,7 @@
       CALL nhru_summary()
       CALL nsub_summary()
       CALL basin_summary()
+      CALL nsegment_summary()
       CALL water_balance()
       test = subbasin()
 

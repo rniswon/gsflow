@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2017-06-28 16:26:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2017-11-15 15:15:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -246,7 +246,6 @@
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
 !Warning, modifies Gw2sm_grav
       USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id !, Gvr_cell_pct, Print_debug
-!      USE GLOBAL, ONLY: IUNIT, DELR, DELC
       USE GWFBASMODULE, ONLY: VBVL, DELT
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET !, UZOLSFLX, UZFLWT
       USE GWFLAKMODULE, ONLY: EVAP, SURFA
@@ -301,11 +300,8 @@
         IF ( icell==0 ) CYCLE
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
-!        IF ( Hrucheck(ihru)/=1 ) then
-!            print *, Hrucheck(ihru), 'hrucheck=0 and cell active', ihru, SEEPOUT(icol,irow)
-!            endif
         pct = SNGL( Gvr_hru_pct_adjusted(i) )
-        ! which need gvr_cell_pct ???
+        ! which calculations need gvr_cell_pct ???
 !        Uzf_infil_map(ihru) = Uzf_infil_map(ihru) + UZOLSFLX(icol, irow)*Gvr_cell_pct(i)*pct*Cellarea(icell)*DELT
 !        Sat_recharge(ihru) = Sat_recharge(ihru) + UZFLWT(icol, irow)*Gvr_hru_pct_adjusted(i)
 !        Mfoutflow_to_gvr(ihru) = Mfoutflow_to_gvr(ihru) + (SEEPOUT(icol,irow)+GWET(icol,irow))*pct
@@ -327,49 +323,26 @@
         Fluxchange(Ihru) = Fluxchange(Ihru) + flux_change*pct
 !        IF ( ABS(flux_change)<NEARZERO ) flux_change = 0.0
         !Gw_rejected_grav includes rejected soil_to_gw
-        Gw_rejected_grav(i) = Gw_rejected_grav(i) + Excess(icell)*Mfl_to_inch + REJ_INF(icol, irow)*Mfq2inch_conv(i) !- flux_change
+        Gw_rejected_grav(i) = Gw_rejected_grav(i) + Excess(icell)*Mfl_to_inch + REJ_INF(icol, irow)*Mfq2inch_conv(i)
         Gw_rejected(ihru) = Gw_rejected(ihru) + Gw_rejected_grav(i)*pct
         Gw2sm_grav(i) = gwdisch ! set in mf2prms
         Gw2sm(ihru) = Gw2sm(ihru) + gwdisch*pct
         Gravity_stor_res(i) = Gravity_stor_res(i) + Gw_rejected_grav(i) + flux_change
-!        IF ( ABS(Gravity_stor_res(i))<NEARZERO ) Gravity_stor_res(i) = 0.0
 
-        IF ( Gravity_stor_res(i)<0.0 ) THEN
+        IF ( Gravity_stor_res(i)<-NEARZERO ) THEN ! allow storage to be very small negative value
           iupdate = 1
           deficit = -Gravity_stor_res(i)*pct ! make deficit positive number
-          !IF ( Gravity_stor_res(i)<-0.001 ) then
-          !  print *, deficit, Ihru, i, Gravity_stor_res(i)
-          !endif
-!          IF ( ABS(deficit)>NEARZERO ) THEN
-            !rsr, where does deficit go in water budget, tiny numbers may not be real as MF budget calculation is slightly different than during transient
-            ! first try removing from pref_flow_stor, then ET, then soil_moist
-            !IF ( Gravity_stor_res(i)<-0.005 ) THEN
-            !  print *, 'GVR deficit in:', i, 'HRU:', ihru, Gravity_stor_res(i), flux_change, gwdisch
-            !  print *, Soil_moist(ihru), gw_rejected_grav(i), pct, NEARZERO
-            !  CALL print_date(1)
-            !ENDIF
-            IF ( Pref_flow_stor(ihru)>deficit ) THEN
-              !IF ( deficit>NEARZERO ) PRINT *, 'pref', Pref_flow_stor(ihru), deficit, ihru
-              Pref_flow_stor(ihru) = Pref_flow_stor(ihru) - deficit
-              Gvr2pfr(ihru) = Gvr2pfr(ihru) - deficit ! this could become negative
-              Pref_flow_in(ihru) = Pref_flow_in(ihru) - deficit
-              !Gw_rejected(ihru) = Gw_rejected(ihru) - deficit
-            ELSEIF ( Soil_moist(ihru)*Hru_frac_perv(ihru)>deficit ) THEN
-              Soil_moist(ihru) = Soil_moist(ihru) - deficit/Hru_frac_perv(ihru)
-!              IF ( Gvr2sm(ihru)>deficit ) THEN
-                Gvr2sm(ihru) = Gvr2sm(ihru) - deficit ! this could become negative
-!              ELSE
-!                print *, 'gvr2sm budget deficit', Gvr2sm(ihru), deficit
-!                Gvr2sm(ihru) = 0.0
-!              ENDIF
-              !IF ( Soil_moist(ihru)<0.0 ) PRINT *, 'budget deficit soil_moist issue', Soil_moist(ihru), ihru
-              !Gw_rejected(ihru) = Gw_rejected(ihru) + deficit
-            ELSE
-              Soil_moist(ihru) = Soil_moist(ihru) - deficit/Hru_frac_perv(ihru) ! this will be negative
-              Gvr2sm(ihru) = Gvr2sm(ihru) - deficit ! this could become negative
-              !PRINT *, 'set to 0 negative storage in GVR:', i, Gravity_stor_res(i)
-            ENDIF
-!          ENDIF
+          !rsr, where does deficit go in water budget, tiny numbers may not be real as MF budget calculation is slightly different than during transient
+          ! first try removing from pref_flow_stor then soil_moist
+          IF ( Pref_flow_stor(ihru)>deficit ) THEN
+            Pref_flow_stor(ihru) = Pref_flow_stor(ihru) - deficit
+            Gvr2pfr(ihru) = Gvr2pfr(ihru) - deficit ! this could become negative
+            Pref_flow_in(ihru) = Pref_flow_in(ihru) - deficit ! this could become negative
+          ELSE
+            Soil_moist(ihru) = Soil_moist(ihru) - deficit/Hru_frac_perv(ihru) ! this could become negative
+            Gvr2sm(ihru) = Gvr2sm(ihru) - deficit ! this could become negative
+            !IF ( Soil_moist(ihru)<0.0 ) PRINT *, 'budget deficit soil_moist issue', Soil_moist(ihru), ihru
+          ENDIF
           Gravity_stor_res(i) = 0.0
         ENDIF
 
@@ -438,15 +411,15 @@
         Basin_gw2sm = Basin_gw2sm + Gw2sm(i)*harea
         Ssres_stor(i) = Slow_stor(i) + Pref_flow_stor(i)
         !IF ( ABS(Ssres_stor(i))<CLOSEZERO .AND. ssres_stor(i)>0.0 ) print*, ssres_stor(i), i, ' small'
-!        IF ( Ssres_stor(i)<-CLOSEZERO ) THEN
+        IF ( Ssres_stor(i)<-NEARZERO ) THEN
           !IF ( Print_debug>-1 ) THEN
           !  PRINT *, 'small negative ssres_stor, set to zero', i, Ssres_stor(i)
           !  CALL print_date(1)
           !ENDIF
-!          Ssres_stor(i) = 0.0
-!          Slow_stor(i) = 0.0
-!          Pref_flow_stor(i) = 0.0
-!        ENDIF
+          Ssres_stor(i) = 0.0
+          Slow_stor(i) = 0.0
+          Pref_flow_stor(i) = 0.0
+        ENDIF
         Basin_ssstor = Basin_ssstor + Ssres_stor(i)*harea
         Basin_szreject = Basin_szreject + Gw_rejected(i)*harea
         Basin_slstor = Basin_slstor + Slow_stor(i)*harea
