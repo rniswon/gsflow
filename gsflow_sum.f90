@@ -557,7 +557,7 @@
       USE GSFSUM
       USE GSFMODFLOW, ONLY: Mfl3t_to_cfs, KKSTP, KKPER, Have_lakes, Maxgziter
       USE GSFBUDGET, ONLY: NetBoundaryFlow2Sat_Q, Gw_bnd_in, Gw_bnd_out, Well_in, Basin_szreject, &
-     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S, Basin_actetgw
+     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S, Basin_actetgw, Basin_fluxchange
 !      USE GSFPRMS2MF, ONLY: Basin_reach_latflow
       USE GWFUZFMODULE, ONLY: UZTSRAT
       USE GWFSFRMODULE, ONLY: SFRUZBD, STRMDELSTOR_RATE, SFRRATIN, SFRRATOUT, IRTFLG, TOTSPFLOW
@@ -704,10 +704,10 @@
       BoundaryStreamFlow_Q = TOTSPFLOW
 
       IF ( Timestep>1 ) THEN ! rsr, this could be incorrect for restart
-        Ave_SoilDrainage2Unsat_Q = (Ave_SoilDrainage2Unsat_Q*(Timestep-1)) + Basin_sz2gw - &
-     &                  Basin_szreject + Basin_soil_to_gw
+        Ave_SoilDrainage2Unsat_Q = (Ave_SoilDrainage2Unsat_Q*(Timestep-1)) + PotGravDrn2Unsat_Q - &
+     &                             UnsatDrainageExcess_Q + CapDrainage2Sat_Q
       ELSE
-        Ave_SoilDrainage2Unsat_Q = Basin_sz2gw - Basin_szreject + Basin_soil_to_gw
+        Ave_SoilDrainage2Unsat_Q = PotGravDrn2Unsat_Q - UnsatDrainageExcess_Q + CapDrainage2Sat_Q
       ENDIF
       Ave_SoilDrainage2Unsat_Q = Ave_SoilDrainage2Unsat_Q/Timestep
 
@@ -763,15 +763,14 @@
      &                        Last_basin_ssstor, Basin_soil_moist, &
      &                        Basin_ssstor, Basin_sz2gw, Basin_ssflow, &
      &                        Basin_lakeinsz, Basin_dunnian, &
-     &                        Basin_perv_et, Basin_soil_to_gw, Basin_swale_et
+     &                        Basin_perv_et, Basin_soil_to_gw, Basin_swale_et, Basin_fluxchange
             WRITE (BALUNT, *) KKITER, Maxgziter
           ENDIF
         ENDIF
         Last_basin_soil_moist = Basin_soil_moist
         Last_basin_ssstor = Basin_ssstor
 
-        sz_bal = Cap_S - Last_Cap_S + Grav_S - Last_Grav_S &
-     &           - Sat2Grav_Q - Infil2Soil_Q &
+        sz_bal = Cap_S - Last_Cap_S + Grav_S - Last_Grav_S - Sat2Grav_Q - Infil2Soil_Q &
      &           + Interflow2Stream_Q + DunnSroff2Stream_Q + DunnInterflow2Lake_Q &
      &           + SoilDrainage2Unsat_Q + CapET_Q + SwaleEvap_Q
         IF ( ABS(sz_bal)/Cap_S>ERRCHK ) WRITE (BALUNT, *) 'Possible soil zone water balance problem', sz_bal
@@ -786,7 +785,7 @@
      &                       Last_SnowPweqv_S, Canopy_S, Last_Canopy_S, Imperv_S, Last_Imperv_S, Dprst_S, Last_Dprst_S, &
      &                       Sat2Grav_Q, Precip_Q, &
      &                       Interflow2Stream_Q, Sroff2Stream_Q, DunnInterflow2Lake_Q, HortSroff2Lake_Q, SoilDrainage2Unsat_Q, &
-     &                       CapET_Q, ImpervEvap_Q, CanopyEvap_Q, SnowEvap_Q, SwaleEvap_Q, DprstEvap_Q
+     &                       CapET_Q, ImpervEvap_Q, CanopyEvap_Q, SnowEvap_Q, SwaleEvap_Q, DprstEvap_Q, Basin_fluxchange
       ENDIF
 
       IF ( Gsf_rpt==1 ) THEN
