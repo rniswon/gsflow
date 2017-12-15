@@ -318,6 +318,7 @@ void setup_cont (void) {
         decl_control_string ("nhruOutBaseFileName", "nhruout_path");
 		decl_control_string ("nsubOutBaseFileName", "nsubout_path");
 		decl_control_string ("basinOutBaseFileName", "basinout_path");
+		decl_control_string("nsegmentOutBaseFileName", "nsegmentout_path");
 /*
 **	run start and end times
 */
@@ -415,6 +416,20 @@ void setup_cont (void) {
 		lval = (long *)umalloc(sizeof(long));
 		lval[0] = 1;
 		decl_control_int_array("basinOut_freq", 1, lval);
+
+		/*
+		**	nsegment_summary
+		*/
+		lval = (long *)umalloc(sizeof(long));
+		lval[0] = 0;
+		decl_control_int_array("nsegmentOutON_OFF", 1, lval);
+		lval = (long *)umalloc(sizeof(long));
+		lval[0] = 0;
+		decl_control_int_array("nsegmentOutVars", 1, lval);
+		lval = (long *)umalloc(sizeof(long));
+		lval[0] = 1;
+		decl_control_int_array("nsegmentOut_freq", 1, lval);
+
 /*
 **	graphics display
 */
