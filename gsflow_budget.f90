@@ -297,7 +297,7 @@
       DO i = 1, Nhrucell
         ihru = Gvr_hru_id(i)
         icell = Gvr_cell_id(i)
-        IF ( icell==0 ) CYCLE
+!        IF ( icell==0 ) CYCLE ! don't need as icell must be > 0
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
         pct = SNGL( Gvr_hru_pct_adjusted(i) )
@@ -411,15 +411,15 @@
         Basin_gw2sm = Basin_gw2sm + Gw2sm(i)*harea
         Ssres_stor(i) = Slow_stor(i) + Pref_flow_stor(i)
         !IF ( ABS(Ssres_stor(i))<CLOSEZERO .AND. ssres_stor(i)>0.0 ) print*, ssres_stor(i), i, ' small'
-        IF ( Ssres_stor(i)<-NEARZERO ) THEN
+!        IF ( Ssres_stor(i)<-NEARZERO ) THEN
           !IF ( Print_debug>-1 ) THEN
           !  PRINT *, 'small negative ssres_stor, set to zero', i, Ssres_stor(i)
           !  CALL print_date(1)
           !ENDIF
-          Ssres_stor(i) = 0.0
-          Slow_stor(i) = 0.0
-          Pref_flow_stor(i) = 0.0
-        ENDIF
+!          Ssres_stor(i) = 0.0
+!          Slow_stor(i) = 0.0
+!          Pref_flow_stor(i) = 0.0
+!        ENDIF
         Basin_ssstor = Basin_ssstor + Ssres_stor(i)*harea
         Basin_szreject = Basin_szreject + Gw_rejected(i)*harea
         Basin_slstor = Basin_slstor + Slow_stor(i)*harea

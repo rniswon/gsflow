@@ -397,7 +397,7 @@
 9001  FORMAT('    Date      Water Bal    capstor   last_cap   gravstor  last_grav   snowstor   lastsnow', &
      &       '  intcpstor  lastintcp   impervst  lastimperv     dprst  lastdprst      gw2sz     precip', &
      &       '  interflow      sroff   lakeinsz  lakesroff   drainage      capET   impervET   canopyET', &
-     &       '     snowET    swaleET    dprstET')
+     &       '     snowET    swaleET    dprstET  fluxchnge')
       END FUNCTION gsfsumdecl
 
 !***********************************************************************

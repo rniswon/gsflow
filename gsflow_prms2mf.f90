@@ -305,7 +305,7 @@
           hru_pct(is) = hru_pct(is) + temp_pct(i)
         ENDIF
         icell = Gvr_cell_id(i)
-        IF ( icell==0 ) CYCLE
+!        IF ( icell==0 ) CYCLE ! don't need as icell must be > 0
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
         IF ( Print_debug>-1 ) THEN
@@ -419,8 +419,8 @@
       INTEGER, EXTERNAL :: toStream
       EXTERNAL Bin_percolation
 ! Local Variables
-      INTEGER :: irow, icol, ik, jk, ibndcheck, ii, ilake
-      INTEGER :: j, icell, ihru
+      INTEGER :: irow, icol, ik, jk, ii, ilake
+      INTEGER :: j, icell, ihru, is_draining
 !***********************************************************************
       prms2mfrun = 0
 
@@ -457,50 +457,37 @@
       PETRATE = 0.0 ! should just be active cells
       Cell_drain_rate = 0.0 ! should just be active cells
       Gw_rejected_grav = Sm2gw_grav ! assume all is rejected to start with
+      is_draining = 0
 
       DO j = 1, Nhrucell
         ihru = Gvr_hru_id(j)
-        IF ( Hrucheck(ihru)==0 ) CYCLE
+        IF ( Hrucheck(ihru)==0 ) CYCLE ! make sure to skip lake and inactive HRUs
         icell = Gvr_cell_id(j)
-        IF ( icell==0 ) CYCLE
+!        IF ( icell==0 ) CYCLE ! don't need as icell must be > 0
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
 
+        IF ( IUZFBND(icol, irow)==0 ) CYCLE
         jk = 0
         ik = 1
         DO WHILE ( jk==0 .AND. ik<Nlayp1 )
           IF ( IBOUND(icol, irow, ik)>0 ) jk = 1
           ik = ik + 1
         ENDDO
+        IF ( jk==0 ) CYCLE
 
-        ibndcheck = 1
-        IF ( jk==0 ) THEN
-          ibndcheck = 0
-        ELSEIF ( IUZFBND(icol, irow)==0 ) THEN
-          ibndcheck = 0
-        ENDIF
 !-----------------------------------------------------------------------
 ! If UZF cell is inactive OR if too many waves then dump water back into
 ! the soilzone
 !-----------------------------------------------------------------------
-        IF ( ibndcheck/=0 ) THEN
-          IF ( Sm2gw_grav(j)>0.0 ) THEN
-            IF ( NWAVST(icol, irow)<NTRAIL_CHK ) THEN
+        IF ( Sm2gw_grav(j)>0.0 ) THEN
+          IF ( NWAVST(icol, irow)<NTRAIL_CHK ) THEN
 !-----------------------------------------------------------------------
 ! Convert drainage from inches to MF Length/Time
 !-----------------------------------------------------------------------
-              Cell_drain_rate(icell) = Cell_drain_rate(icell) + Sm2gw_grav(j)*Gvr2cell_conv(j)
-              Gw_rejected_grav(j) = 0.0
-!            ELSE ! ELSEIF ( NWAVST(icol, irow)>=NTRAIL_CHK ) THEN
-!              WRITE (IOUT, *) '--WARNING-- Too many waves in UZF cell'
-!              WRITE (IOUT, *) ' col =', icol, ' row =', irow, 'numwaves=', NTRAIL_CHK
-!              PRINT *, '--WARNING-- Too many waves in UZF cell: col =', &
-!     &                 icol, 'row =', irow, 'cell=', icell, 'numwaves=', NTRAIL_CHK
-!              Gw_rejected_grav(j) = Sm2gw_grav(j)
-            ENDIF
-!          ELSE
-!            PRINT *, 'inactive uzf cell', icol, irow, icell, Sm2gw_grav(j), j, ihru
-!            Gw_rejected_grav(j) = Sm2gw_grav(j)
+            Cell_drain_rate(icell) = Cell_drain_rate(icell) + Sm2gw_grav(j)*Gvr2cell_conv(j)
+            Gw_rejected_grav(j) = 0.0
+            is_draining = 1
           ENDIF
         ENDIF
 !-----------------------------------------------------------------------
@@ -522,7 +509,7 @@
       Net_sz2gw = 0.0D0
       Excess = 0.0
       FINF = 0.0
-      CALL Bin_percolation()
+      IF ( is_draining==1 ) CALL Bin_percolation()
 
       END FUNCTION prms2mfrun
 

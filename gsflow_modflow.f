@@ -1356,7 +1356,7 @@ C7------SIMULATE EACH STRESS PERIOD.
 C
 C7B-----READ AND PREPARE INFORMATION FOR STRESS PERIOD.
 C----------READ USING PACKAGE READ AND PREPARE MODULES.
-        IF(IUNIT(2).GT.0) CALL GWF2WEL7RP(IUNIT(2),KPER,IGRID)
+        IF(IUNIT(2).GT.0) CALL GWF2WEL7RP(IUNIT(2),KKPER,IGRID)
 !gsf    IF(IUNIT(3).GT.0) CALL GWF2DRN7RP(IUNIT(3),IGRID)
 !gsf    IF(IUNIT(4).GT.0) CALL GWF2RIV7RP(IUNIT(4),IGRID)
 !gsf    IF(IUNIT(5).GT.0) CALL GWF2EVT7RP(IUNIT(5),IGRID)
@@ -1694,7 +1694,6 @@ C
      &    Totalarea_mf
       USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Print_debug,
      &    Gvr_cell_id, Gvr_cell_pct
-      USE PRMS_BASIN, ONLY: DNEARZERO
       USE GWFUZFMODULE, ONLY: IUZFBND
       IMPLICIT NONE
       INTRINSIC DBLE
@@ -1849,8 +1848,7 @@ C
 
       DO i = 1, Nhrucell
         ! MF volume to PRMS inches
-        IF ( Gvr_cell_id(i)>0 )
-     +       Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
+        Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
         ! MF discharge to PRMS inches
         ! note DELT may change during simulation at some point, so this will need to go in read_stress
         Mfq2inch_conv(i) = Mfvol2inch_conv(i)*DELT
