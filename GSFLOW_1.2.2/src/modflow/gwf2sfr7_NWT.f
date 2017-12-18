@@ -275,7 +275,7 @@ Cdep  changed DSTROT to FXLKOT
       STROUT = 0.0
       FXLKOT = 0.0
 !IFACE -- 6th element of ISTRM is for IFACE
-      ALLOCATE (STRM(31,nstrmar), ISTRM(6,nstrmar))  !EDM - new index for XSA for LMT
+      ALLOCATE (STRM(31,nstrmar), ISTRM(6,nstrmar),BEDK(nstrmar))  !EDM - new index for XSA for LMT
       ALLOCATE (HSTRM(nstrmar,NUMTIM), HWDTH(nstrmar,NUMTIM))
       ALLOCATE (QSTRM(nstrmar,NUMTIM))
       ALLOCATE (HWTPRM(nstrmar,NUMTIM))
@@ -681,6 +681,7 @@ C13-----CHECK RANGE AND ORDER FOR SEGMENTS AND REACHES.
         ISTRM(3, ii) = jrch
         ISTRM(4, ii) = jseg
         ISTRM(5, ii) = ireach
+        BEDK(ii) = STRM(6, ii)
         SEG(1, ISTRM(4, ii)) = SEG(1, ISTRM(4, ii)) + STRM(1, ii)
 C       Number of reaches in segment added to ISEG
         ISEG(4, jseg) = ireach
@@ -1537,6 +1538,7 @@ C19-----COMPUTE VARIABLES NEEDED FOR STREAM LEAKAGE.
               IF ( IERR.GT.0 )IFLG = IERR
 !
               STRM(6, irch) = avhc
+              bedk(irch) = avhc
               STRM(8, irch) = avthk 
 C20-----COMPUTE STREAMBED ELEVATION AND STREAM WIDTH FOR BEGINNING
 C         OF EACH STREAM SEGMENT FOR COMPUTATION OF LAKE OUTFLOW.
@@ -3763,7 +3765,7 @@ C5b------DETERMINE LAYER, ROW, COLUMN OF EACH REACH.
           gwflow = 0.0D0
           dvrsn = 0.0D0
           flowin = 0.0D0  
-          depthtr = 0.0
+          depthtr = STRM(7, l)
           IF ( irt.EQ.1 ) THEN
             SUMLEAK(l) = 0.0D0
             SUMRCH(l) = 0.0
@@ -4110,7 +4112,7 @@ C
 ! EDM calc x-sectional area of channel for LMT w/ SFR mass routine
 !  First, need some terms to send to CALC_XSA
             qlat = (runof + runoff + precip - etstr)/strlen
-            qa = STRM(10,l)
+            qa = STRM(25,l)
             qb = STRM(9,l)
             IF ( icalc.EQ.3 ) THEN
               cdpth = SEG(9, istsg)
@@ -8260,14 +8262,14 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GWFBASMODULE, ONLY: TOTIM
       USE GWFSFRMODULE, ONLY: NSS, NUMTAB, ISFRLIST,SEG, FXLKOT, 
-     +                        IDIVAR, CLOSEZERO
+     +                        IDIVAR, CLOSEZERO, STRM, BEDK, NSTRM
 !!      USE GWFSFRMODULE, ONLY: NSS, TABFLOW, TABTIME, NUMTAB, ISFRLIST,
 !!     +                        SEG, FXLKOT, IDIVAR, CLOSEZERO
       USE GLOBAL, ONLY: IOUT
       IMPLICIT NONE
       EXTERNAL FLOWTERP
       REAL FLOWTERP
-      INTEGER i, iseg, Iunitlak, istsg, lk
+      INTEGER i, iseg, Iunitlak, istsg, lk,L
 C     ------------------------------------------------------------------
 C
 C1------CALL LINEAR INTERPOLATION ROUTINE
@@ -8276,7 +8278,12 @@ C1------CALL LINEAR INTERPOLATION ROUTINE
           iseg = ISFRLIST(1,i)
           SEG(2,iseg) = FLOWTERP(TOTIM,i)  
         END DO
-      END IF 
+      END IF
+C
+C-------SAVED STREAMBED K FOR RESETTING AFTER RESTART
+      DO L=1, NSTRM
+          STRM(6,L) = BEDK(L)
+      END DO
 C
 C DEP moved the from SFR7FM
 C DEP FXLKOT is now adjusted in LAK7FM for limiting to available lake water.
@@ -8505,6 +8512,7 @@ C     ------------------------------------------------------------------
       DEALLOCATE (GWFSFRDAT(IGRID)%Nfoldflbt)
       DEALLOCATE (GWFSFRDAT(IGRID)%NUMTAB)
       DEALLOCATE (GWFSFRDAT(IGRID)%MAXVAL)
+      DEALLOCATE (GWFSFRDAT(IGRID)%BEDK)
 C
       END SUBROUTINE GWF2SFR7DA
 C
@@ -8621,6 +8629,7 @@ C     ------------------------------------------------------------------
       Nfoldflbt=>GWFSFRDAT(IGRID)%Nfoldflbt
       NUMTAB=>GWFSFRDAT(IGRID)%NUMTAB
       MAXVAL=>GWFSFRDAT(IGRID)%MAXVAL
+      BEDK=>GWFSFRDAT(IGRID)%BEDK
       END SUBROUTINE SGWF2SFR7PNT
 C
 C-------SUBROUTINE SGWF2SFR7PSV
@@ -8736,5 +8745,6 @@ C     ------------------------------------------------------------------
       GWFSFRDAT(IGRID)%Nfoldflbt=>Nfoldflbt
       GWFSFRDAT(IGRID)%NUMTAB=>NUMTAB
       GWFSFRDAT(IGRID)%MAXVAL=>MAXVAL
+      GWFSFRDAT(IGRID)%BEDK=>BEDK
 C
       END SUBROUTINE SGWF2SFR7PSV

@@ -30,6 +30,7 @@
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
       INTEGER, SAVE :: Kkiter
 !   Declared Parameters
+      INTEGER, SAVE :: Mxsziter
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
       REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
 ! Precip_flag (1=precip_1sta; 2=precip_laps; 3=precip_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
@@ -37,7 +38,7 @@
 ! Control parameters
       INTEGER, SAVE :: Print_debug, MapOutON_OFF, CsvON_OFF, Dprst_flag, Subbasin_flag, Parameter_check_flag
       INTEGER, SAVE :: Init_vars_from_file, Save_vars_to_file, Orad_flag, Cascade_flag, Cascadegw_flag
-      INTEGER, SAVE :: NhruOutON_OFF, Gwr_swale_flag, NsubOutON_OFF, BasinOutON_OFF
+      INTEGER, SAVE :: NhruOutON_OFF, Gwr_swale_flag, NsubOutON_OFF, BasinOutON_OFF, NsegmentOutON_OFF
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Model_output_file, Var_init_file, Var_save_file
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Csv_output_file, Model_control_file, Param_file
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Temp_module, Srunoff_module, Et_module
@@ -65,12 +66,12 @@
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow
       INTEGER, EXTERNAL :: srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, write_climate_hru
-      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, numchars, declvar, declparam, getparam
-      INTEGER, EXTERNAL :: potet_pm_sta
-      EXTERNAL :: module_error, print_module, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, basin_summary
-      EXTERNAL :: nhru_summary, module_doc, read_error, nsub_summary
+      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, potet_pm_sta
+      EXTERNAL :: module_doc, nsub_summary, nsegment_summary, basin_summary
       INTEGER, EXTERNAL :: gsflow_modflow, gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
+      INTEGER, EXTERNAL :: declvar, declparam, getparam, numchars
+      EXTERNAL :: module_error, read_error, print_module, PRMS_open_output_file
+      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, nhru_summary
 ! Local Variables
       INTEGER :: i, iret, nc
 !***********************************************************************
@@ -89,7 +90,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2017-08-18 09:35:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2017-11-14 15:20:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -141,12 +142,17 @@
         IF ( Model==0 .OR. Model==99 ) THEN
           IF ( declvar(MODNAME, 'KKITER', 'one', 1, 'integer', &
      &         'Current iteration in GSFLOW simulation', 'none', KKITER)/=0 ) CALL read_error(3, 'KKITER')
+          IF ( declparam(MODNAME, 'mxsziter', 'one', 'integer', &
+     &         '0', '0', '5000', &
+     &         'Maximum number of iterations soilzone states are computed', &
+     &         'Maximum number of iterations soilzone states are computed', &
+     &         'none')/=0 ) CALL read_error(1, 'mxsziter')
           ALLOCATE ( Gvr_cell_pct(Nhrucell) )
           IF ( Nhru/=Nhrucell ) THEN
             IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
      &           '0.0', '0.0', '1.0', &
-     &           'Proportion of the MODFLOW cell associated with each GVR', &
-     &           'Proportion of the MODFLOW cell area associated with each gravity reservoir', &
+     &           'Proportion of the grid cell associated with each GVR', &
+     &           'Proportion of the grid cell area associated with each gravity reservoir', &
      &           'decimal fraction')/=0 ) CALL read_error(1, 'gvr_cell_pct')
           ENDIF
         ENDIF
@@ -180,6 +186,7 @@
             IF ( getparam(MODNAME, 'gvr_cell_pct', Nhrucell, 'real', &
      &           Gvr_cell_pct)/=0 ) CALL read_error(2, 'gvr_cell_pct')
           ENDIF
+          IF ( getparam(MODNAME, 'mxsziter', 1, 'integer', Mxsziter)/=0 ) CALL read_error(2, 'mxsziter')
         ENDIF
         IF ( MapOutON_OFF>0 .OR. Model==0 ) THEN
           IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
@@ -434,6 +441,8 @@
 
       IF ( BasinOutON_OFF==1 ) CALL basin_summary()
 
+      IF ( NsegmentOutON_OFF==1 ) CALL nsegment_summary()
+
       IF ( Subbasin_flag==1 ) THEN
         call_modules = subbasin()
         IF ( call_modules/=0 ) CALL module_error('subbasin', Arg, call_modules)
@@ -517,7 +526,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 1.2.2 09/01/2017', //, &
+     &        25X, 'Version 1.2.2 12/01/2017', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -805,6 +814,8 @@
 
 ! basin_summary
       IF ( control_integer(BasinOutON_OFF, 'basinOutON_OFF')/=0 ) BasinOutON_OFF = 0
+! nsegment_summary
+      IF ( control_integer(NsegmentOutON_OFF, 'nsegmentOutON_OFF')/=0 ) NsegmentOutON_OFF = 0
 
 ! cascade
       IF ( control_integer(Cascade_flag, 'cascade_flag')/=0 ) Cascade_flag = 1
@@ -825,8 +836,8 @@
       IF ( decldim('ntemp', 0, MAXDIM, 'Number of air-temperature-measurement stations')/=0 ) CALL read_error(7, 'ntemp')
       IF ( decldim('nobs', 0, MAXDIM, 'Number of streamflow-measurement stations')/=0 ) CALL read_error(7, 'nobs')
       IF ( decldim('nevap', 0, MAXDIM, 'Number of pan-evaporation data sets')/=0 ) CALL read_error(7, 'nevap')
-      IF ( decldim('nratetbl', 0, MAXDIM, 'Number of rating-table data sets for lake elevations') &
-     &     /=0 ) CALL read_error(7, 'nratetbl')
+!      IF ( decldim('nratetbl', 0, MAXDIM, 'Number of rating-table data sets for lake elevations') &
+!     &     /=0 ) CALL read_error(7, 'nratetbl')
 
 ! depletion curves
       IF ( decldim('ndepl', 1, MAXDIM, 'Number of snow-depletion curves')/=0 ) CALL read_error(7, 'ndelp')
@@ -926,8 +937,9 @@
       Ngwcell = getdim('ngwcell')
       IF ( Ngwcell==-1 ) CALL read_error(6, 'ngwcell')
 
-      Nratetbl = getdim('nratetbl')
-      IF ( Nratetbl==-1 ) CALL read_error(6, 'nratetbl')
+!      Nratetbl = getdim('nratetbl')
+!      IF ( Nratetbl==-1 ) CALL read_error(6, 'nratetbl')
+      Nratetbl = 0
 
       Stream_order_flag = 0
       IF ( Nsegment>0 .AND. Strmflow_flag>1 .AND. Model/=0 ) THEN
@@ -996,7 +1008,7 @@
         IF ( Nhrucell==0 ) Nhrucell = 1
         IF ( Ngwcell==0 ) Ngwcell = 1
         IF ( Nsegment==0 ) Nsegment = 1
-        IF ( Nratetbl==0 ) Nratetbl = 4
+!        IF ( Nratetbl==0 ) Nratetbl = 4
         Subbasin_flag = 1
         Cascade_flag = 1
         Cascadegw_flag = 1
@@ -1026,7 +1038,7 @@
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, strmflow_in_out
       INTEGER, EXTERNAL :: write_climate_hru, muskingum, potet_pm_sta
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
-      EXTERNAL :: nhru_summary, water_balance, nsub_summary, basin_summary
+      EXTERNAL :: nhru_summary, water_balance, nsub_summary, basin_summary, nsegment_summary
 ! Local variable
       INTEGER :: test
 !**********************************************************************
@@ -1074,6 +1086,7 @@
       CALL nhru_summary()
       CALL nsub_summary()
       CALL basin_summary()
+      CALL nsegment_summary()
       CALL water_balance()
       test = subbasin()
 
@@ -1145,43 +1158,48 @@
 
       IF ( Et_module(:13)=='potet_jh_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_jh_prms to potet_jh'
+        Et_module = 'potet_jh'
       ELSEIF ( Et_module(:14)=='potet_pan_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_pan_prms to potet_pan'
+        Et_module = 'potet_pan'
       ELSEIF ( Et_module(:15)=='potet_epan_prms' ) THEN
         PRINT *, 'ERROR, deprecated et_module value, change potet_epan_prms to potet_pan'
         ierr = 1
       ELSEIF ( Et_module(:20)=='potet_hamon_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_hamon_hru_prms to potet_hamon_hru'
+        Et_module = 'potet_hamon'
       ELSEIF ( Et_module(:16)=='potet_hamon_prms' ) THEN
         PRINT *, 'WARNING, deprecated et_module value, change potet_hamon_prms to potet_hamon'
-        ierr = 1
+        Et_module = 'potet_hamon'
       ENDIF
 
       IF ( Solrad_module(:17)=='ddsolrad_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ddsolrad_hru_prms to ddsolrad'
+        solrad_module = 'ddsolrad'
       ELSEIF ( Solrad_module(:17)=='ccsolrad_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_hru_prms to ccsolrad'
+        solrad_module = 'ccsolrad'
       ELSEIF ( Solrad_module(:13)=='ddsolrad_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ddsolrad_prms to ddsolrad'
+        solrad_module = 'ddsolrad'
       ELSEIF ( Solrad_module(:13)=='ccsolrad_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_prms to ccsolrad'
+        solrad_module = 'ccsolrad'
       ENDIF
 
       IF ( Srunoff_module(:18)=='srunoff_carea_prms' ) THEN
         PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_carea_prms to srunoff_carea'
+        srunoff_module = 'srunoff_carea'
       ELSEIF ( Srunoff_module(:18)=='srunoff_smidx_prms' ) THEN
         PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_smidx_prms to srunoff_smidx'
+        srunoff_module = 'srunoff_smidx'
       ENDIF
 
       IF ( Strmflow_module(:13)=='strmflow_prms' ) THEN
         PRINT *, 'WARNING, deprecated strmflow_module value, change strmflow_prms to strmflow'
+        strmflow_module = 'strmflow'
       ELSEIF ( Strmflow_module(:13)=='strmflow_lake' ) THEN
         PRINT *, 'ERROR, module strmflow_lake not available, use a different strmflow_module'
-        ierr = 1
-      ENDIF
-      IF ( Strmflow_module(:15)/='strmflow_in_out' .AND. &
-     &     Strmflow_module(:8)/='strmflow' .AND. Strmflow_module(:9)/='muskingum' ) THEN
-        PRINT '(/,2A)', 'ERROR, invalid strmflow_module value: ', Strmflow_module
         ierr = 1
       ENDIF
       IF ( ierr==1 ) STOP

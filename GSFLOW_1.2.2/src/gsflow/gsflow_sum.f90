@@ -18,7 +18,6 @@
       DOUBLE PRECISION, SAVE :: Cumvol_gwbndot, Rate_gwbndot
       DOUBLE PRECISION, SAVE :: Cum_surfstor, Basin_convert
       DOUBLE PRECISION, SAVE :: Cum_delstore, Rate_delstore
-      DOUBLE PRECISION, SAVE :: Rate_farout, Cumvol_farout
       DOUBLE PRECISION, SAVE :: Last_basin_soil_moist, Last_basin_ssstor
       DOUBLE PRECISION, SAVE :: Rate_strmin, Rate_wellin, Rate_wellot
       DOUBLE PRECISION, SAVE :: Rate_surfstor, Last_Grav_S
@@ -109,7 +108,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = 'gsflow_sum.f90 2017-05-15 10:13:00Z'
+      Version_gsflow_sum = 'gsflow_sum.f90 2017-11-08 12:26:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -383,7 +382,7 @@
 
       IF ( declvar(MODNAME, 'NetWellFlow_Q', 'one', 1, 'double', &
      &     'Net volumetric flow rate of groundwater injection or removal from wells ', &
-     &     'L3', NetWellFlow_Q)/=0 ) CALL read_error(1, 'NetWellFlow_Q')
+     &     'L3/T', NetWellFlow_Q)/=0 ) CALL read_error(1, 'NetWellFlow_Q')
 
       IF ( declvar(MODNAME, 'BoundaryStreamFlow_Q', 'one', 1, 'double', &
      &     'Volumetric specified streamflow into the model domain to SFR', &
@@ -398,7 +397,7 @@
 9001  FORMAT('    Date      Water Bal    capstor   last_cap   gravstor  last_grav   snowstor   lastsnow', &
      &       '  intcpstor  lastintcp   impervst  lastimperv     dprst  lastdprst      gw2sz     precip', &
      &       '  interflow      sroff   lakeinsz  lakesroff   drainage      capET   impervET   canopyET', &
-     &       '     snowET    swaleET    dprstET')
+     &       '     snowET    swaleET    dprstET  fluxchnge')
       END FUNCTION gsfsumdecl
 
 !***********************************************************************
@@ -447,7 +446,6 @@
       Cumvol_strmot = 0.0D0
       Cumvol_gwbndot = 0.0D0
       Cumvol_wellot = 0.0D0
-      Cumvol_farout = 0.0D0
       Cum_delstore = 0.0D0
       Cum_surfstor = 0.0D0
       Cum_soilstor = 0.0D0
@@ -494,7 +492,6 @@
       Rate_uzstor = 0.0D0
       Rate_satstor = 0.0D0
       Rate_pweqv = 0.0D0
-      Rate_farout = 0.0D0
       SoilDrainage2Unsat_Q = 0.0D0
       Ave_SoilDrainage2Unsat_Q = 0.0D0
       Lake2Sat_Q = 0.0D0
@@ -559,11 +556,9 @@
       INTEGER FUNCTION gsfsumrun()
       USE GSFSUM
       USE GSFMODFLOW, ONLY: Mfl3t_to_cfs, KKSTP, KKPER, Have_lakes, Maxgziter
-!      USE GSFPRMS2MF, ONLY: Net_sz2gw
-      USE GSFBUDGET, ONLY: NetBoundaryFlow2Sat_Q, Gw_bnd_in, Gw_bnd_out, Well_in, &
-     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S
+      USE GSFBUDGET, ONLY: NetBoundaryFlow2Sat_Q, Gw_bnd_in, Gw_bnd_out, Well_in, Basin_szreject, &
+     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S, Basin_actetgw, Basin_fluxchange
 !      USE GSFPRMS2MF, ONLY: Basin_reach_latflow
-      USE GSFBUDGET, ONLY: Basin_actetgw
       USE GWFUZFMODULE, ONLY: UZTSRAT
       USE GWFSFRMODULE, ONLY: SFRUZBD, STRMDELSTOR_RATE, SFRRATIN, SFRRATOUT, IRTFLG, TOTSPFLOW
       USE GWFLAKMODULE, ONLY: TOTGWIN_LAK, TOTGWOT_LAK, TOTDELSTOR_LAK, &
@@ -586,7 +581,7 @@
       USE PRMS_SOILZONE, ONLY: Basin_lakeprecip, Basin_dunnian, &
      &    Basin_slowflow, Basin_prefflow, Basin_lakeinsz, &
      &    Basin_cap_infil_tot, Basin_pref_flow_infil, Basin_sz2gw, &
-     &    Basin_sm2gvr, Basin_gvr2sm, Basin_gvr2pfr, Basin_dunnian,  Basin_dncascadeflow, Basin_szreject
+     &    Basin_sm2gvr, Basin_gvr2sm, Basin_gvr2pfr, Basin_dunnian,  Basin_dncascadeflow
       IMPLICIT NONE
       INTRINSIC DBLE
 ! Local variables
@@ -698,6 +693,7 @@
       RechargeUnsat2Sat_Q = UZTSRAT(3)
       !?? doesn't match basin_gw2sm from budget
       Basinseepout = UZTSRAT(5)
+      !print *, Sat2Grav_Q, Basinseepout, Sat2Grav_Q - Basinseepout !rsr, not sure why these don't match
       SoilDrainage2Unsat_Q = UZTSRAT(1)
       Unsat_dS = UZTSRAT(4)
 
@@ -708,10 +704,10 @@
       BoundaryStreamFlow_Q = TOTSPFLOW
 
       IF ( Timestep>1 ) THEN ! rsr, this could be incorrect for restart
-        Ave_SoilDrainage2Unsat_Q = (Ave_SoilDrainage2Unsat_Q*(Timestep-1)) + Basin_sz2gw - &
-     &                  Basin_szreject + Basin_soil_to_gw
+        Ave_SoilDrainage2Unsat_Q = (Ave_SoilDrainage2Unsat_Q*(Timestep-1)) + PotGravDrn2Unsat_Q - &
+     &                             UnsatDrainageExcess_Q + CapDrainage2Sat_Q
       ELSE
-        Ave_SoilDrainage2Unsat_Q = Basin_sz2gw - Basin_szreject + Basin_soil_to_gw
+        Ave_SoilDrainage2Unsat_Q = PotGravDrn2Unsat_Q - UnsatDrainageExcess_Q + CapDrainage2Sat_Q
       ENDIF
       Ave_SoilDrainage2Unsat_Q = Ave_SoilDrainage2Unsat_Q/Timestep
 
@@ -767,15 +763,14 @@
      &                        Last_basin_ssstor, Basin_soil_moist, &
      &                        Basin_ssstor, Basin_sz2gw, Basin_ssflow, &
      &                        Basin_lakeinsz, Basin_dunnian, &
-     &                        Basin_perv_et, Basin_soil_to_gw, Basin_swale_et
+     &                        Basin_perv_et, Basin_soil_to_gw, Basin_swale_et, Basin_fluxchange
             WRITE (BALUNT, *) KKITER, Maxgziter
           ENDIF
         ENDIF
         Last_basin_soil_moist = Basin_soil_moist
         Last_basin_ssstor = Basin_ssstor
 
-        sz_bal = Cap_S - Last_Cap_S + Grav_S - Last_Grav_S &
-     &           - Sat2Grav_Q - Infil2Soil_Q &
+        sz_bal = Cap_S - Last_Cap_S + Grav_S - Last_Grav_S - Sat2Grav_Q - Infil2Soil_Q &
      &           + Interflow2Stream_Q + DunnSroff2Stream_Q + DunnInterflow2Lake_Q &
      &           + SoilDrainage2Unsat_Q + CapET_Q + SwaleEvap_Q
         IF ( ABS(sz_bal)/Cap_S>ERRCHK ) WRITE (BALUNT, *) 'Possible soil zone water balance problem', sz_bal
@@ -790,7 +785,7 @@
      &                       Last_SnowPweqv_S, Canopy_S, Last_Canopy_S, Imperv_S, Last_Imperv_S, Dprst_S, Last_Dprst_S, &
      &                       Sat2Grav_Q, Precip_Q, &
      &                       Interflow2Stream_Q, Sroff2Stream_Q, DunnInterflow2Lake_Q, HortSroff2Lake_Q, SoilDrainage2Unsat_Q, &
-     &                       CapET_Q, ImpervEvap_Q, CanopyEvap_Q, SnowEvap_Q, SwaleEvap_Q, DprstEvap_Q
+     &                       CapET_Q, ImpervEvap_Q, CanopyEvap_Q, SnowEvap_Q, SwaleEvap_Q, DprstEvap_Q, Basin_fluxchange
       ENDIF
 
       IF ( Gsf_rpt==1 ) THEN
@@ -1096,7 +1091,7 @@
       ! rsr, need lake pipeline in???
 !     &            + Cumvol_lakin - Cumvol_lakeppt
       cumvol_out = Cumvol_et + Cumvol_strmot + Cumvol_gwbndot + &
-     &             Cumvol_wellot + Cumvol_farout
+     &             Cumvol_wellot
       ! rsr, need lake pipeline out???
 !     &             + Cumvol_lakot - Cumvol_lakeevap - Cumvol_uzfet
       cumdiff = cumvol_in - cumvol_out
@@ -1107,7 +1102,7 @@
 !     &           Rate_lakot + Rate_farout
 
       rate_in = Rate_precip + Rate_strmin + Rate_gwbndin + Rate_wellin
-      rate_out = Rate_et + Rate_strmot + Rate_gwbndot + Rate_wellot + Rate_farout
+      rate_out = Rate_et + Rate_strmot + Rate_gwbndot + Rate_wellot
       ratediff = rate_in - rate_out
 !
 !5------PRINT CUMULATIVE AND RATE DIFFERENCES.
@@ -1213,7 +1208,7 @@
       DOUBLE PRECISION :: absval
 !***********************************************************************
       absval = ABS(Val)
-      IF ( absval<1.0D-5 ) THEN
+      IF ( absval<1.0D-8 ) THEN
 !       WRITE (Strng, '(I18)') INT(Val)
         Strng = ' '
       ELSEIF ( absval>BIG .OR. absval<SMALL ) THEN

@@ -6,7 +6,7 @@
       INTEGER, PARAMETER :: ITDIM = 80
       INTEGER, SAVE :: Convfail_cnt, Steady_state, Ncells
       INTEGER, SAVE :: IGRID, KKPER, ICNVG, NSOL, IOUTS
-      INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters, Nszchanging
+      INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters
       INTEGER, SAVE :: Mfiter_cnt(ITDIM), Iter_cnt(ITDIM), Iterations
       INTEGER, SAVE :: Szcheck, Sziters, INUNIT, KPER, NCVGERR
       INTEGER, SAVE :: Have_lakes, Max_sziters, Maxgziter
@@ -80,7 +80,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-08-15 09:09:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2017-11-08 12:24:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -116,7 +116,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model,
+      USE PRMS_MODULE, ONLY: Model, Mxsziter,
      &    EQULS, Logunt, Init_vars_from_file, Kper_mfo
 C1------USE package modules.
       USE GLOBAL
@@ -437,7 +437,6 @@ C7------SIMULATE EACH STRESS PERIOD.
       Sziters = 0
       KPER = 1
 
-      Nszchanging = 0
       Convfail_cnt = 0
       Max_iters = 0
       Max_sziters = 0
@@ -449,6 +448,9 @@ C7------SIMULATE EACH STRESS PERIOD.
         CALL set_cell_values()
         IF ( Init_vars_from_file==1 ) CALL gsflow_modflow_restart(1)
         CALL check_gvr_cell_pct()
+        ! make the default number of soilzone iterations equal to the
+        ! maximum MF iterations, which is a good practice using NWT and cells=nhru
+        IF ( Mxsziter<1 ) Mxsziter = MXITER
       ENDIF
 
       ! run SS if needed, read to current stress period, read restart if needed
@@ -475,7 +477,7 @@ C
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
       USE PRMS_MODULE, ONLY: Model, Kper_mfo, Print_debug, Kkiter,
-     &    Timestep, Logunt, Init_vars_from_file
+     &    Timestep, Logunt, Init_vars_from_file, Mxsziter
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
 C1------USE package modules.
       USE GLOBAL
@@ -598,7 +600,7 @@ C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
    25     FORMAT(' Solving:  Stress period: ',i5,4x,
      &       'Time step:',I6,4x,'Groundwater-Flow Eqn.')
    26     FORMAT('Skipping:  Stress period: ',i5,4x,
-     &       'Time step: ',i5)
+     &       'Time step:',I6)
           ENDIF
 C
 C7C2----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
@@ -654,19 +656,24 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
 !     1                              IUNIT(44),IUNIT(52),IUNIT(55),IGRID)
 
 !  Call the PRMS modules that need to be inside the iteration loop
-            IF ( Szcheck>0 ) THEN
-              retval = soilzone()
-              IF ( retval.NE.0 ) THEN
-                PRINT 9001, 'soilzone', retval
-                RETURN
+            IF ( Model==0 ) THEN
+              IF ( Szcheck>0 ) THEN
+                retval = soilzone()
+                IF ( retval.NE.0 ) THEN
+                  PRINT 9001, 'soilzone', retval
+                  RETURN
+                ENDIF
+                retval = gsflow_prms2mf()
+                IF ( retval.NE.0 ) THEN
+                  PRINT 9001, 'gsflow_prms2mf', retval
+                  RETURN
+                ENDIF
+                Sziters = Sziters + 1
+                Maxgziter = KKITER
+                IF ( KKITER==Mxsziter ) Szcheck = 0 ! stop calling soilzone in iteration loop
+              ELSEIF ( iss==0 ) THEN
+                IF ( KKITER==Mxsziter+1 ) Stopcount = Stopcount + 1
               ENDIF
-              retval = gsflow_prms2mf()
-              IF ( retval.NE.0 ) THEN
-                PRINT 9001, 'gsflow_prms2mf', retval
-                RETURN
-              ENDIF
-              Sziters = Sziters + 1
-              Maxgziter = KKITER
             ENDIF
 
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
@@ -967,7 +974,6 @@ C
       IF(IUNIT(52).NE.0) CALL GWF2MNW17OT(IGRID)
 
       IF ( gsflag==1 ) THEN
-        IF ( Szcheck==-1 .OR. Szcheck==1 ) Nszchanging = Nszchanging + 1
         II = MIN(ITDIM, Maxgziter)
         Iter_cnt(II) = Iter_cnt(II) + 1
         IF ( Maxgziter.GT.Max_sziters ) Max_sziters = Maxgziter
@@ -1078,6 +1084,7 @@ c      IF(IUNIT(14).GT.0) CALL LMG7DA(IGRID)
 !gsf  IF(IUNIT(39).GT.0) CALL GWF2ETS7DA(IGRID)
 !gsf  IF(IUNIT(40).GT.0) CALL GWF2DRT7DA(IGRID)
 !      IF(IUNIT(42).GT.0) CALL GMG7DA(IGRID)
+!gsf  IF(IUNIT(59).GT.0) CALL PCGN2DA(IGRID)
       IF(IUNIT(44).GT.0) CALL GWF2SFR7DA(IGRID)
       IF(IUNIT(46).GT.0) CALL GWF2GAG7DA(IGRID)
       IF(IUNIT(50).GT.0) CALL GWF2MNW27DA(IGRID)
@@ -1108,9 +1115,9 @@ C
         WRITE ( Logunt, 9001 ) istep, Convfail_cnt, Iterations, Sziters,
      &          FLOAT(Iterations)/FLOAT(istep),
      &          FLOAT(Sziters)/FLOAT(istep), Max_iters, Max_sziters
-        IF ( Nszchanging>0 .OR. Stopcount>0 ) THEN
-          PRINT 9005, Nszchanging, Stopcount
-          WRITE (Logunt, 9005) Nszchanging, Stopcount
+        IF ( Stopcount>0 ) THEN
+          PRINT 9005, Stopcount
+          WRITE (Logunt, 9005) Stopcount
         ENDIF
         WRITE (Logunt, 9003) 'MF iteration distribution:', Mfiter_cnt
         WRITE (Logunt, '(/)')
@@ -1128,6 +1135,7 @@ C10-----END OF PROGRAM.
         WRITE(*,*) ' Normal termination of simulation'
         WRITE (Logunt, '(A)') 'Normal termination of simulation'
       END IF
+
 !gsf  CALL USTOP(' ')
       IF ( Model.EQ.2 ) CALL USTOP(' ')
 
@@ -1139,12 +1147,12 @@ C10-----END OF PROGRAM.
      &        ' Maximum MF iterations:', I6,
      &        ';  Maximum SZ iterations:', I8, /)
  9003 FORMAT (A, 2X, 10I5, /, 10(28X, 10I5, /))
- 9005 FORMAT (' Steps SZ changing when MF converged:', I5,
-     &        '; mxsziter reached:', I4, /)
+ 9005 FORMAT ('mxsziter reached:', I4, /)
  9007 FORMAT (A, 10I5, /, 10(28X, 10I5, /))
 
 C
-      END
+      END FUNCTION gsfclean
+!
       SUBROUTINE GETNAMFIL(FNAME)
 C     ******************************************************************
 C     GET THE NAME OF THE NAME FILE
@@ -1686,22 +1694,43 @@ C
      &    Totalarea_mf
       USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Print_debug,
      &    Gvr_cell_id, Gvr_cell_pct
-      USE PRMS_BASIN, ONLY: DNEARZERO
       USE GWFUZFMODULE, ONLY: IUZFBND
       IMPLICIT NONE
       INTRINSIC DBLE
 ! Local Variables
-      INTEGER :: icell, i, irow, icol
+      INTEGER :: icell, ierr, i, irow, icol
       DOUBLE PRECISION :: pctdiff
       DOUBLE PRECISION, ALLOCATABLE :: cell_pct(:)
 !***********************************************************************
       ALLOCATE ( cell_pct(Ngwcell) )
       cell_pct = 0.0D0
+      ierr = 0
       DO i = 1, Nhrucell
         icell = Gvr_cell_id(i)
-        IF ( icell>0 )
-     &       cell_pct(icell) = cell_pct(icell) + DBLE( Gvr_cell_pct(i) )  !rgn 6/21/17
+        IF ( icell==0 ) THEN
+          PRINT *, 'ERROR, gvr_cell_id = 0 for gvr:', i
+          PRINT *, 'Be sure gvr_cell_id is in the Parameter File'
+          ierr = 1
+          CYCLE
+        ENDIF
+        IF ( icell>Ngwcell ) THEN
+          PRINT *, 'ERROR, gvr_cell_id > ngwcell for gvr:', i
+          ierr = 1
+          CYCLE
+        ENDIF
+        IF ( Gvr_cell_pct(i)<=0.0D0 ) THEN
+          ierr = 1
+          PRINT *, 'ERROR, gvr_cell_pct <= 0, cell:', i
+          CYCLE
+        ENDIF
+!        cell_temp_pct(i) = Gvr_cell_pct(i)
+        cell_pct(icell) = cell_pct(icell) + DBLE( Gvr_cell_pct(i) )
       ENDDO
+
+      IF ( ierr==1 ) THEN
+        PRINT *, 'ERROR, check gsflow.log for messages'
+        STOP
+      ENDIF
 
       Ncells = 0
       Totalarea_mf = 0.0D0
@@ -1819,8 +1848,7 @@ C
 
       DO i = 1, Nhrucell
         ! MF volume to PRMS inches
-        IF ( Gvr_cell_id(i)>0 )
-     +       Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
+        Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
         ! MF discharge to PRMS inches
         ! note DELT may change during simulation at some point, so this will need to go in read_stress
         Mfq2inch_conv(i) = Mfvol2inch_conv(i)*DELT
