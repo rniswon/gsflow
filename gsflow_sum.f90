@@ -1208,7 +1208,7 @@
       DOUBLE PRECISION :: absval
 !***********************************************************************
       absval = ABS(Val)
-      IF ( absval<1.0D-8 ) THEN
+      IF ( absval<1.0D-5 ) THEN
 !       WRITE (Strng, '(I18)') INT(Val)
         Strng = ' '
       ELSEIF ( absval>BIG .OR. absval<SMALL ) THEN
