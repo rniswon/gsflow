@@ -109,7 +109,7 @@ C
      &           'HYD ', 'SFR ', '    ', 'GAGE', 'LVDA', '    ', 'LMT6',  ! 49
      &           'MNW2', 'MNWI', 'MNW1', 'KDEP', 'SUB ', 'UZF ', 'gwm ',  ! 56
      &           'SWT ', 'cfp ', 'pcgn', '    ', 'fmp ', 'UPW ', 'NWT ',  ! 63
-     &           'SWR ', 'SWI2', 'AGO ', '    ', 'IWRT', 'IRED', '    ',  ! 70     - SWR - JDH 
+     &           'SWR ', 'SWI2', 'AWU ', '    ', 'IWRT', 'IRED', '    ',  ! 70     - SWR - JDH 
      &           30*'    '/                                               ! 71-100 - SWR - JDH
 C     ------------------------------------------------------------------
 C
@@ -347,7 +347,7 @@ c      IF(IUNIT(14).GT.0) CALL LMG7AR(IUNIT(14),MXITER,IGRID)
       IF(IUNIT(43).GT.0 .AND. IUNIT(44).GT.0)
      1                   CALL GWF2HYD7SFR7AR(IUNIT(43),IGRID)
       IF(IUNIT(49).GT.0) CALL LMT8BAS7AR(INUNIT,CUNIT,IGRID)
-      IF(IUNIT(66).GT.0) CALL GWF2AGO7AR(IUNIT(66),IUNIT(63))
+      IF(IUNIT(66).GT.0) CALL GWF2AWU7AR(IUNIT(66),IUNIT(63))
 !      IF(IUNIT(61).GT.0) THEN
 !        CALL FMP2AR(
 !     1  IUNIT(61),IUNIT(44),IUNIT(52),IUNIT(55),IGRID)                  !FMP2AR CALL ADDED BY SCHMID
@@ -590,7 +590,8 @@ C
 !          ENDIF     
           IF(IUNIT(64).GT.0) CALL GWF2SWR7AD(KKPER,KKSTP,
      2                                       IGRID,IUNIT(54))  !SWR - JDH
-          IF(IUNIT(66).GT.0) CALL GWF2AGO7AD(IUNIT(66),KKPER)
+                    IF(IUNIT(66).GT.0 .AND. ISSFLG(KPER)==0 ) 
+     1                            CALL GWF2AWU7AD(IUNIT(66),KKPER)
           IF ( Model.EQ.2 ) THEN
 C
 C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
@@ -774,8 +775,8 @@ C     2                                            KKITER,KKSTP,KKPER)
      1                                         IUNIT(9),IGRID)
             IF(IUNIT(57).GT.0) CALL GWF2SWT7FM(KKPER,IGRID)
             IF(IUNIT(64).GT.0) CALL GWF2SWR7FM(KKITER,KKPER,KKSTP,IGRID)  !SWR - JDH
-            IF(IUNIT(66).GT.0) CALL GWF2AGO7FM(Kkper, Kkstp, Kkiter,
-     1                                         IUNIT(63))
+            IF(IUNIT(66).GT.0.AND. ISSFLG(KPER)==0 ) 
+     1                CALL GWF2AWU7FM(Kkper, Kkstp, Kkiter,IUNIT(63))
 !            IF(IUNIT(66).GT.0) CALL GWF2GFB7FM(IGRID)
 C-------------SWI2 FORMULATE (GWF2SWI2FM) NEEDS TO BE THE LAST PACKAGE
 C             ENTRY SINCE SWI2 SAVES THE RHS (RHSFRESH) PRIOR TO ADDING SWI TERMS
@@ -1069,8 +1070,8 @@ C7C4----CALCULATE BUDGET TERMS. SAVE CELL-BY-CELL FLOW TERMS.
           IF(IUNIT(64).GT.0) CALL GWF2SWR7BD(KKSTP,KKPER,IGRID)  !SWR - JDH
 !         IF(IUNIT(66).GT.0) CALL GWF2GFB7BD(KKSTP,KKPER,IGRID) 
           IF(IUNIT(65).GT.0) CALL GWF2SWI2BD(KKSTP,KKPER,IGRID)  !SWI2 - JDH
-          IF(IUNIT(66).GT.0) CALL GWF2AGO7DA()
-          IF(IUNIT(66).GT.0) CALL GWF2AGO7BD(KKSTP,KKPER,IUNIT(63))
+          IF(IUNIT(66).GT.0 .AND. ISSFLG(KPER)==0) 
+     +                       CALL GWF2AWU7BD(KKSTP,KKPER,IUNIT(63))
 CLMT
 CLMT----CALL LINK-MT3DMS SUBROUTINES TO SAVE FLOW-TRANSPORT LINK FILE
 CLMT----FOR USE BY MT3DMS FOR TRANSPORT SIMULATION
@@ -1304,6 +1305,7 @@ c      IF(IUNIT(14).GT.0) CALL LMG7DA(IGRID)
       IF(IUNIT(57).GT.0) CALL GWF2SWT7DA(IGRID)
       IF(IUNIT(64).GT.0) CALL GWF2SWR7DA(IGRID)  !SWR - JDH
       IF(IUNIT(65).GT.0) CALL GWF2SWI2DA(IGRID)  !SW12 - JDH
+      IF(IUNIT(66).GT.0) CALL GWF2AWU7DA()
 !      IF(IUNIT(66).GT.0) CALL GWF2GFB7DA(IGRID)
       CALL OBS2BAS7DA(IUNIT(28),IGRID)
       IF(IUNIT(33).GT.0) CALL OBS2DRN7DA(IGRID)
@@ -1618,7 +1620,7 @@ C----------READ USING PACKAGE READ AND PREPARE MODULES.
 !        IF(IUNIT(61).GT.0) CALL FMP2RP(IUNIT(61),ISTARTFL,KKPER,        !FMP2AR CALL ADDED BY SCHMID
 !     1                          IUNIT(44),IUNIT(52),IGRID)     
         IF(IUNIT(64).GT.0) CALL GWF2SWR7RP(IUNIT(64),KKPER,IGRID)  !SWR - JDH
-        IF ( IUNIT(66).GT.0 ) CALL GWF2AGO7RP(IUNIT(66),KKPER)
+        IF ( IUNIT(66).GT.0 ) CALL GWF2AWU7RP(IUNIT(66),KKPER)
 C
         IF ( GSFLOW_flag==1 .AND. ISSFLG(KPER).EQ.0 )
      1                   CALL ZERO_SPECIFIED_FLOWS(IUNIT(22),IUNIT(44))
