@@ -50,3 +50,7 @@ msds/gsflow_develop_f/x64/Debug/gsflow_develop.exp
 msds/gsflow_develop_f/x64/Release/gsflow_develop.exp
 /msds/gsflow_develop_f/x64/Release/gsflow_SWI_beta.zip
 /msds/gsflow_develop_f/x64/Release/gsflow_SWI_beta.txt
+msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/Release/GSFLOW_MODSIM.exp
+msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/Release/GSFLOW_MODSIM.dll
+msds/gsflow_develop/gsflow_develop.opensdf
+msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/GSFLOW_MODSIM.sln
