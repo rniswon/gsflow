@@ -79,7 +79,7 @@
 !***********************************************************************
       gwflowdecl = 0
 
-      Version_gwflow = 'gwflow.f90 2017-06-29 11:49:00Z'
+      Version_gwflow = 'gwflow.f90 2018-01-18 16:59:00Z'
       CALL print_module(Version_gwflow, 'Groundwater                 ', 90)
       MODNAME = 'gwflow'
 
@@ -197,7 +197,7 @@
 
       IF ( declvar(MODNAME, 'basin_gwstor_minarea_wb', 'one', 1, 'double', &
      &     'Basin area-weighted average storage added to each GWR when storage is less than gwstor_min', &
-     &     'inches', Basin_gwstor_minarea_wb)/=0 ) CALL read_error(3, 'basin_gwstor_minarea_wbr_minarea_wb')
+     &     'inches', Basin_gwstor_minarea_wb)/=0 ) CALL read_error(3, 'basin_gwstor_minarea_wb')
 
       END FUNCTION gwflowdecl
 
@@ -483,7 +483,7 @@
       IF ( In_out==0 ) THEN
         WRITE ( Restart_outunit ) MODNAME
         WRITE ( Restart_outunit ) Basin_gwstor, Basin_gwflow, Basin_gwsink, Basin_gwin, Basin_gwstor_minarea_wb, &
-     &          Gwminarea_flag, Basin_dnflow, Basin_gw_upslope, Basin_gwfarflow
+     &          Gwminarea_flag, Basin_dnflow, Basin_gw_upslope
         IF ( Gwminarea_flag==1 ) THEN
           WRITE ( Restart_outunit ) Gwstor_minarea_wb
           WRITE ( Restart_outunit ) Gwstor_minarea
@@ -504,7 +504,7 @@
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
         READ ( Restart_inunit ) Basin_gwstor, Basin_gwflow, Basin_gwsink, Basin_gwin, Basin_gwstor_minarea_wb, &
-     &         Gwminarea_flag, Basin_dnflow, Basin_gw_upslope, Basin_gwfarflow
+     &         Gwminarea_flag, Basin_dnflow, Basin_gw_upslope
         IF ( Gwminarea_flag==1 ) THEN ! could be error if someone turns off gwstor_min for restart
           READ ( Restart_inunit ) Gwstor_minarea_wb
           READ ( Restart_inunit ) Gwstor_minarea
