@@ -131,10 +131,10 @@
         IF ( Print_debug>-1 ) THEN
           PRINT 15
           PRINT 9002
+          PRINT 16, EQULS
         ENDIF
         WRITE ( Logunt, 15 )
         WRITE ( Logunt, 16 ) EQULS
-        PRINT 16, EQULS
         WRITE ( PRMS_output_unit, 15 )
         WRITE ( PRMS_output_unit, 16 ) EQULS
         CALL print_module(PRMS_versn, 'GSFLOW Computation Order    ', 90)
