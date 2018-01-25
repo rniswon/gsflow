@@ -545,8 +545,7 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
           IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
      1                                           IGRID)
           IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
-          IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(44),IUNIT(22),
-     1                                         KKSTP,KKPER,IGRID)  !rgn 6/12/12
+          IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(22),IGRID)  !rgn 6/12/12
           END IF
 
 C--EDM----RGN THIS IS ALL DONE INSIDE SFR NOW
