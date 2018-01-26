@@ -188,7 +188,7 @@ soil_moist
 nsubOutBaseFileName
 1
 4
-.\nsub_test
+.\nsub_
 ####
 parameter_check_flag
 1

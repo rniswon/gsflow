@@ -187,12 +187,12 @@ soil_moist
 nsubOutBaseFileName
 1
 4
-.\nsub_test_
+.\nsub_
 ####
 basinOutBaseFileName
 1
 4
-basinOut
+.\basinOut
 ####
 basinOutON_OFF
 1

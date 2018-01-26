@@ -17643,8 +17643,8 @@ Date: 1996/09/30; Stress:  2; Step:  5844; Simulation step: 5844
                   MF iterations:       12; SZ iterations:     12
 
 
- Run end date and time (yyyy/mm/dd hh:mm:ss): 2018/01/25 12:02:49
- Elapsed run time: 16 Minutes,  3.789 Seconds
+ Run end date and time (yyyy/mm/dd hh:mm:ss): 2018/01/25 17:17:45
+ Elapsed run time: 15 Minutes, 44.307 Seconds
 
  Number of time steps:   5844;  Number of non-convergence:   0
  MF iterations:         62980;  SZ iterations:           62926
