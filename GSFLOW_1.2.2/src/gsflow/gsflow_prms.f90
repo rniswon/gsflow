@@ -131,10 +131,10 @@
         IF ( Print_debug>-1 ) THEN
           PRINT 15
           PRINT 9002
+          PRINT 16, EQULS
         ENDIF
         WRITE ( Logunt, 15 )
         WRITE ( Logunt, 16 ) EQULS
-        PRINT 16, EQULS
         WRITE ( PRMS_output_unit, 15 )
         WRITE ( PRMS_output_unit, 16 ) EQULS
         CALL print_module(PRMS_versn, 'GSFLOW Computation Order    ', 90)
@@ -460,11 +460,11 @@
           Elapsed_time_minutes = INT(Elapsed_time/60.0)
           PRINT '(A,I5,A,F6.2,A,/)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                               Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+          WRITE ( PRMS_output_unit,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                                  Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+          WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                        Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         ENDIF
-        WRITE ( PRMS_output_unit,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                                                Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
-        WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                                      Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         CLOSE ( Logunt )
       ELSEIF ( Process_flag==1 ) THEN
         IF ( Model==1 ) THEN

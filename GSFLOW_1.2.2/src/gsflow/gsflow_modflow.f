@@ -75,7 +75,7 @@ C
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
       ! Model (0=integrated; 1=PRMS-only; 2=MODFLOW-only)
-      USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Model, Logunt
+      USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Model,Logunt,Print_debug
       IMPLICIT NONE
 !***********************************************************************
       gsfdecl = 0
@@ -92,7 +92,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
      &  /,25X,'VERSION ',A/,14X,'BASED ON MODFLOW-2005 VERSION ',A,/)
 !gsf &  /,20X,'SWR1 Version ',A/)
 
-      WRITE ( *, 8 )
+      IF ( Print_debug>-1 ) WRITE ( *, 8 )
       WRITE ( Logunt, 8 )
     8 FORMAT (14X, 'PROCESSES: GWF and OBS', /, 14X,
      &        'PACKAGES:  BAS, BCF, CHD, DE4, FHB, GAG, GHB,',
@@ -116,7 +116,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model, Mxsziter,
+      USE PRMS_MODULE, ONLY: Model, Mxsziter, Print_debug,
      &    EQULS, Logunt, Init_vars_from_file, Kper_mfo
 C1------USE package modules.
       USE GLOBAL
@@ -410,7 +410,8 @@ C
 C7------SIMULATE EACH STRESS PERIOD.
       CALL print_module(Version_gsflow_modflow,
      &                  'GSFLOW MODFLOW main         ', 77)
-      PRINT '(A,/A,/A)', EQULS, 'MODFLOW Packages', EQULS
+      IF ( Print_debug>-1 )
+     &     PRINT '(A,/A,/A)', EQULS, 'MODFLOW Packages', EQULS
       WRITE ( Logunt, '(A,/A,/A)') EQULS, 'MODFLOW Packages', EQULS
       CALL print_module(Version_uzf,
      &                  'UZF-NWT Package             ', 77)
@@ -419,10 +420,8 @@ C7------SIMULATE EACH STRESS PERIOD.
       IF ( Have_lakes==1 )
      &     CALL print_module(Version_lak,
      &                      'LAK-NWT Package             ', 77)
-      PRINT '(A,/)', EQULS
-      WRITE ( Logunt, '(A,/)') EQULS
 
-      WRITE(*,490)'Using NAME file: ', FNAME(1:NC)
+      WRITE ( Logunt, '(A,/)') EQULS
       WRITE( Logunt, 490 )'Using NAME file: ', FNAME(1:NC)
 
       IF ( IUNIT(63)>0 ) solver = 'NWT'
@@ -431,7 +430,11 @@ C7------SIMULATE EACH STRESS PERIOD.
       IF ( IUNIT(9)>0 ) solver = 'SIP'
       IF ( IUNIT(10)>0 ) solver = 'DE47'
 !      IF ( IUNIT(42)>0 ) solver = 'GMG'
-      PRINT 14, solver
+      IF ( Print_debug>-1 ) THEN
+        PRINT '(A,/)', EQULS
+        WRITE(*,490)'Using NAME file: ', FNAME(1:NC)
+        PRINT 14, solver
+      ENDIF
       WRITE ( Logunt, 14 ) solver
    14 FORMAT (/, 'Using Solver Package: ', A)
       Sziters = 0
@@ -555,7 +558,7 @@ C7C1----CALCULATE TIME STEP LENGTH. SET HOLD=HNEW.
           IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
      1                                           IGRID)
           IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
-          IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(22))  !rgn 6/12/12
+          IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(22),IGRID)  !rgn 6/12/12
           IF(IUNIT(50).GT.0) THEN
             IF (IUNIT(1).GT.0) THEN
               CALL GWF2MNW27BCF(KPER,IGRID)
@@ -1445,7 +1448,8 @@ C
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
      &    Steady_state, ICNVG, KPER, KSTP, Mft_to_days
       USE PRMS_MODULE, ONLY: Init_vars_from_file, Kkiter, Model,
-     &    Starttime, Start_year, Start_month, Start_day, Logunt
+     &    Starttime, Start_year, Start_month, Start_day, Logunt,
+     &    Print_debug
       USE GWFBASMODULE, ONLY: TOTIM
       IMPLICIT NONE
       EXTERNAL :: READ_STRESS, RESTART1READ
@@ -1475,7 +1479,8 @@ C
           ENDIF
         ENDIF
       ENDDO
-      PRINT ( '(/, A, I5,2("/",I2.2))' ), 'modflow_time_zero:',
+      IF ( Print_debug>-1 )
+     &     PRINT ( '(/, A, I5,2("/",I2.2))' ), 'modflow_time_zero:',
      &  Modflow_time_zero(1), Modflow_time_zero(2), Modflow_time_zero(3)
       seconds = Modflow_time_zero(6)
       ALLOCATE ( Stress_dates(NPER+1) )
@@ -1604,7 +1609,7 @@ C
             STRM(j,i) = ZERO
           END DO
         END DO
-        IF ( TESTSFR.GT.1.0E-5 ) THEN
+        IF ( TESTSFR.GT.1.0 ) THEN
           WRITE (Logunt, *)
           WRITE (Logunt, *)'***WARNING***'
           WRITE (Logunt, 10)
@@ -1625,7 +1630,7 @@ C
           RNF(i) = ZERO
           WTHDRW(i) = ZERO
         END DO
-        IF ( TESTLAK.GT.1.0E-5 ) THEN
+        IF ( TESTLAK.GT.1.0 ) THEN
           WRITE (Logunt, *)
           WRITE (Logunt, *)'***WARNING***'
           WRITE (Logunt, 11)
