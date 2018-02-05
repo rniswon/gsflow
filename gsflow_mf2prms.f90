@@ -25,7 +25,7 @@
 ! Functions
       EXTERNAL print_module
 ! Local Variables
-      INTEGER :: i, irow, icol, icell, j ,k, ihru
+      INTEGER :: i, irow, icol, icell, j, k, ihru
       integer :: IRWL,NMCL,SGNM
       DOUBLE PRECISION :: mf_q2prms_inch, firr
 !      CHARACTER(LEN=14) :: MODNAME
@@ -57,7 +57,7 @@
             NMCL = NUMCELLS(IRWL)
             DO K = 1, NMCL
               ihru = UZFROW(K,IRWL)
-              firr = WELLIRRPRMS(IHRU)*mf_q2prms_inch/HRU_PERV(IHRU)
+              firr = WELLIRRPRMS(k)*mf_q2prms_inch/HRU_PERV(IHRU)
               soil_moist(ihru) = soil_moist(ihru) + firr
             END DO
           END DO
@@ -69,7 +69,7 @@
             NMCL = DVRCH(SGNM)
             DO K=1,NMCL        
               ihru = IRRROW(K,SGNM)
-              firr = SFRIRRPRMS(IHRU)*mf_q2prms_inch/HRU_PERV(ihru)
+              firr = SFRIRRPRMS(k)*mf_q2prms_inch/HRU_PERV(ihru)
               soil_moist(ihru) = soil_moist(ihru) + firr  
             END DO
           END DO
