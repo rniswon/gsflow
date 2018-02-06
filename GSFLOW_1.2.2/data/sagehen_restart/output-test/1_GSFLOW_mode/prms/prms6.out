@@ -45,7 +45,7 @@ Solar Radiation Distribution   ddsolrad                   2016-11-03
 Transpiration Distribution     transp_tindex              2015-01-06
 Potential Evapotranspiration   potet_jh                   2016-05-10
 Canopy Interception            intcp                      2017-09-27
-Snow Dynamics                  snowcomp                   2017-10-06
+Snow Dynamics                  snowcomp                   2018-02-06
 Surface Runoff                 srunoff_smidx              2017-11-08
 Soil Zone Computations         soilzone                   2018-01-24
 GSFLOW PRMS to MODFLOW         gsflow_prms2mf             2017-11-15
