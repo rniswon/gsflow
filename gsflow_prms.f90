@@ -1486,7 +1486,7 @@
      &       'Maximum number of iterations soilzone states are computed', &
      &       'Maximum number of iterations soilzone states are computed', &
      &       'none')/=0 ) CALL read_error(1, 'mxsziter')
-        ALLOCATE ( Gvr_cell_pct(Nhrucell) )
+        ALLOCATE ( Gvr_cell_pct(Nhrucell), Soilzone_gain(Nhru) )
         IF ( Nhru/=Nhrucell ) THEN
           IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
      &         '0.0', '0.0', '1.0', &

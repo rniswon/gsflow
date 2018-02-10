@@ -11,8 +11,7 @@
                             Mfl2_to_acre, Mfl_to_inch
       USE PRMS_SOILZONE, ONLY: Hrucheck, Gvr_hru_id, Gw2sm_grav !, Gw2sm_grav_save
       USE GWFUZFMODULE, ONLY: SEEPOUT
-      USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id
-      USE PRMS_FLOWVARS, ONLY: soil_moist
+      USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id, soilzone_gain
       USE PRMS_MODULE, ONLY: NHRU
       USE GLOBAL,       ONLY:IUNIT
       USE GSFMODFLOW, ONLY: 
@@ -50,6 +49,7 @@
 !
 ! From irrigation wells
 !
+        soilzone_gain = 0.0
         mf_q2prms_inch = DELT*Mfl2_to_acre*Mfl_to_inch
         IF ( Iunit(66) > 0 ) then
           DO J = 1, NUMIRRWELSP
@@ -57,8 +57,7 @@
             NMCL = NUMCELLS(IRWL)
             DO K = 1, NMCL
               ihru = UZFROW(K,IRWL)
-              firr = WELLIRRPRMS(k)*mf_q2prms_inch/HRU_PERV(IHRU)
-              soil_moist(ihru) = soil_moist(ihru) + firr
+              soilzone_gain(ihru) = soilzone_gain(ihru) + WELLIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(IHRU)
             END DO
           END DO
 !
@@ -69,8 +68,7 @@
             NMCL = DVRCH(SGNM)
             DO K=1,NMCL        
               ihru = IRRROW(K,SGNM)
-              firr = SFRIRRPRMS(k)*mf_q2prms_inch/HRU_PERV(ihru)
-              soil_moist(ihru) = soil_moist(ihru) + firr  
+              soilzone_gain(ihru) = soilzone_gain(ihru) + SFRIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(ihru)
             END DO
           END DO
         END IF
