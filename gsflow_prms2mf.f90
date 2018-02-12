@@ -9,7 +9,7 @@
       INTEGER, SAVE :: NTRAIL_CHK, Nlayp1
       ! Number of stream reaches in each stream segment
       INTEGER, SAVE, ALLOCATABLE :: Numreach_segment(:)
-      REAL, SAVE, ALLOCATABLE :: Excess(:)
+      REAL, SAVE, ALLOCATABLE :: Excess(:), Soil_water_deficit(:, :)
       DOUBLE PRECISION, SAVE :: Totalarea
       CHARACTER(LEN=14), SAVE :: MODNAME
 !   Declared Variables
@@ -31,11 +31,10 @@
 !           Produces cell_drain in MODFLOW units.
 !     ******************************************************************
       INTEGER FUNCTION gsflow_prms2mf()
-      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file
+      USE PRMS_MODULE, ONLY: Process
       IMPLICIT NONE
 ! Functions
       INTEGER, EXTERNAL :: prms2mfdecl, prms2mfinit, prms2mfrun
-      EXTERNAL :: gsflow_prms2mf_restart
 !***********************************************************************
       gsflow_prms2mf = 0
 
@@ -44,10 +43,7 @@
       ELSEIF ( Process(:4)=='decl' ) THEN
         gsflow_prms2mf = prms2mfdecl()
       ELSEIF ( Process(:4)=='init' ) THEN
-        IF ( Init_vars_from_file>0 ) CALL gsflow_prms2mf_restart(1)
         gsflow_prms2mf = prms2mfinit()
-      ELSEIF ( Process(:5)=='clean' ) THEN
-        IF ( Save_vars_to_file==1 ) CALL gsflow_prms2mf_restart(0)
       ENDIF
 
       END FUNCTION gsflow_prms2mf
@@ -69,7 +65,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-11-08 12:23:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2018-02-09 16:56:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -163,7 +159,7 @@
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area
       USE PRMS_SOILZONE, ONLY: Gvr_hru_id, Gvr_hru_pct_adjusted
-      USE GLOBAL, ONLY: NLAY, NROW, NCOL
+      USE GLOBAL, ONLY: NLAY, NROW, NCOL, IUNIT
       USE GWFUZFMODULE, ONLY: IUZFBND
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
@@ -309,21 +305,26 @@
           hru_pct(is) = hru_pct(is) + temp_pct(i)
         ENDIF
         icell = Gvr_cell_id(i)
-        IF ( icell==0 ) CYCLE
+!        IF ( icell==0 ) CYCLE ! don't need as icell must be > 0
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
         IF ( Print_debug>-1 ) THEN
           IF ( Hru_type(ihru)==0 ) THEN
-            IF ( IUZFBND(icol, irow)/=0 .AND. Print_debug>-1 ) &
+            IF ( IUZFBND(icol, irow)/=0 ) &
      &           PRINT *, 'WARNING, HRU inactive & UZF cell active, irow:', irow, 'icell:', icell, ' HRU:', ihru
           ENDIF
           IF ( IUZFBND(icol, irow)==0 ) THEN
-            IF ( Hru_type(ihru)/=0 .AND. Print_debug>-1 ) &
+            IF ( Hru_type(ihru)/=0 ) &
      &           PRINT *, 'WARNING, UZF cell inactive, irow:', irow, ' icell:', icell, ' HRU is active:', ihru
           ENDIF
         ENDIF
       ENDDO
       IF ( ierr==1 ) STOP
+
+      IF ( IUNIT(66)>0 ) THEN
+        ALLOCATE ( Soil_water_deficit(Ncol,Nrow) )
+        Soil_water_deficit = 0.0
+      ENDIF
 
       IF ( Nhru/=Nhrucell ) THEN
 ! way to adjust gvr_hru_pct, rsr
@@ -409,14 +410,14 @@
       USE GSFPRMS2MF
       USE GSFMODFLOW, ONLY: Gvr2cell_conv, Acre_inches_to_mfl3, &
      &    Inch_to_mfl_t, Gwc_row, Gwc_col, Mft_to_days
-      USE GLOBAL, ONLY: IBOUND
+      USE GLOBAL, ONLY: IBOUND, IUNIT
 !     USE GLOBAL, ONLY: IOUT
       USE GWFUZFMODULE, ONLY: IUZFBND, NWAVST, PETRATE, IGSFLOW, FINF
       USE GWFLAKMODULE, ONLY: RNF, EVAPLK, PRCPLK, NLAKES
-      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Have_lakes
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO
+      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Have_lakes, Water_use_flag
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO, Hru_frac_perv
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
-      USE PRMS_FLOWVARS, ONLY: Hru_actet
+      USE PRMS_FLOWVARS, ONLY: Hru_actet, Soil_moist_max, Soil_moist
       USE PRMS_SRUNOFF, ONLY: Hortonian_lakes
       USE PRMS_SOILZONE, ONLY: Sm2gw_grav, Lakein_sz, Hrucheck, Gvr_hru_id, Unused_potet, Gvr_hru_pct_adjusted
       IMPLICIT NONE
@@ -424,9 +425,8 @@
       INTEGER, EXTERNAL :: toStream
       EXTERNAL Bin_percolation
 ! Local Variables
-      INTEGER :: irow, icol, ik, jk, ibndcheck, ii, ilake
-      INTEGER :: j, icell, ihru
-      REAL :: seep
+      INTEGER :: irow, icol, ik, jk, ii, ilake
+      INTEGER :: j, icell, ihru, is_draining
 !***********************************************************************
       prms2mfrun = 0
 
@@ -462,51 +462,38 @@
 !-----------------------------------------------------------------------
       PETRATE = 0.0 ! should just be active cells
       Cell_drain_rate = 0.0 ! should just be active cells
+      Gw_rejected_grav = Sm2gw_grav ! assume all is rejected to start with
+      is_draining = 0
 
       DO j = 1, Nhrucell
         ihru = Gvr_hru_id(j)
-        IF ( Hrucheck(ihru)==0 ) CYCLE
-        Gw_rejected_grav(j) = 0.0
+        IF ( Hrucheck(ihru)==0 ) CYCLE ! make sure to skip lake and inactive HRUs
         icell = Gvr_cell_id(j)
-        IF ( icell==0 ) CYCLE
+!        IF ( icell==0 ) CYCLE ! don't need as icell must be > 0
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
 
+        IF ( IUZFBND(icol, irow)==0 ) CYCLE
         jk = 0
         ik = 1
         DO WHILE ( jk==0 .AND. ik<Nlayp1 )
           IF ( IBOUND(icol, irow, ik)>0 ) jk = 1
           ik = ik + 1
         ENDDO
+        IF ( jk==0 ) CYCLE
 
-        ibndcheck = 1
-        IF ( jk==0 ) THEN
-          ibndcheck = 0
-        ELSEIF ( IUZFBND(icol, irow)==0 ) THEN
-          ibndcheck = 0
-        ENDIF
 !-----------------------------------------------------------------------
 ! If UZF cell is inactive OR if too many waves then dump water back into
 ! the soilzone
 !-----------------------------------------------------------------------
-        seep = Sm2gw_grav(j)
-        IF ( seep>0.0 ) THEN
-          IF ( ibndcheck/=0 ) THEN
-            IF ( NWAVST(icol, irow)<NTRAIL_CHK ) THEN
+        IF ( Sm2gw_grav(j)>0.0 ) THEN
+          IF ( NWAVST(icol, irow)<NTRAIL_CHK ) THEN
 !-----------------------------------------------------------------------
 ! Convert drainage from inches to MF Length/Time
 !-----------------------------------------------------------------------
-              Cell_drain_rate(icell) = Cell_drain_rate(icell) + seep*Gvr2cell_conv(j)
-            ELSE ! ELSEIF ( NWAVST(icol, irow)>=NTRAIL_CHK ) THEN
-!              WRITE (IOUT, *) '--WARNING-- Too many waves in UZF cell'
-!              WRITE (IOUT, *) ' col =', icol, ' row =', irow, 'numwaves=', NTRAIL_CHK
-!              PRINT *, '--WARNING-- Too many waves in UZF cell: col =', &
-!     &                 icol, 'row =', irow, 'cell=', icell, 'numwaves=', NTRAIL_CHK
-              Gw_rejected_grav(j) = seep
-            ENDIF
-          ELSE
-!            PRINT *, 'inactive uzf cell', icol, irow, icell, seep, j, ihru
-            Gw_rejected_grav(j) = seep
+            Cell_drain_rate(icell) = Cell_drain_rate(icell) + Sm2gw_grav(j)*Gvr2cell_conv(j)
+            Gw_rejected_grav(j) = 0.0
+            is_draining = 1
           ENDIF
         ENDIF
 !-----------------------------------------------------------------------
@@ -518,6 +505,12 @@
           Unused_potet(ihru) = Unused_potet(ihru) - Unused_potet(ihru)*Gvr_hru_pct_adjusted(j)
           IF ( Unused_potet(ihru)<0.0 ) Unused_potet(ihru) = 0.0
         ENDIF
+!
+! soil water deficit
+!
+      IF ( IUNIT(66)>0 ) &
+     &     Soil_water_deficit(icol, irow) = (Soil_moist_max(ihru)-Soil_moist(ihru))*Hru_frac_perv(ihru)*Gvr2cell_conv(j)
+
       ENDDO
  
 !-----------------------------------------------------------------------
@@ -528,7 +521,7 @@
       Net_sz2gw = 0.0D0
       Excess = 0.0
       FINF = 0.0
-      CALL Bin_percolation()
+      IF ( is_draining==1 ) CALL Bin_percolation()
 
       END FUNCTION prms2mfrun
 
@@ -652,24 +645,3 @@
       ENDDO
 
       END SUBROUTINE Bin_percolation
-
-!***********************************************************************
-!     Write to or read from restart file
-!***********************************************************************
-      SUBROUTINE gsflow_prms2mf_restart(In_out)
-      USE PRMS_MODULE, ONLY: Restart_outunit, Restart_inunit
-      USE GSFPRMS2MF, ONLY: MODNAME
-      IMPLICIT NONE
-      ! Argument
-      INTEGER, INTENT(IN) :: In_out
-      EXTERNAL check_restart
-      ! Local Variable
-      CHARACTER(LEN=14) :: module_name
-!***********************************************************************
-      IF ( In_out==0 ) THEN
-        WRITE ( Restart_outunit ) MODNAME
-      ELSE
-        READ ( Restart_inunit ) module_name
-        CALL check_restart(MODNAME, module_name)
-      ENDIF
-      END SUBROUTINE gsflow_prms2mf_restart

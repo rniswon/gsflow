@@ -30,7 +30,7 @@
       INTEGER, EXTERNAL :: strmflow_in_out, muskingum, muskingum_lake, numchars
       INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta !, setup
       EXTERNAL :: module_error, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, check_bounded_params, water_balance, basin_summary, nsegment_summary
+      EXTERNAL :: call_modules_restart, water_balance, basin_summary, nsegment_summary
       EXTERNAL :: prms_summary, nhru_summary, module_doc, convert_params, read_error, nsub_summary
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum, gsflow_prms2modsim
       INTEGER, EXTERNAL :: setdims, stream_temp
@@ -354,7 +354,7 @@
 
       IF ( BasinOutON_OFF==1 ) CALL basin_summary()
 
-      IF ( NsegmentOutON_OFF==1 ) CALL nsegment_summary()
+      IF ( NsegmentOutON_OFF>0 ) CALL nsegment_summary()
 
       IF ( Subbasin_flag==1 ) THEN
         call_modules = subbasin()
@@ -400,7 +400,6 @@
         WRITE ( Logunt, '(A)' ) EQULS
         IF ( Model==25 ) CALL convert_params()
       ELSEIF ( Process_flag==2 ) THEN
-        IF ( Parameter_check_flag>0 ) CALL check_bounded_params()
         IF ( Parameter_check_flag==2 ) STOP
         IF ( Model==25 ) THEN
           CALL convert_params()
@@ -456,11 +455,11 @@
       CALL PRMS_open_output_file(Logunt, 'gsflow.log', 'gsflow.log', 0, iret)
       IF ( iret/=0 ) STOP
 
-      PRINT 3
+      IF ( Print_debug>-2 ) PRINT 3
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 11/10/2017', //, &
+     &        22X, 'Version 1.2 MODSIM 02/12/2018', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -788,9 +787,6 @@
      &     'Number of spatial units in the target map for mapped results')/=0 ) CALL read_error(7, 'ngwcell')
       IF ( decldim('nreach', idim, MAXDIM, 'Number of reaches on all stream segments')/=0 ) CALL read_error(7, 'nreach')
 
-      IF ( control_integer(Stream_temp_flag, 'stream_temp_flag')/=0 ) Stream_temp_flag = 0
-      IF ( Stream_temp_flag==1 ) Stream_order_flag = Stream_order_flag + 1   !!!! CAUTION
-
       IF ( control_integer(Frozen_flag, 'frozen_flag')/=0 ) Frozen_flag = 0
       IF ( control_integer(Dyn_imperv_flag, 'dyn_imperv_flag')/=0 ) Dyn_imperv_flag = 0
       IF ( control_integer(Dyn_intcp_flag, 'dyn_intcp_flag')/=0 ) Dyn_intcp_flag = 0
@@ -832,8 +828,12 @@
 ! nsegment_summary
       IF ( control_integer(NsegmentOutON_OFF, 'nsegmentOutON_OFF')/=0 ) NsegmentOutON_OFF = 0
 
+! stream_temp
+      IF ( control_integer(Stream_temp_flag, 'stream_temp_flag')/=0 ) Stream_temp_flag = 0
+      IF ( Stream_temp_flag==1 ) Stream_order_flag = Stream_order_flag + 1   !!!! CAUTION
+
       IF ( control_integer(Prms_warmup, 'prms_warmup')/=0 ) Prms_warmup = 0
-      IF ( nsubOutON_OFF==1 .OR. NhruOutON_OFF==1 .OR. NsubOutON_OFF==1 .OR. BasinOutON_OFF==1 .OR. NsegmentOutON_OFF==1 ) THEN
+      IF ( nsubOutON_OFF>0 .OR. NhruOutON_OFF>0 .OR. NsubOutON_OFF>0 .OR. BasinOutON_OFF>0 .OR. NsegmentOutON_OFF>0 ) THEN
         IF ( Start_year+Prms_warmup>End_year ) THEN ! change to start full date ???
           PRINT *, 'ERROR, prms_warmup > than simulation time period:', Prms_warmup
           Inputerror_flag = 1
@@ -1001,7 +1001,7 @@
 
       Stream_order_flag = 0
       IF ( Nsegment>0 .AND. Strmflow_flag>1 .AND. Model/=0 ) THEN
-        Stream_order_flag = 1 ! strmflow_in_out or muskingum
+        Stream_order_flag = 1 ! strmflow_in_out, muskingum, or muskingum_lake
       ENDIF
 
       IF ( Nsegment<1 .AND. Model/=99 ) THEN
