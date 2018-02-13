@@ -7,29 +7,74 @@
 !     gvr_hru_id, gvr_cell_id
 !     ******************************************************************
       INTEGER FUNCTION gsflow_mf2prms()
-      USE GSFMODFLOW, ONLY: Mfq2inch_conv, Gwc_col, Gwc_row
-      USE PRMS_SOILZONE, ONLY: Gw2sm_grav
+      USE GSFMODFLOW, ONLY: Mfq2inch_conv, Gwc_col, Gwc_row, &
+                            Mfl2_to_acre, Mfl_to_inch
+      USE PRMS_SOILZONE, ONLY: Hrucheck, Gvr_hru_id, Gw2sm_grav !, Gw2sm_grav_save
       USE GWFUZFMODULE, ONLY: SEEPOUT
-      USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id
+      USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id, soilzone_gain
+      USE PRMS_MODULE, ONLY: NHRU
+      USE GLOBAL,       ONLY:IUNIT
+      USE GSFMODFLOW, ONLY: 
+      USE PRMS_BASIN, ONLY: HRU_PERV
+      USE GWFBASMODULE, ONLY:DELT
+      USE GWFAWUMODULE, ONLY: NUMIRRWELSP,IRRWELVAR,NUMCELLS,WELLIRRPRMS,  &
+                              NUMIRRSFRSP,IRRSEG,DVRCH,SFRIRRPRMS,UZFROW,  &
+                              IRRROW
       IMPLICIT NONE
 ! Functions
       EXTERNAL print_module
 ! Local Variables
-      INTEGER :: i, icell
+      INTEGER :: i, irow, icol, icell, j, k, ihru
+      integer :: IRWL,NMCL,SGNM
+      DOUBLE PRECISION :: mf_q2prms_inch, firr
 !      CHARACTER(LEN=14) :: MODNAME
 ! Save Variables
       CHARACTER(LEN=80), SAVE :: Version_gsflow_mf2prms
 !***********************************************************************
       gsflow_mf2prms = 0
-
+      mf_q2prms_inch = 0.0
       IF ( Process(:3)=='run' ) THEN
         DO i = 1, Nhrucell
-          icell = Gvr_cell_id(i)
-          IF ( icell/=0 ) Gw2sm_grav(i) = SEEPOUT(Gwc_col(icell), Gwc_row(icell))*Mfq2inch_conv(i)
+          IF ( Hrucheck(Gvr_hru_id(i))==1 ) THEN
+            icell = Gvr_cell_id(i)
+            IF ( icell==0 ) CYCLE
+            irow = Gwc_row(icell)
+            icol = Gwc_col(icell)
+            !Gw2sm_grav_save(i) = Gw2sm_grav(i)
+            Gw2sm_grav(i) = SEEPOUT(icol, irow)*Mfq2inch_conv(i)
+          ENDIF
         ENDDO
+!
+! Add irrigation to HRU from AWU Package
+!
+! From irrigation wells
+!
+        soilzone_gain = 0.0
+        mf_q2prms_inch = DELT*Mfl2_to_acre*Mfl_to_inch
+        IF ( Iunit(66) > 0 ) then
+          DO J = 1, NUMIRRWELSP
+            IRWL = IRRWELVAR(J)
+            NMCL = NUMCELLS(IRWL)
+            DO K = 1, NMCL
+              ihru = UZFROW(K,IRWL)
+              soilzone_gain(ihru) = soilzone_gain(ihru) + WELLIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(IHRU)
+            END DO
+          END DO
+!
+! From segment diversions     
+!
+          DO J = 1, NUMIRRSFRSP
+            SGNM = IRRSEG(J)
+            NMCL = DVRCH(SGNM)
+            DO K=1,NMCL        
+              ihru = IRRROW(K,SGNM)
+              soilzone_gain(ihru) = soilzone_gain(ihru) + SFRIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(ihru)
+            END DO
+          END DO
+        END IF
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2017-11-15 09:58:00Z'
+        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2017-11-03 14:37:00Z'
         CALL print_module(Version_gsflow_mf2prms, 'GSFLOW MODFLOW to PRMS      ', 90)
 !        MODNAME = 'gsflow_mf2prms'
       ENDIF
