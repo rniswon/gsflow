@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2017-11-09 12:28:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2018-02-12 16:35:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -245,7 +245,6 @@
 !      USE GLOBAL, ONLY: IUNIT
 !Warning, modifies Gw_rejected_grav
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
-      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Have_lakes !, Gvr_cell_pct, Print_debug
       USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Have_lakes !, Gvr_cell_pct, Print_debug
       USE GWFBASMODULE, ONLY: VBVL, DELT
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET !, UZOLSFLX, UZFLWT

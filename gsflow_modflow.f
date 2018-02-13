@@ -23,7 +23,7 @@ C     ******************************************************************
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2017-11-09 12:23:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2018-02-12 16:43:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -881,14 +881,11 @@ C7C2C---IF CONVERGENCE CRITERION HAS BEEN MET STOP ITERATING.
           KITER = MXITER
 C
    33     CONTINUE
-C       PRINT 9002, KKPER, KKSTP,KKITER, Maxgziter
       !move above and executed when AFR = TRUE
           IF(IUNIT(62).GT.0 ) CALL GWF2UPWUPDATE(2,Igrid)
+C
  9001 FORMAT ('ERROR in ', A, ' module, arg = run.',
-     &        ' Called from gsfrun.', /, 'Return val =', I2)     
- !9002 FORMAT('Stress:', I3, '; Step:', I6,
- !    &       /, 18X, 'MF iterations:', I9,
- !    &       '; SZ iterations:', I7, /)
+     &        ' Called from MFNWT_RUN.', /, 'Return val =', I2)
 
       END SUBROUTINE MFNWT_RUN
 C
@@ -1168,8 +1165,6 @@ C
      &                       KKSTP, Timestep, KKITER, Maxgziter
       ENDIF
 
- 9001 FORMAT ('ERROR in ', A, ' module, arg = run.',
-     &        ' Called from MFNWT_RUN.', /, 'Return val =', I2)
  9002 FORMAT('Date:', I5, 2('/',I2.2), '; Stress:', I3, '; Step:', I6,
      &       '; Simulation step:', I5, /, 18X, 'MF iterations:', I9,
      &       '; SZ iterations:', I7, /)
@@ -1328,10 +1323,6 @@ C
           PRINT 9005, Stopcount
           WRITE (Logunt, 9005) Stopcount
         ENDIF
-!        IF ( Nszchanging>0 .OR. Stopcount>0 ) THEN
-!          PRINT 9005, Nszchanging, Stopcount
-!          WRITE (Logunt, 9005) Nszchanging, Stopcount
-!        ENDIF
         WRITE (Logunt, 9003) 'MF iteration distribution:', Mfiter_cnt
         WRITE (Logunt, '(/)')
         WRITE (Logunt, 9007) 'SZ computation distribution:', Iter_cnt
@@ -1348,10 +1339,8 @@ C10-----END OF PROGRAM.
         WRITE(*,*) ' Normal termination of simulation'
         WRITE (Logunt, '(A)') 'Normal termination of simulation'
       END IF
-      CLOSE (Logunt)
 
 !gsf  CALL USTOP(' ')
-C
       IF ( Model==2 ) CALL USTOP(' ')
 
  9001 FORMAT (' Number of time steps:', I7,
@@ -1363,10 +1352,9 @@ C
      &        ';  Maximum SZ iterations:', I8, /)
  9003 FORMAT (A, 2X, 10I5, /, 10(28X, 10I5, /))
  9005 FORMAT ('mxsziter reached:', I4, /)
-! 9005 FORMAT (' Steps SZ changing when MF converged:', I5,
-!     &        '; mxsziter reached:', I4, /)
  9007 FORMAT (A, 10I5, /, 10(28X, 10I5, /))
 
+C
       END SUBROUTINE MFNWT_CLEAN
 !
       SUBROUTINE GETNAMFIL(FNAME)
@@ -2003,7 +1991,6 @@ C
      &    Totalarea_mf
       USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Print_debug,
      &    Gvr_cell_id, Gvr_cell_pct
-      USE PRMS_BASIN, ONLY: DNEARZERO
       USE GWFUZFMODULE, ONLY: IUZFBND
       IMPLICIT NONE
       INTRINSIC DBLE
@@ -2136,8 +2123,7 @@ C
 
       DO i = 1, Nhrucell
         ! MF volume to PRMS inches
-        IF ( Gvr_cell_id(i)>0 )
-     +       Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
+        Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
         ! MF discharge to PRMS inches
         ! note DELT may change during simulation at some point, so this will need to go in read_stress
         Mfq2inch_conv(i) = Mfvol2inch_conv(i)*DELT
