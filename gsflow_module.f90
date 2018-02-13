@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 11/0/2017'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 02/09/2018'
       CHARACTER(LEN=8), SAVE :: Process, Arg
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -16,21 +16,23 @@
       INTEGER, SAVE :: Ntemp, Nrain, Nsol, Nsegment, Ndepl, Nobs, Nevap, Ndeplval
       INTEGER, SAVE :: Starttime(6), Endtime(6)
       INTEGER, SAVE :: Start_year, Start_month, Start_day, End_year, End_month, End_day
-      INTEGER, SAVE :: Transp_flag, Sroff_flag, Solrad_flag, Et_flag, Water_use_flag
+      INTEGER, SAVE :: Transp_flag, Sroff_flag, Solrad_flag, Et_flag
       INTEGER, SAVE :: Climate_temp_flag, Climate_precip_flag, Climate_potet_flag, Climate_transp_flag
       INTEGER, SAVE :: Lake_route_flag, Nratetbl, Strmflow_flag, Stream_order_flag
       INTEGER, SAVE :: Temp_flag, Precip_flag, Climate_hru_flag, Climate_swrad_flag
       INTEGER, SAVE :: Precip_combined_flag, Temp_combined_flag
       INTEGER, SAVE :: Inputerror_flag, Timestep
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
+      INTEGER, SAVE :: Stream_temp_flag, Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF
       INTEGER, SAVE :: Grid_flag, Logunt, First_timestep
-      INTEGER, SAVE :: Have_lakes, Prms_warmup, MODSIM_flag
       INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag, Number_timesteps
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
-      INTEGER, SAVE :: Dynamic_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Kkiter
+      INTEGER, SAVE :: Dynamic_flag, Water_use_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Prms_warmup
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
+      INTEGER, SAVE :: mf_timestep, startday, endday, mf_nowtime
       CHARACTER(LEN=80), SAVE :: Version_read_control_file, Version_read_parameter_file
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
+      INTEGER, SAVE :: Kkiter, Have_lakes, MODSIM_flag
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Lake_In_Out_vol(:)
 !   Declared Parameters
       INTEGER, SAVE :: Mxsziter
@@ -54,7 +56,6 @@
       INTEGER, SAVE :: Dyn_snareathresh_flag, Dyn_transp_on_flag
       INTEGER, SAVE :: Dyn_sro2dprst_perv_flag, Dyn_sro2dprst_imperv_flag, Dyn_fallfrost_flag, Dyn_springfrost_flag
       INTEGER, SAVE :: Gwr_transferON_OFF, External_transferON_OFF, Segment_transferON_OFF, Lake_transferON_OFF
-      INTEGER, SAVE :: Stream_temp_flag, Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF
       END MODULE PRMS_MODULE
 
 !***********************************************************************
