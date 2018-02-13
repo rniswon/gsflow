@@ -143,7 +143,7 @@ C4------OPEN NAME FILE.
 C
 C5------Get current date and time, assign to IBDT, and write to screen
       CALL DATE_AND_TIME(VALUES=IBDT)
-      IF ( Model==2 ) THEN
+      IF ( Model==2 .OR. Model==12 ) THEN
         WRITE(*,2) (IBDT(I),I=1,3),(IBDT(I),I=5,7)
         WRITE (Logunt, 2) (IBDT(I),I=1,3),(IBDT(I),I=5,7)
       ENDIF

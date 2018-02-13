@@ -7,6 +7,7 @@
       
       USE PRMS_MODULE
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_CLEAN, MFNWT_TIMEADVANCE, MFNWT_OCBUDGET
+      USE GWFSFRMODULE, ONLY: NSS
       IMPLICIT NONE
 ! Arguments
       INTEGER, INTENT(IN) :: Process_mode, Idivert(Nsegshold)
@@ -44,6 +45,12 @@
       Process_flag = Process_mode !(0=run, 1=declare, 2=init, 3=clean, 4=setdims)
 
       IF ( Process_flag==0 ) THEN
+        IF ( Model==12 .AND. .NOT. MS_GSF_converge ) THEN
+! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST MODSIM-MODFLOW ITERATION
+          CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
+          CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)  !SOLVE GW SW EQUATIONS FOR MODSIM-GSFLOW ITERATION
+          RETURN
+        ENDIF
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
@@ -56,7 +63,8 @@
         ENDIF
 
         ! GSFLOW, MODSIM-GSFLOW
-        IF ( GSFLOW_flag==1 ) THEN
+        IF ( GSFLOW_flag==1 .OR. Model==12 ) THEN
+          IF ( Model==12 ) Nsegshold = NSS
           call_modules = gsfdecl()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
@@ -444,20 +452,12 @@
       ! Maximum values are no longer limits
 ! Local Variables
       INTEGER :: idim, iret, j
-      INTEGER :: test, mf_timestep, startday, endday, mf_nowtime
+      INTEGER :: test
 !***********************************************************************
       Inputerror_flag = 0
 
       CALL PRMS_open_output_file(Logunt, 'gsflow.log', 'gsflow.log', 0, iret)
       IF ( iret/=0 ) STOP
-
-      IF ( Print_debug>-2 ) PRINT 3
-      WRITE ( Logunt, 3 )
-    3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
-     &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 02/13/2018', //, &
-     &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
-     &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
       CALL read_control_file()
       CALL get_control_arguments()
@@ -469,7 +469,13 @@
       ! 9=snowcomp; 13=cascade; 14=subbasin tree
       IF ( control_integer(Print_debug, 'print_debug')/=0 ) Print_debug = 0
 
-      IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
+      IF ( Print_debug>-2 ) PRINT 3
+      WRITE ( Logunt, 3 )
+    3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
+     &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
+     &        22X, 'Version 1.2 MODSIM 02/13/2018', //, &
+     &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
+     &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
@@ -554,7 +560,7 @@
       IF ( control_string(mappingFileName, 'mappingFileName')/=0 ) CALL read_error(5, 'mappingFileName')
       IF ( control_string(xyFileName, 'xyFileName')/=0 ) CALL read_error(5, 'xyFileName')
 
-      IF ( Model==2 ) THEN
+      IF ( Model==2 .OR. Model==12 ) THEN ! MODFLOW or MODSIM-MODFLOW modes
 ! for MODFLOW-only simulations
         Kper_mfo = 1
         mf_timestep = 1
@@ -564,6 +570,7 @@
         CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
         PRINT *, ' '
         WRITE (Logunt, '(1X)')
+        IF ( Model==12 ) RETURN
         DO WHILE ( Kper_mfo<=Nper )
           IF ( mf_nowtime>endday ) EXIT
           CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
@@ -580,7 +587,9 @@
         STOP
       ENDIF
 
-      IF ( Model==12 .OR. Model==13 ) RETURN ! MODSIM or MODSIM-MODFLOW modes
+      IF ( Model==13 ) RETURN ! MODSIM
+
+      IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
 
       CALL setup_dimens()
 

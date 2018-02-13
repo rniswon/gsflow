@@ -29,6 +29,7 @@
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
       INTEGER, SAVE :: Dynamic_flag, Water_use_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Prms_warmup
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
+      INTEGER, SAVE :: mf_timestep, startday, endday, mf_nowtime
       CHARACTER(LEN=80), SAVE :: Version_read_control_file, Version_read_parameter_file
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
       INTEGER, SAVE :: Kkiter, Have_lakes, MODSIM_flag
