@@ -69,7 +69,7 @@ C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
       USE GWFUZFMODULE, ONLY: Version_uzf
-      USE GWFSFRMODULE, ONLY: Version_sfr
+      USE GWFSFRMODULE, ONLY: Version_sfr, NSS
       USE GWFLAKMODULE, ONLY: Version_lak, NLAKES
 !gsf  USE PCGN
       IMPLICIT NONE
@@ -77,7 +77,7 @@ C1------USE package modules.
       INCLUDE 'openspec.inc'
 ! Arguments
       LOGICAL, INTENT(IN) :: AFR
-      INTEGER, INTENT(IN) :: Nsegshold
+      INTEGER, INTENT(INOUT) :: Nsegshold
       INTEGER, INTENT(IN) :: Idivert(Nsegshold)
       INTEGER, INTENT(INOUT) :: Nlakeshold
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
@@ -302,9 +302,12 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
       IF ( IUNIT(62).GT.0 ) THEN
         IF(IUNIT(21).GT.0) CALL GWF2HFB7UPW(IGRID)
       END IF
-      IF(IUNIT(44).GT.0) CALL GWF2SFR7AR(IUNIT(44),IUNIT(1),IUNIT(23),
+      IF(IUNIT(44).GT.0) THEN
+        CALL GWF2SFR7AR(IUNIT(44),IUNIT(1),IUNIT(23),
      1                           IUNIT(37),IUNIT(15),NSOL,IOUTS,
      2                           IUNIT(62),IUNIT(55),IGRID)
+        Nsegshold = NSS
+      ENDIF
       IF(IUNIT(55).GT.0) CALL GWF2UZF1AR(IUNIT(55),IUNIT(1),
      1                                   IUNIT(23),IUNIT(37),
      2                                   IUNIT(63),IGRID)
@@ -440,7 +443,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       IF ( ISSFLG(1).EQ.1 ) DELT = 1.0/Mft_to_days
 C
       KKPER = KPER
-      IF ( Model==2 ) THEN
+      IF ( Model==2 .OR. Model==12 ) THEN
         Kkper_new = GET_KPER()
         Kper_mfo = Kkper_new
       ENDIF
@@ -512,7 +515,7 @@ C7------SIMULATE EACH STRESS PERIOD.
         ELSE
           KSTP = 0
         END IF
-        CALL MFNWT_RDSTRESS(KPER) ! second time in run, read restart
+        CALL MFNWT_RDSTRESS(KPER) ! second time in run, read stress period
         IF ( ISSFLG(KKPER).EQ.1 ) STOP
      &       'ERROR, cannot run steady state after first stress period.'
         IF ( ISSFLG(1).EQ.1 ) Delt_save = DELT
@@ -591,7 +594,7 @@ C
      2                                       IGRID,IUNIT(54))  !SWR - JDH
           IF(IUNIT(66).GT.0 .AND. ISSFLG(KPER)==0 ) 
      1                            CALL GWF2AWU7AD(IUNIT(66),KKPER)
-          IF ( Model.EQ.2 ) THEN
+          IF ( Model.EQ.2 .OR. Model==12 ) THEN
 C
 C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
             iprt = 0 ! rsr, using FORMAT 26 is not done because of this statement

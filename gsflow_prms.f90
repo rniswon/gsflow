@@ -560,7 +560,7 @@
       IF ( control_string(mappingFileName, 'mappingFileName')/=0 ) CALL read_error(5, 'mappingFileName')
       IF ( control_string(xyFileName, 'xyFileName')/=0 ) CALL read_error(5, 'xyFileName')
 
-      IF ( Model==2 .OR. Model==12 ) THEN ! MODFLOW or MODSIM-MODFLOW modes
+      IF ( Model==2 .OR. Model==12 ) THEN ! MODFLOW-only or MODSIM-MODFLOW
 ! for MODFLOW-only simulations
         Kper_mfo = 1
         mf_timestep = 1
@@ -585,9 +585,9 @@
         ENDDO
         CALL MFNWT_CLEAN()
         STOP
+      ELSEIF ( Model==13 ) THEN ! MODSIM
+        RETURN
       ENDIF
-
-      IF ( Model==13 ) RETURN ! MODSIM
 
       IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
 
