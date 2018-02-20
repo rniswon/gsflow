@@ -9,7 +9,6 @@ LIBOBJS = \
         gwf2bas7_NWT.o \
         pcg7_NWT.o \
         sip7_NWT.o \
-	mhc7.o \
         de47_NWT.o \
         gwf2bcf7.o \
         gwf2lpf7.o \
@@ -79,9 +78,6 @@ NWT1_gmres.o: NWT1_gmres.f90
 
 NWT1_ilupc_mod.o: NWT1_ilupc_mod.f90
 	$(FC) $(FFLAGS) -c NWT1_ilupc_mod.f90
-
-mhc7.o: mhc7.f
-	$(FC) $(FFLAGS) -c mhc7.f
 
 NWT1_module.o: NWT1_module.f
 	$(FC) $(FFLAGS) -c NWT1_module.f
