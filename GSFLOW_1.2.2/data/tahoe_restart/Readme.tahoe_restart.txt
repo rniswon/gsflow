@@ -19,7 +19,7 @@ January 30, 1984.
 
 Output for the series of simulations is provided in the 'output-test' sub-
 directory. Note that an executable program located in the 'bin' directory named 
-'CSV_merge_Tahoe.exe' merges all of the csv output files for the restart 
+'CSV_merge.exe' merges all of the csv output files for the restart 
 simulations into a single output file using information from the 'names.dat' 
 file provided in the 'windows' subdirectory. Also note that the 'gsflow.log' 
 file provided in the directory is for the 'continuous' simulation.

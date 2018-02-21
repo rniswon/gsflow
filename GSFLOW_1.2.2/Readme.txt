@@ -68,7 +68,7 @@ directory structure will be created in the installation directory:
                             software.
    |    |--src           
    |        |--gsflow           ; Source code for GSFLOW Modules
-   |        |--mms              ; Source code for MMS software
+   |        |--mmf              ; Source code for MMF software
    |        |--modflow          ; Source code for MODFLOW-2005 and MODFLOW-NWT 
                                   Packages
    |        |--prms             ; Source code for PRMS Modules
@@ -153,6 +153,6 @@ Visual Fortran and C++ compilers.  Although executable versions of the program
 are provided, the source code also is provided in the GSFLOW_1.2.2\src 
 directory so that GSFLOW can be recompiled if necessary.  However, the USGS
 cannot provide assistance to those compiling GSFLOW. In general, the 
-requirements are a Fortran compiler, a compatible compiler, and the knowledge
+requirements are a Fortran compiler, a compatible C compiler, and the knowledge
 of using the compilers. Makefiles are included in the GSFLOW_1.2.2\src 
 directories as an example for compiling GSFLOW.
