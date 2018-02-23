@@ -78,9 +78,6 @@
     <ClInclude Include="..\..\..\mmf.git\protos.h" />
     <ClInclude Include="..\..\..\mmf.git\structs.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\mmf.git\Makefile" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9E8144B7-970A-436B-8BEC-AD857C3D7D89}</ProjectGuid>
     <RootNamespace>mmf</RootNamespace>

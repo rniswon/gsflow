@@ -186,9 +186,4 @@
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\mmf.git\Makefile">
-      <Filter>Source Files</Filter>
-    </None>
-  </ItemGroup>
 </Project>
