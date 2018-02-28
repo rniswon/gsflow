@@ -527,7 +527,7 @@ C7------SIMULATE EACH STRESS PERIOD.
 C
 C7C-----SIMULATE EACH TIME STEP.
 !gsf    DO 90 KSTP = 1, NSTP(KPER) ! maybe a problem, need loop for MFNWT and probably MODSIM
-          KSTP = KSTP + 1
+          IF ( AFR ) KSTP = KSTP + 1
           KKSTP = KSTP
           IF ( IUNIT(63).GT.0 )itreal = 0
 C
@@ -536,19 +536,19 @@ C--(5/6/13) Based on a conversation with Rich, everything in the
 C  following if statement should be moved to it's own subroutine.
 C  For now, just to move forward, I'm stuffing it into an IF statement.
           IF(AFR) THEN
-          IF(IUNIT(62).GT.0 ) CALL GWF2UPWUPDATE(1,Igrid)
-          CALL GWF2BAS7AD(KKPER,KKSTP,IGRID)
-          IF(IUNIT(62).GT.0) CALL GWF2UPW1AD(IGRID)
-          IF(IUNIT(20).GT.0) CALL GWF2CHD7AD(KKPER,IGRID)
-          IF(IUNIT(1).GT.0) CALL GWF2BCF7AD(KKPER,IGRID)
-          IF(IUNIT(17).GT.0) CALL GWF2RES7AD(KKSTP,KKPER,IGRID)
-          IF(IUNIT(23).GT.0) CALL GWF2LPF7AD(KKPER,IGRID)
-          IF(IUNIT(37).GT.0) CALL GWF2HUF7AD(KKPER,IGRID)
-          IF(IUNIT(16).GT.0) CALL GWF2FHB7AD(IGRID)
-          IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
-     1                                           IGRID)
-          IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
-          IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(22),IGRID)  !rgn 6/12/12
+            IF(IUNIT(62).GT.0 ) CALL GWF2UPWUPDATE(1,Igrid)
+            CALL GWF2BAS7AD(KKPER,KKSTP,IGRID)
+            IF(IUNIT(62).GT.0) CALL GWF2UPW1AD(IGRID)
+            IF(IUNIT(20).GT.0) CALL GWF2CHD7AD(KKPER,IGRID)
+            IF(IUNIT(1).GT.0) CALL GWF2BCF7AD(KKPER,IGRID)
+            IF(IUNIT(17).GT.0) CALL GWF2RES7AD(KKSTP,KKPER,IGRID)
+            IF(IUNIT(23).GT.0) CALL GWF2LPF7AD(KKPER,IGRID)
+            IF(IUNIT(37).GT.0) CALL GWF2HUF7AD(KKPER,IGRID)
+            IF(IUNIT(16).GT.0) CALL GWF2FHB7AD(IGRID)
+            IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
+     1                                             IGRID)
+            IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
+            IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(22),IGRID)  !rgn 6/12/12
           END IF
 
 C--EDM----RGN THIS IS ALL DONE INSIDE SFR NOW
