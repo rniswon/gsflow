@@ -28,13 +28,14 @@
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow
       INTEGER, EXTERNAL :: srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, write_climate_hru
-      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, potet_pm_sta
-      EXTERNAL :: module_doc, nsub_summary, nsegment_summary, basin_summary
+      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, muskingum_lake, numchars
+      INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta !, setup
+      INTEGER, EXTERNAL :: stream_temp
+      EXTERNAL :: module_error, PRMS_open_output_file
+      EXTERNAL :: call_modules_restart, water_balance, basin_summary, nsegment_summary
+      EXTERNAL :: prms_summary, nhru_summary, module_doc, convert_params, read_error, nsub_summary
       INTEGER, EXTERNAL :: gsflow_prms2modsim, gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
-      INTEGER, EXTERNAL :: muskingum_lake, water_use_read, dynamic_param_read, stream_temp, numchars !, setup
-      EXTERNAL :: module_error, read_error, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, water_balance, nhru_summary, setdims
-      EXTERNAL :: prms_summary, convert_params, check_parameters, precip_temp_grid
+      EXTERNAL :: setdims, check_parameters, precip_temp_grid
       EXTERNAL :: read_control_file, read_parameter_file_dimens, GSFLOW_decl, GSFLOW_init
 ! Local Variables
       INTEGER :: i, iret, nc, call_modules
@@ -283,10 +284,7 @@
           ENDIF
           IF ( call_modules/=0 ) CALL module_error(Strmflow_module, Arg, call_modules)
 
-          IF ( Stream_temp_flag>0 ) THEN
-            call_modules = stream_temp()
-            IF ( call_modules/=0 ) CALL module_error('stream_temp', Arg, call_modules)
-          ENDIF
+          IF ( Stream_temp_flag==1 ) call_modules = stream_temp()
 
           IF ( Print_debug>-2 ) THEN
             call_modules = basin_sum()
@@ -1127,12 +1125,12 @@
       INTEGER, EXTERNAL :: potet_pan, potet_jh, potet_hamon, potet_hs, potet_pt, potet_pm
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow, srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, strmflow_in_out
-      INTEGER, EXTERNAL :: write_climate_hru, muskingum, potet_pm_sta
-      INTEGER, EXTERNAL :: stream_temp, muskingum_lake
-      INTEGER, EXTERNAL :: dynamic_param_read, water_use_read !, setup
+      INTEGER, EXTERNAL :: write_climate_hru, muskingum, muskingum_lake
+      INTEGER, EXTERNAL :: stream_temp
+      EXTERNAL :: nhru_summary, prms_summary, water_balance, nsub_summary, basin_summary, nsegment_summary
+      INTEGER, EXTERNAL :: dynamic_param_read, water_use_read, potet_pm_sta !, setup
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
-      EXTERNAL :: nhru_summary, water_balance, nsub_summary, basin_summary, nsegment_summary
-      EXTERNAL :: precip_temp_grid, prms_summary
+      EXTERNAL :: precip_temp_grid
 ! Local variable
       INTEGER :: test
 !**********************************************************************
@@ -1276,29 +1274,29 @@
 
       IF ( Solrad_module(:17)=='ddsolrad_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ddsolrad_hru_prms to ddsolrad'
-        solrad_module = 'ddsolrad'
+        Solrad_module = 'ddsolrad'
       ELSEIF ( Solrad_module(:17)=='ccsolrad_hru_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_hru_prms to ccsolrad'
-        solrad_module = 'ccsolrad'
+        Solrad_module = 'ccsolrad'
       ELSEIF ( Solrad_module(:13)=='ddsolrad_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ddsolrad_prms to ddsolrad'
-        solrad_module = 'ddsolrad'
+        Solrad_module = 'ddsolrad'
       ELSEIF ( Solrad_module(:13)=='ccsolrad_prms' ) THEN
         PRINT *, 'WARNING, deprecated solrad_module value, change ccsolrad_prms to ccsolrad'
-        solrad_module = 'ccsolrad'
+        Solrad_module = 'ccsolrad'
       ENDIF
 
       IF ( Srunoff_module(:18)=='srunoff_carea_prms' ) THEN
         PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_carea_prms to srunoff_carea'
-        srunoff_module = 'srunoff_carea'
+        Srunoff_module = 'srunoff_carea'
       ELSEIF ( Srunoff_module(:18)=='srunoff_smidx_prms' ) THEN
         PRINT *, 'WARNING, deprecated srunoff_module value, change srunoff_smidx_prms to srunoff_smidx'
-        srunoff_module = 'srunoff_smidx'
+        Srunoff_module = 'srunoff_smidx'
       ENDIF
 
       IF ( Strmflow_module(:13)=='strmflow_prms' ) THEN
         PRINT *, 'WARNING, deprecated strmflow_module value, change strmflow_prms to strmflow'
-        strmflow_module = 'strmflow'
+        Strmflow_module = 'strmflow'
       ELSEIF ( Strmflow_module(:13)=='strmflow_lake' ) THEN
         PRINT *, 'ERROR, module strmflow_lake not available, use a different strmflow_module, such as muskingum_lake'
         ierr = 1
@@ -1358,20 +1356,20 @@
       INTRINSIC TRIM
       ! Local Variables
       INTEGER :: nhru_test, dprst_test, nsegment_test, temp_test, et_test, ierr
-      INTEGER :: cascade_test, cascdgw_test, nhrucell_test, nlake_test
+      INTEGER :: cascade_test, cascdgw_test, nhrucell_test, nlake_test, transp_test
       CHARACTER(LEN=MAXCONTROL_LENGTH) :: model_test
       CHARACTER(LEN=11) :: module_name
 !***********************************************************************
       IF ( In_out==0 ) THEN
         WRITE ( Restart_outunit ) MODNAME
         WRITE ( Restart_outunit ) Timestep, Nhru, Dprst_flag, Nsegment, Temp_flag, Et_flag, &
-     &          Cascade_flag, Cascadegw_flag, Nhrucell, Nlake, Model_mode
+     &          Cascade_flag, Cascadegw_flag, Nhrucell, Nlake, Transp_flag, Model_mode
       ELSE
         ierr = 0
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
         READ ( Restart_inunit ) Timestep, nhru_test, dprst_test, nsegment_test, temp_test, et_test, &
-     &         cascade_test, cascdgw_test, nhrucell_test, nlake_test, model_test
+     &         cascade_test, cascdgw_test, nhrucell_test, nlake_test, transp_test, model_test
         IF ( TRIM(Model_mode)/=TRIM(model_test) ) THEN
           PRINT *, 'ERROR, Initial Conditions File saved for model_mode=', model_test
           PRINT *, '       Current model has model_mode=', Model_mode, ' they must be equal'
@@ -1396,27 +1394,23 @@
           ierr = 1
         ENDIF
         CALL check_restart_dimen('nsegment', nsegment_test, Nsegment, ierr)
+        ! Temp_flag (1=temp_1sta; 2=temp_laps; 3=temp_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
         IF ( Temp_flag/=temp_test ) THEN
-          PRINT *, 'ERROR, Initial Conditions File saved for model with different temperature'
-          PRINT *, '       module than current model, they must use the same module'
-          ierr = 1
+          IF ( Temp_flag<4 .OR. temp_test<4 ) THEN
+            PRINT *, 'ERROR, Initial Conditions File saved for model with different temperature module'
+            PRINT *, '       than current model, cannot switch to/from temp_1sta, temp_laps, or temp_dist2'
+            ierr = 1
+          ENDIF
         ENDIF
         IF ( Et_flag/=et_test ) THEN
-          IF ( Et_flag==4 ) THEN
-            PRINT *, 'ERROR, Initial Conditions File saved for model using potet_pan module'
-            PRINT *, '       current model also must use potet_pan'
+          IF ( Et_flag==4 .OR. et_test==4 ) THEN
+            PRINT *, 'ERROR, Cannot switch to/from potet_pan module for restart simulations'
             ierr = 1
-          ELSEIF ( Et_flag==6 ) THEN
-            PRINT *, 'ERROR, Initial Conditions File saved for model using potet_pm_sta module'
-            PRINT *, '       current model also must use potet_pm_sta'
-            ierr = 1
-          ELSEIF ( Et_flag==5 ) THEN
-            PRINT *, 'ERROR, Initial Conditions File saved for model using potet_pt module'
-            PRINT *, '       current model also must use potet_pt'
-            ierr = 1
-          ELSEIF ( Et_flag==11 ) THEN
-            PRINT *, 'ERROR, Initial Conditions File saved for model using potet_pm module'
-            PRINT *, '       current model also must use potet_pm'
+          ENDIF
+        ENDIF
+        IF ( Transp_flag/=transp_test ) THEN
+          IF ( Transp_flag==1 .OR. transp_test==1 ) THEN
+            PRINT *, 'ERROR, Cannot switch to/from transp_tindex module for restart simulations'
             ierr = 1
           ENDIF
         ENDIF

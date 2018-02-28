@@ -779,29 +779,11 @@
         WRITE ( Restart_outunit ) Total_pump, Total_pump_cfs, Unsat_S, Sat_S, &
      &          Sat_dS, StreamExchng2Sat_Q, Stream2Unsat_Q, Stream_inflow, &
      &          Basin_gw2sm, LakeExchng2Sat_Q, Lake2Unsat_Q
-        WRITE ( Restart_outunit ) Gw2sm
-        WRITE ( Restart_outunit ) Actet_gw
-        WRITE ( Restart_outunit ) Actet_tot_gwsz
-        WRITE ( Restart_outunit ) Streamflow_sfr
-!        WRITE ( Restart_outunit ) Uzf_infil_map
-!        WRITE ( Restart_outunit ) Sat_recharge
-!        WRITE ( Restart_outunit ) Mfoutflow_to_gvr
-        WRITE ( Restart_outunit ) Reach_cfs
-        WRITE ( Restart_outunit ) Reach_wse
       ELSE
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
         READ ( Restart_inunit ) Total_pump, Total_pump_cfs, Unsat_S, Sat_S, &
      &         Sat_dS, StreamExchng2Sat_Q, Stream2Unsat_Q, Stream_inflow, &
      &         Basin_gw2sm, LakeExchng2Sat_Q, Lake2Unsat_Q
-        READ ( Restart_inunit ) Gw2sm
-        READ ( Restart_inunit ) Actet_gw
-        READ ( Restart_inunit ) Actet_tot_gwsz
-        READ ( Restart_inunit ) Streamflow_sfr
-!        READ ( Restart_inunit ) Uzf_infil_map
-!        READ ( Restart_inunit ) Sat_recharge
-!        READ ( Restart_inunit ) Mfoutflow_to_gvr
-        READ ( Restart_inunit ) Reach_cfs
-        READ ( Restart_inunit ) Reach_wse
       ENDIF
       END SUBROUTINE gsflow_budget_restart
