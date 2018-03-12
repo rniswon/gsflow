@@ -64,7 +64,7 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GSFMODFLOW
       USE PRMS_MODULE, ONLY: Model, Mxsziter, GSFLOW_flag, Have_lakes,
-     &    EQULS, Logunt, Init_vars_from_file, Kper_mfo
+     &    EQULS, Logunt, Init_vars_from_file, Kper_mfo, Print_debug
 C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
@@ -105,7 +105,7 @@ C
      &           'gwt ', 'FHB ', 'RES ', 'STR ', 'IBS ', 'CHD ', 'HFB6',  ! 21
      &           'LAK ', 'LPF ', 'DIS ', '    ', 'PVAL', '    ', 'HOB ',  ! 28
      &           '    ', '    ', 'ZONE', 'MULT', 'DROB', 'RVOB', 'GBOB',  ! 35
-     &           'STOB', 'HUF2', 'CHOB', 'ETS ', 'DRT ', '    ', 'GMG ',  ! 42
+     &           'STOB', 'HUF2', 'CHOB', 'ETS ', 'DRT ', '    ', 'gmg ',  ! 42
      &           'HYD ', 'SFR ', '    ', 'GAGE', 'LVDA', '    ', 'LMT6',  ! 49
      &           'MNW2', 'MNWI', 'MNW1', 'KDEP', 'SUB ', 'UZF ', 'gwm ',  ! 56
      &           'SWT ', 'cfp ', 'pcgn', '    ', 'fmp ', 'UPW ', 'NWT ',  ! 63
@@ -391,7 +391,8 @@ C
 C7------SIMULATE EACH STRESS PERIOD.
       CALL print_module(Version_gsflow_modflow,
      &                  'GSFLOW MODFLOW main         ', 77)
-      PRINT '(A,/A,/A)', EQULS, 'MODFLOW Packages', EQULS
+      IF ( Print_debug>-1 )
+     &     PRINT '(A,/A,/A)', EQULS, 'MODFLOW Packages', EQULS
       WRITE ( Logunt, '(A,/A,/A)') EQULS, 'MODFLOW Packages', EQULS
       CALL print_module(Version_uzf,
      &                  'UZF-NWT Package             ', 77)
@@ -400,10 +401,8 @@ C7------SIMULATE EACH STRESS PERIOD.
       IF ( Have_lakes==1 )
      &     CALL print_module(Version_lak,
      &                      'LAK-NWT Package             ', 77)
-      PRINT '(A,/)', EQULS
-      WRITE ( Logunt, '(A,/)') EQULS
 
-      WRITE(*,490)'Using NAME file: ', FNAME(1:NC)
+      WRITE ( Logunt, '(A,/)') EQULS
       WRITE( Logunt, 490 )'Using NAME file: ', FNAME(1:NC)
 
       IF ( IUNIT(63)>0 ) solver = 'NWT'
@@ -412,7 +411,11 @@ C7------SIMULATE EACH STRESS PERIOD.
       IF ( IUNIT(9)>0 ) solver = 'SIP'
       IF ( IUNIT(10)>0 ) solver = 'DE47'
 !      IF ( IUNIT(42)>0 ) solver = 'GMG'
-      PRINT 14, solver
+      IF ( Print_debug>-1 ) THEN
+        PRINT '(A,/)', EQULS
+        WRITE(*,490)'Using NAME file: ', FNAME(1:NC)
+        PRINT 14, solver
+      ENDIF
       WRITE ( Logunt, 14 ) solver
    14 FORMAT (/, 'Using Solver Package: ', A)
       Sziters = 0
@@ -2081,7 +2084,8 @@ C
      &    Mfl2_to_acre, Mfl3_to_ft3, Mfl_to_inch, Sfr_conv,
      &    Acre_inches_to_mfl3, Inch_to_mfl_t, Mfl3t_to_cfs,
      &    Mfvol2inch_conv, Gvr2cell_conv, Mfq2inch_conv
-      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Model, Gvr_cell_pct
+      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Gvr_cell_pct,
+     &    Gsflow_flag
       USE PRMS_BASIN, ONLY: FT2_PER_ACRE
       IMPLICIT NONE
 ! Local Variables
@@ -2123,17 +2127,19 @@ C
 ! inch over basin (acres) conversion to modflow length cubed
       Acre_inches_to_mfl3 = FT2_PER_ACRE/(Mfl3_to_ft3*12.0D0)
 
-      IF ( Model==2 ) RETURN
+      IF ( Gsflow_flag==1 ) THEN
 
-      DO i = 1, Nhrucell
-        ! MF volume to PRMS inches
-        Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
-        ! MF discharge to PRMS inches
-        ! note DELT may change during simulation at some point, so this will need to go in read_stress
-        Mfq2inch_conv(i) = Mfvol2inch_conv(i)*DELT
-        ! PRMS inches in a gravity-flow reservoir to MF rate
-        Gvr2cell_conv(i) = Gvr_cell_pct(i)*Inch_to_mfl_t
-      ENDDO
+        DO i = 1, Nhrucell
+          ! MF volume to PRMS inches
+          Mfvol2inch_conv(i) = Mfl_to_inch/Cellarea(Gvr_cell_id(i))
+          ! MF discharge to PRMS inches
+          ! note DELT may change during simulation at some point, so this will need to go in read_stress
+          Mfq2inch_conv(i) = Mfvol2inch_conv(i)*DELT
+          ! PRMS inches in a gravity-flow reservoir to MF rate
+          Gvr2cell_conv(i) = Gvr_cell_pct(i)*Inch_to_mfl_t
+        ENDDO
+
+      ENDIF
 
  9001 FORMAT (' Units are undefined. LENUNI and ITMUNI must be > 0', /,
      +        ' Lenuni =', I4, 'Itmuni =', I4)

@@ -9,12 +9,10 @@
       INTEGER FUNCTION gsflow_mf2prms()
       USE GSFMODFLOW, ONLY: Mfq2inch_conv, Gwc_col, Gwc_row, &
                             Mfl2_to_acre, Mfl_to_inch
-      USE PRMS_SOILZONE, ONLY: Hrucheck, Gvr_hru_id, Gw2sm_grav !, Gw2sm_grav_save
+      USE PRMS_SOILZONE, ONLY: Hrucheck, Gvr_hru_id, Gw2sm_grav
       USE GWFUZFMODULE, ONLY: SEEPOUT
       USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id, soilzone_gain
-      USE PRMS_MODULE, ONLY: NHRU
       USE GLOBAL,       ONLY:IUNIT
-      USE GSFMODFLOW, ONLY: 
       USE PRMS_BASIN, ONLY: HRU_PERV
       USE GWFBASMODULE, ONLY:DELT
       USE GWFAWUMODULE, ONLY: NUMIRRWELSP,IRRWELVAR,NUMCELLS,WELLIRRPRMS,  &
@@ -24,7 +22,7 @@
 ! Functions
       EXTERNAL print_module
 ! Local Variables
-      INTEGER :: i, irow, icol, icell, j, k, ihru
+      INTEGER :: i, j, k, ihru
       integer :: IRWL,NMCL,SGNM
       DOUBLE PRECISION :: mf_q2prms_inch, firr
 !      CHARACTER(LEN=14) :: MODNAME
@@ -35,14 +33,8 @@
       mf_q2prms_inch = 0.0
       IF ( Process(:3)=='run' ) THEN
         DO i = 1, Nhrucell
-          IF ( Hrucheck(Gvr_hru_id(i))==1 ) THEN
-            icell = Gvr_cell_id(i)
-            IF ( icell==0 ) CYCLE
-            irow = Gwc_row(icell)
-            icol = Gwc_col(icell)
-            !Gw2sm_grav_save(i) = Gw2sm_grav(i)
-            Gw2sm_grav(i) = SEEPOUT(icol, irow)*Mfq2inch_conv(i)
-          ENDIF
+          IF ( Hrucheck(Gvr_hru_id(i))==1 ) &
+     &         Gw2sm_grav(i) = SEEPOUT(Gwc_col(Gvr_cell_id(i)), Gwc_row(Gvr_cell_id(i)))*Mfq2inch_conv(i)
         ENDDO
 !
 ! Add irrigation to HRU from AWU Package
@@ -74,7 +66,7 @@
         END IF
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2017-11-03 14:37:00Z'
+        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2018-03-02 10:18:00Z'
         CALL print_module(Version_gsflow_mf2prms, 'GSFLOW MODFLOW to PRMS      ', 90)
 !        MODNAME = 'gsflow_mf2prms'
       ENDIF

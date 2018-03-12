@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = 'gsflow_budget.f90 2018-02-12 16:35:00Z'
+      Version_gsflow_budget = 'gsflow_budget.f90 2018-03-02 10:40:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -198,11 +198,11 @@
         STOP
       ENDIF
 
+      Reach_cfs = 0.0 ! dimension NSTRM
+      Reach_wse = 0.0 ! dimension NSTRM
+      Total_pump = 0.0D0
+      Total_pump_cfs = 0.0D0
       IF ( Init_vars_from_file==0 ) THEN
-        Reach_cfs = 0.0 ! dimension NSTRM
-        Reach_wse = 0.0 ! dimension NSTRM
-        Total_pump = 0.0D0
-        Total_pump_cfs = 0.0D0
         Unsat_S = UZTSRAT(6)
         IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()
         IF ( IUNIT(23)>0 ) CALL MODFLOW_GET_STORAGE_LPF()
@@ -214,14 +214,14 @@
         Lake2Unsat_Q = 0.0D0
         Stream_inflow = 0.0D0
         Basin_gw2sm = 0.0D0
-!        Uzf_infil_map = 0.0 ! dimension nhru
-!        Sat_recharge = 0.0 ! dimension nhru
-!        Mfoutflow_to_gvr = 0.0 ! dimension nhru
-        Gw2sm = 0.0 ! dimension nhru
-        Actet_gw = 0.0 ! dimension nhru
-        Actet_tot_gwsz = 0.0 ! dimension nhru
-        Streamflow_sfr = 0.0 ! dimension nsegment
       ENDIF
+!      Uzf_infil_map = 0.0 ! dimension nhru
+!      Sat_recharge = 0.0 ! dimension nhru
+!      Mfoutflow_to_gvr = 0.0 ! dimension nhru
+      Gw2sm = 0.0 ! dimension nhru
+      Actet_gw = 0.0 ! dimension nhru
+      Actet_tot_gwsz = 0.0 ! dimension nhru
+      Streamflow_sfr = 0.0 ! dimension nsegment
 
 !  Set the volume budget indicies to -1 anytime "init" is called.
 !  This will make "run" figure out the vbnm order.
