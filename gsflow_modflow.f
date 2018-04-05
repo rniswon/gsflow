@@ -78,7 +78,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2018-03-27 10:05:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2018-04-05 11:23:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
@@ -1385,7 +1385,7 @@ C----------READ USING PACKAGE READ AND PREPARE MODULES.
      1             IUNIT(22),IUNIT(55),NSOL,IGRID)
         IF(IUNIT(39).GT.0) CALL GWF2ETS7RP(IUNIT(39),IGRID)
         IF(IUNIT(40).GT.0) CALL GWF2DRT7RP(IUNIT(40),IGRID)
-        IF(IUNIT(50).GT.0) CALL GWF2MNW27RP(IUNIT(50),kper,IUNIT(9),
+        IF(IUNIT(50).GT.0) CALL GWF2MNW27RP(IUNIT(50),kkper,IUNIT(9),
      +                                      IUNIT(10),0,IUNIT(13),
      +                                      IUNIT(15),IUNIT(63),IGRID)
         IF(IUNIT(51).GT.0.AND.KKPER.EQ.1) CALL GWF2MNW2I7RP(IUNIT(51),
@@ -1443,7 +1443,7 @@ C
 !     READ AND PREPARE INFORMATION FOR STRESS PERIOD.
 !***********************************************************************
       SUBROUTINE SET_STRESS_DATES()
-      USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT
+      USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT, NSTP
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
      &    Steady_state, ICNVG, KPER, KSTP, Mft_to_days
@@ -1544,8 +1544,8 @@ C
       Modflow_time_in_stress = Modflow_skip_time
       DO i = 1, NPER
         IF ( ISSFLG(i)/=1 ) time = time + PERLEN(i)*Mft_to_days
-!      IF ( time<=Modflow_skip_time ) THEN     !RGN
-           IF ( time<Modflow_skip_time ) THEN   !RGN
+      IF ( time<=Modflow_skip_time ) THEN     !RGN
+!           IF ( time<Modflow_skip_time ) THEN   !RGN
           Modflow_skip_stress = i
           kstpskip = kstpskip + PERLEN(i)*Mft_to_days
         ELSE
@@ -1555,16 +1555,20 @@ C
 !      Modflow_time_in_stress = Modflow_time_in_stress - time   !RGN
       Modflow_time_in_stress = Modflow_skip_time - kstpskip
       IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
-      IF ( Init_vars_from_file==1 ) THEN
+!      IF ( Init_vars_from_file==1 ) THEN    !RGN 4/3/2018 This should always be called.
         DO i = 1, Modflow_skip_stress + 1
           KPER = i                   !RGN
           CALL READ_STRESS()
-!       KPER = KPER + 1              !RGN         
+          IF ( i < Modflow_skip_stress + 1 ) THEN
+            DO KSTP = 1, NSTP(KPER)
+              CALL GWF2BAS7OC(KSTP,i,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
+            END DO
+          END IF
         ENDDO
-      END IF
+!      END IF
 !      IF ( Modflow_skip_stress.EQ.0 .and. Steady_state==0 )  !RGN
 !     +     CALL READ_STRESS()           !RGN read stress was called already
-      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) CALL READ_STRESS()
+!      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) CALL READ_STRESS() !RGN 4/3/2018 already read to current stress
       IF ( ISSFLG(1)/=1 ) TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time 6/28/17 need to include SS time
       KSTP = Modflow_time_in_stress ! caution, in days
       IF ( KSTP<0 ) KSTP = 0
