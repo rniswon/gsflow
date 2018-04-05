@@ -99,7 +99,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2018-03-15 12:00:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-04-05 11:18:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -915,7 +915,7 @@
       IF ( control_integer(Stream_temp_flag, 'stream_temp_flag')/=0 ) Stream_temp_flag = 0
 
       IF ( control_integer(Prms_warmup, 'prms_warmup')/=0 ) Prms_warmup = 0
-      IF ( nsubOutON_OFF>0 .OR. NhruOutON_OFF>0 .OR. NsubOutON_OFF>0 .OR. BasinOutON_OFF>0 .OR. NsegmentOutON_OFF>0 ) THEN
+      IF ( NhruOutON_OFF>0 .OR. NsubOutON_OFF>0 .OR. BasinOutON_OFF>0 .OR. NsegmentOutON_OFF>0 ) THEN
         IF ( Start_year+Prms_warmup>End_year ) THEN ! change to start full date ???
           PRINT *, 'ERROR, prms_warmup > than simulation time period:', Prms_warmup
           Inputerror_flag = 1
@@ -1016,7 +1016,7 @@
       IF ( Cascadegw_flag==2 ) Ncascdgw = Ncascade
       IF ( Ncascade==0 ) Cascade_flag = 0
       IF ( Ncascdgw==0 .OR. Model==0 .OR. Model==2 ) Cascadegw_flag = 0
-      IF ( Cascade_flag==1 .OR. Cascadegw_flag>0 ) THEN
+      IF ( (Cascade_flag==1 .OR. Cascadegw_flag>0) .AND. Model/=10 ) THEN ! don't call if model_mode = CONVERT
         Call_cascade = 1
       ELSE
         Call_cascade = 0
