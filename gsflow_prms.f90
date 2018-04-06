@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 03/13/2018'
+      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 04/06/2018'
       CHARACTER(LEN=8), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -23,7 +23,7 @@
       INTEGER, SAVE :: Precip_combined_flag, Temp_combined_flag
       INTEGER, SAVE :: Inputerror_flag, Timestep
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
-      INTEGER, SAVE :: Stream_temp_flag
+      INTEGER, SAVE :: Stream_temp_flag, PRMS4_flag
       INTEGER, SAVE :: Grid_flag, Logunt, First_timestep
       INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
@@ -133,7 +133,6 @@
      &        '    Output Summary: basin_sum, subbasin, map_results, prms_summary,', /, &
      &        '                    nhru_summary, nsub_summary, water_balance', /, &
      &        '                    basin_summary, nsegment_summary', /, &
-     &        'Streamflow Routing: strmflow, strmflow_in_out, muskingum', /, &
      &        '     Preprocessing: write_climate_hru, frost_date', /, 68('-'))
   16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 19X, &
      &        'Module', 16X, 'Version Date', /, A)
@@ -582,26 +581,29 @@
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
-      ! debug print flag:
-      ! -1=quiet - reduced screen output
-      ! 0=none; 1=water balances; 2=basin;
-      ! 4=basin_sum; 5=soltab; 7=soil zone;
-      ! 9=snowcomp; 13=cascade; 14=subbasin tree
-      IF ( control_integer(Print_debug, 'print_debug')/=0 ) Print_debug = 0
-      IF ( Print_debug>-1 ) PRINT 3
+          ! debug print flag:
+          ! -1=quiet - reduced screen output
+          ! 0=none; 1=water balances; 2=basin;
+          ! 4=basin_sum; 5=soltab; 7=soil zone;
+          ! 9=snowcomp; 13=cascade; 14=subbasin tree
+          IF ( control_integer(Print_debug, 'print_debug')/=0 ) Print_debug = 0
+          IF ( Print_debug>-1 ) PRINT 3
 
-      IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
+          IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
 
-      IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
-      PRMS_flag = 1
-!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW)
-      IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:4)=='    ') THEN
-        Model = 0
-        PRMS_flag = 0
-      ELSEIF ( Model_mode(:4)=='PRMS' .OR. Model_mode(:5)=='DAILY' )THEN
-        Model = 1
-      ELSEIF ( Model_mode(:7)=='MODFLOW' ) THEN
-        Model = 2
+          IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
+          PRMS4_flag = 1
+    !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW)
+          PRMS4_flag = 1
+          IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:4)=='    ') THEN
+            Model = 0
+            PRMS_flag = 0
+            IF ( Model_mode(:7)=='GSFLOW5' ) PRMS4_flag = 0
+          ELSEIF ( Model_mode(:4)=='PRMS' .OR. Model_mode(:5)=='DAILY' )THEN
+            Model = 1
+            IF ( Model_mode(:5)=='PRMS5' ) PRMS4_flag = 0
+          ELSEIF ( Model_mode(:7)=='MODFLOW' ) THEN
+            Model = 2
         PRMS_flag = 0
       ELSEIF ( Model_mode(:5)=='FROST' ) THEN
         Model = 9
