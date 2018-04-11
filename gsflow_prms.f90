@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 04/06/2018'
+      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 04/10/2018'
       CHARACTER(LEN=8), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -99,7 +99,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2018-04-05 11:18:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-04-10 10:40:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -488,8 +488,8 @@
 
       IF ( Process_flag==0 ) THEN
         RETURN
-      ELSEIF ( Model==1 ) THEN
-        IF ( Process_flag==3 ) THEN
+      ELSEIF ( Process_flag==3 ) THEN
+        IF ( Model==1 ) THEN
           CALL DATE_AND_TIME(VALUES=Elapsed_time_end)
           Execution_time_end = Elapsed_time_end(5)*3600 + Elapsed_time_end(6)*60 + &
      &                         Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
@@ -507,13 +507,15 @@
      &                                                       Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
           WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                                        Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
-        ELSEIF ( Process_flag==1 ) THEN
-          IF ( Print_debug>-1 ) PRINT '(A)', EQULS
-          IF ( Print_debug>-2 ) WRITE ( PRMS_output_unit, '(A)' ) EQULS
-          WRITE ( Logunt, '(A)') EQULS
         ENDIF
-      ENDIF
-      IF ( Process_flag==2 ) THEN
+      ELSEIF ( Process_flag==1 ) THEN
+        IF ( Print_debug>-2 ) THEN
+          PRINT '(A)', EQULS
+          WRITE ( PRMS_output_unit, '(A)' ) EQULS
+        ENDIF
+        WRITE ( Logunt, '(A)') EQULS
+        IF ( Model==10 ) CALL convert_params()
+      ELSEIF ( Process_flag==2 ) THEN
         IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
         IF ( Inputerror_flag==1 ) THEN
           PRINT '(//,A,//,A,/,A,/,A)', '**Fix input errors in your Parameter File to continue**', &
@@ -525,21 +527,15 @@
      &          'parameter_check_flag to 0. After calibration set the', &
      &          'parameter_check_flag to 1 to verify that those calibration', &
      &          'parameters have valid and compatible values.'
-          STOP
         ENDIF
-        IF ( Parameter_check_flag==2 ) STOP
+        IF ( Parameter_check_flag==2 .OR. Inputerror_flag==1 ) STOP
         IF ( Model==10 ) THEN
           CALL convert_params()
           STOP
         ENDIF
-        PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
+        IF ( Print_debug>-2 ) &
+     &       PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
         WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
-      ELSEIF ( Process_flag==1 ) THEN
-        IF ( Print_debug>-2 ) THEN
-          PRINT '(A)', EQULS
-          WRITE ( PRMS_output_unit, '(A)' ) EQULS
-        ENDIF
-        IF ( Model==10 ) CALL convert_params()
       ENDIF
 
     4 FORMAT (/, 2(A, I5, 2('/',I2.2)), //, A, /)
