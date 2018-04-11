@@ -1556,6 +1556,7 @@ C
       Modflow_time_in_stress = Modflow_skip_time - kstpskip
       IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
 !      IF ( Init_vars_from_file==1 ) THEN    !RGN 4/3/2018 This should always be called.
+      IF ( mfstrt_jul==start_jul ) Modflow_skip_stress = -1   !RGN 4/9/2018 mf start time equals start time then no skip
         DO i = 1, Modflow_skip_stress + 1
           KPER = i                   !RGN
           CALL READ_STRESS()
