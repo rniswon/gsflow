@@ -46,14 +46,14 @@ MF_NWT/MF_NWT/Debug/
 # https://stackoverflow.com/questions/5533050/gitignore-exclude-folder-but-include-specific-subfolder/
 # 
 # This ignores entire directories except for pointed exceptions.  The sequence below is important
-msds/*
-!msds/gsflow_develop_f/
+#msds/*
+#!msds/gsflow_develop_f/
 
-msds/gsflow_develop_f/*
-!msds/gsflow_develop_f/DLL_GSFLOW/
+#msds/gsflow_develop_f/*
+#!msds/gsflow_develop_f/DLL_GSFLOW/
 
-msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/*
-!msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/debug
+#msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/*
+#!msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/debug
 
 # Other specific ignores
 #

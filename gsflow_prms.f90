@@ -55,7 +55,7 @@
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2018-02-13 10:25:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-04-11 13:25:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -366,9 +366,28 @@
         IF ( call_modules/=0 ) CALL module_error('subbasin', Arg, call_modules)
       ENDIF
 
-      IF ( Process_flag==0 ) RETURN
-
-      IF ( Process_flag==1 ) THEN
+      IF ( Process_flag==0 ) THEN
+        RETURN
+      ELSEIF ( Process_flag==3 ) THEN
+        CALL DATE_AND_TIME(VALUES=Elapsed_time_end)
+        Execution_time_end = Elapsed_time_end(5)*3600 + Elapsed_time_end(6)*60 + &
+     &                       Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
+        Elapsed_time = Execution_time_end - Execution_time_start
+        Elapsed_time_minutes = INT(Elapsed_time/60.0)
+        IF ( Print_debug>-1 ) THEN
+          PRINT 9001
+          PRINT 9003, 'start', (Elapsed_time_start(i),i=1,3), (Elapsed_time_start(i),i=5,7)
+          PRINT 9003, 'end  ', (Elapsed_time_end(i),i=1,3), (Elapsed_time_end(i),i=5,7)
+          PRINT '(A,I5,A,F6.2,A,/)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                               Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+        ENDIF
+        IF ( Print_debug>-2 ) &
+     &       WRITE ( PRMS_output_unit,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                                     Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+        WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                      Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+        CLOSE ( Logunt )
+      ELSEIF ( Process_flag==1 ) THEN
         CALL read_parameter_file_params()
         IF ( Print_debug>-2 ) THEN
           PRINT '(A)', EQULS
@@ -376,9 +395,8 @@
         ENDIF
         WRITE ( Logunt, '(A)' ) EQULS
         IF ( Model==25 ) CALL convert_params()
-
       ELSEIF ( Process_flag==2 ) THEN
-        IF ( Print_debug>-1 ) CALL check_parameters()
+        IF ( Parameter_check_flag>0 ) CALL check_parameters()
         IF ( Inputerror_flag==1 ) THEN
           PRINT '(//,A,//,A,/,A,/,A)', '**Fix input errors in your Parameter File to continue**', &
      &          '  Set control parameter parameter_check_flag to 0 after', &
@@ -389,35 +407,16 @@
      &          'parameter_check_flag to 0. After calibration set the', &
      &          'parameter_check_flag to 1 to verify that those calibration', &
      &          'parameters have valid and compatible values.'
-          STOP
         ENDIF
-        IF ( Parameter_check_flag==2 ) STOP
+        IF ( Parameter_check_flag==2 .OR. Inputerror_flag==1 ) STOP
         IF ( Model==25 ) THEN
           CALL convert_params()
           STOP
         ENDIF
-        IF ( Print_debug>-1 ) &
-     &    PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
+        IF ( Print_debug>-2 ) &
+     &       PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
         WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
 
-      ELSEIF ( Process_flag==3 ) THEN
-        CALL DATE_AND_TIME(VALUES=Elapsed_time_end)
-        Execution_time_end = Elapsed_time_end(5)*3600 + Elapsed_time_end(6)*60 + &
-     &                       Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
-        Elapsed_time = Execution_time_end - Execution_time_start
-        Elapsed_time_minutes = INT(Elapsed_time/60.0)
-        IF ( Print_debug>-2 ) THEN
-          PRINT 9001
-          PRINT 9003, 'start', (Elapsed_time_start(i),i=1,3), (Elapsed_time_start(i),i=5,7)
-          PRINT 9003, 'end  ', (Elapsed_time_end(i),i=1,3), (Elapsed_time_end(i),i=5,7)
-          PRINT '(A,I5,A,F6.2,A,/)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                               Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
-          WRITE ( PRMS_output_unit,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                                                  Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
-        ENDIF
-        WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                                      Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
-        CLOSE ( Logunt )
       ENDIF
 
     4 FORMAT (/, 2(A, I5, 2('/',I2.2)), //, A, /)
@@ -476,6 +475,8 @@
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
+      PRMS4_flag = 1
+      IF ( Model_mode(:5)=='PRMS5' .OR. Model_mode(:7)=='GSFLOW5' ) PRMS4_flag = 0
       PRMS_flag = 1
       GSFLOW_flag = 0
       MODSIM_flag = 0
@@ -558,7 +559,7 @@
       IF ( control_string(mappingFileName, 'mappingFileName')/=0 ) CALL read_error(5, 'mappingFileName')
       IF ( control_string(xyFileName, 'xyFileName')/=0 ) CALL read_error(5, 'xyFileName')
 
-      IF ( Model==2 .OR. Model==12 ) THEN ! MODFLOW or MODSIM-MODFLOW modes
+      IF ( Model==2 .OR. Model==12 ) THEN ! MODFLOW-only or MODSIM-MODFLOW
 ! for MODFLOW-only simulations
         Kper_mfo = 1
         mf_timestep = 1
@@ -583,9 +584,9 @@
         ENDDO
         CALL MFNWT_CLEAN()
         STOP
+      ELSEIF ( Model==13 ) THEN ! MODSIM
+        RETURN
       ENDIF
-
-      IF ( Model==13 ) RETURN ! MODSIM
 
       IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
 
@@ -837,7 +838,7 @@
       IF ( control_integer(Stream_temp_flag, 'stream_temp_flag')/=0 ) Stream_temp_flag = 0
 
       IF ( control_integer(Prms_warmup, 'prms_warmup')/=0 ) Prms_warmup = 0
-      IF ( nsubOutON_OFF>0 .OR. NhruOutON_OFF>0 .OR. NsubOutON_OFF>0 .OR. BasinOutON_OFF>0 .OR. NsegmentOutON_OFF>0 ) THEN
+      IF ( NhruOutON_OFF>0 .OR. NsubOutON_OFF>0 .OR. BasinOutON_OFF>0 .OR. NsegmentOutON_OFF>0 ) THEN
         IF ( Start_year+Prms_warmup>End_year ) THEN ! change to start full date ???
           PRINT *, 'ERROR, prms_warmup > than simulation time period:', Prms_warmup
           Inputerror_flag = 1
@@ -934,7 +935,7 @@
       IF ( Cascadegw_flag==2 ) Ncascdgw = Ncascade
       IF ( Ncascade==0 ) Cascade_flag = 0
       IF ( Ncascdgw==0 .OR. GSFLOW_flag==1 .OR. Model==2 ) Cascadegw_flag = 0
-      IF ( Cascade_flag==1 .OR. Cascadegw_flag>0 ) THEN
+      IF ( (Cascade_flag==1 .OR. Cascadegw_flag>0) .AND. Model/=25 ) THEN ! don't call if model_mode = CONVERT
         Call_cascade = 1
       ELSE
         Call_cascade = 0
@@ -1394,7 +1395,7 @@
           ierr = 1
         ENDIF
         CALL check_restart_dimen('nsegment', nsegment_test, Nsegment, ierr)
-        ! Temp_flag (1=temp_1sta; 2=temp_laps; 3=temp_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
+        ! Temp_flag (1=temp_1sta; 2=temp_laps; 3=temp_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru; 8=temp_sta
         IF ( Temp_flag/=temp_test ) THEN
           IF ( Temp_flag<4 .OR. temp_test<4 ) THEN
             PRINT *, 'ERROR, Initial Conditions File saved for model with different temperature module'
@@ -1485,7 +1486,7 @@
      &       'Maximum number of iterations soilzone states are computed', &
      &       'Maximum number of iterations soilzone states are computed', &
      &       'none')/=0 ) CALL read_error(1, 'mxsziter')
-        ALLOCATE ( Gvr_cell_pct(Nhrucell) )
+        ALLOCATE ( Gvr_cell_pct(Nhrucell), Soilzone_gain(Nhru) )
         IF ( Nhru/=Nhrucell ) THEN
           IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
      &         '0.0', '0.0', '1.0', &

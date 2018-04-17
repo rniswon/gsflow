@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A7C7AC23-018C-4543-879E-75A2A6022EAE}</ProjectGuid>
+    <RootNamespace>gsflow_dev_c</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\mmf\alloc_space.c" />
+    <ClCompile Include="..\..\..\src\mmf\batch_run.c" />
+    <ClCompile Include="..\..\..\src\mmf\batch_run_functions.c" />
+    <ClCompile Include="..\..\..\src\mmf\build_lists.c" />
+    <ClCompile Include="..\..\..\src\mmf\call_modules.c" />
+    <ClCompile Include="..\..\..\src\mmf\call_setdims.c" />
+    <ClCompile Include="..\..\..\src\modflow\ccfd.c" />
+    <ClCompile Include="..\..\..\src\mmf\check_vars.c" />
+    <ClCompile Include="..\..\..\src\mmf\control_addr.c" />
+    <ClCompile Include="..\..\..\src\mmf\control_array.c" />
+    <ClCompile Include="..\..\..\src\mmf\control_var.c" />
+    <ClCompile Include="..\..\..\src\mmf\create_vstats.c" />
+    <ClCompile Include="..\..\..\src\mmf\decl_control.c" />
+    <ClCompile Include="..\..\..\src\mmf\decldim.c" />
+    <ClCompile Include="..\..\..\src\mmf\declparam.c" />
+    <ClCompile Include="..\..\..\src\mmf\declvar.c" />
+    <ClCompile Include="..\..\..\src\mmf\dim_addr.c" />
+    <ClCompile Include="..\..\..\src\mmf\dprint.c" />
+    <ClCompile Include="..\..\..\src\mmf\free_vstats.c" />
+    <ClCompile Include="..\..\..\src\mmf\get_elem_add.c" />
+    <ClCompile Include="..\..\..\src\mmf\get_times.c" />
+    <ClCompile Include="..\..\..\src\mmf\getdim.c" />
+    <ClCompile Include="..\..\..\src\mmf\getdimname.c" />
+    <ClCompile Include="..\..\..\src\mmf\getparam.c" />
+    <ClCompile Include="..\..\..\src\mmf\getvar.c" />
+    <ClCompile Include="..\..\..\src\mmf\graph_single_run.c" />
+    <ClCompile Include="..\..\..\src\mmf\julconvert.c" />
+    <ClCompile Include="..\..\..\src\mmf\julday.c" />
+    <ClCompile Include="..\..\..\src\mmf\load_param.c" />
+    <ClCompile Include="..\..\..\src\modflow\mf2kgmg.c" />
+    <ClCompile Include="..\..\..\src\modflow\mf2kgmg_wrap.c" />
+    <ClCompile Include="..\..\..\src\mmf\mmf.c" />
+    <ClCompile Include="..\..\..\src\mmf\oprint.c" />
+    <ClCompile Include="..\..\..\src\mmf\param_addr.c" />
+    <ClCompile Include="..\..\..\src\mmf\parse_args.c" />
+    <ClCompile Include="..\..\..\src\mmf\print_model_info.c" />
+    <ClCompile Include="..\..\..\src\mmf\print_params.c" />
+    <ClCompile Include="..\..\..\src\mmf\print_vars.c" />
+    <ClCompile Include="..\..\..\src\mmf\putvar.c" />
+    <ClCompile Include="..\..\..\src\modflow\r_vector.c" />
+    <ClCompile Include="..\..\..\src\mmf\read_control.c" />
+    <ClCompile Include="..\..\..\src\mmf\read_datainfo.c" />
+    <ClCompile Include="..\..\..\src\mmf\read_line.c" />
+    <ClCompile Include="..\..\..\src\mmf\read_params.c" />
+    <ClCompile Include="..\..\..\src\mmf\read_vars.c" />
+    <ClCompile Include="..\..\..\src\mmf\readvar.c" />
+    <ClCompile Include="..\..\..\src\mmf\reset_dim.c" />
+    <ClCompile Include="..\..\..\src\mmf\save_params.c" />
+    <ClCompile Include="..\..\..\src\mmf\save_vars.c" />
+    <ClCompile Include="..\..\..\src\mmf\setup_cont.c" />
+    <ClCompile Include="..\..\..\src\modflow\solvers.c" />
+    <ClCompile Include="..\..\..\src\mmf\sort_dims.c" />
+    <ClCompile Include="..\..\..\src\mmf\sort_params.c" />
+    <ClCompile Include="..\..\..\src\mmf\sort_vars.c" />
+    <ClCompile Include="..\..\..\src\mmf\stats.c" />
+    <ClCompile Include="..\..\..\src\mmf\str_to_vals.c" />
+    <ClCompile Include="..\..\..\src\mmf\timing.c" />
+    <ClCompile Include="..\..\..\src\mmf\umalloc_etc.c" />
+    <ClCompile Include="..\..\..\src\mmf\uprint.c" />
+    <ClCompile Include="..\..\..\src\mmf\var_addr.c" />
+    <ClCompile Include="..\..\..\src\mmf\write_vstats.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\mmf\defs.h" />
+    <ClInclude Include="..\..\..\src\mmf\globals.h" />
+    <ClInclude Include="..\..\..\src\mmf\mmf.h" />
+    <ClInclude Include="..\..\..\src\mmf\mms.h" />
+    <ClInclude Include="..\..\..\src\mmf\nodes.h" />
+    <ClInclude Include="..\..\..\src\mmf\protos.h" />
+    <ClInclude Include="..\..\..\src\mmf\structs.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
