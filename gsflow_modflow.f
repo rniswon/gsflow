@@ -18,16 +18,17 @@ C     ******************************************************************
 !        SPECIFICATIONS:
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Logunt, GSFLOW_flag
+      USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Logunt, GSFLOW_flag,
+     &    Print_debug
       IMPLICIT NONE
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2018-02-12 16:43:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2018-04-05 11:23:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
-      WRITE (*,1) MFVNAM,VERSION(:17),VERSION2(:17),VERSION3
+      IF ( Print_debug>-2 )WRITE (*,1) MFVNAM,VERSION(:17),VERSION2(:17)
       WRITE ( Logunt, 1 ) MFVNAM,VERSION(:17),VERSION2(:17),VERSION3
     1 FORMAT (/,28X,'MODFLOW',A,/,
      &'  U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
@@ -35,7 +36,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
      &  /,25X,'VERSION ',A/,14X,'BASED ON MODFLOW-2005 VERSION ',A,/,
      &  /,20X,'SWR1 Version ',A/)
 
-      WRITE ( *, 8 )
+      IF ( Print_debug>-1 ) WRITE ( *, 8 )
       WRITE ( Logunt, 8 )
     8 FORMAT (14X, 'PROCESSES: GWF and OBS', /, 14X,
      &        'PACKAGES:  BAS, BCF, CHD, DE4, FHB, GAG, GHB,',
@@ -1602,7 +1603,7 @@ C----------READ USING PACKAGE READ AND PREPARE MODULES.
      1             IUNIT(22),IUNIT(55),NSOL,IGRID)
         IF(IUNIT(39).GT.0) CALL GWF2ETS7RP(IUNIT(39),IGRID)
         IF(IUNIT(40).GT.0) CALL GWF2DRT7RP(IUNIT(40),IGRID)
-        IF(IUNIT(50).GT.0) CALL GWF2MNW27RP(IUNIT(50),kper,IUNIT(9),
+        IF(IUNIT(50).GT.0) CALL GWF2MNW27RP(IUNIT(50),kkper,IUNIT(9),
      +                                      IUNIT(10),0,IUNIT(13),
      +                                      IUNIT(15),IUNIT(63),IGRID)
         IF(IUNIT(51).GT.0.AND.KKPER.EQ.1) CALL GWF2MNW2I7RP(IUNIT(51),
@@ -1740,7 +1741,8 @@ C
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
      &    Steady_state, ICNVG, KPER, KSTP, Mft_to_days
       USE PRMS_MODULE, ONLY: Init_vars_from_file, Kkiter, Model,
-     &    Starttime, Start_year, Start_month, Start_day, Logunt
+     &    Starttime, Start_year, Start_month, Start_day, Logunt,
+     &    Print_debug
       USE GWFBASMODULE, ONLY: TOTIM
       IMPLICIT NONE
       ! Arguments
@@ -1779,7 +1781,8 @@ C
           ENDIF
         ENDIF
       ENDDO
-      PRINT ( '(/, A, I5,2("/",I2.2))' ), 'modflow_time_zero:',
+      IF ( Print_debug>-1 )
+     &     PRINT ( '(/, A, I5,2("/",I2.2))' ), 'modflow_time_zero:',
      &  Modflow_time_zero(1), Modflow_time_zero(2), Modflow_time_zero(3)
       ALLOCATE ( Stress_dates(NPER+1) )
       Stress_dates = 0.0D0
