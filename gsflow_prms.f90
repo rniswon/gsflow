@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 04/10/2018'
+      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 04/19/2018'
       CHARACTER(LEN=8), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -99,7 +99,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2018-04-10 10:40:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-04-19 16:38:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -921,6 +921,7 @@
       ENDIF
 
 ! cascade
+      ! if cascade_flag = 2, use hru_segment parameter for cascades, ncascade=ncascdgw=nhru (typical polygon HRUs)
       IF ( control_integer(Cascade_flag, 'cascade_flag')/=0 ) Cascade_flag = 1
       ! if cascadegw_flag = 2, use same cascades as HRUs
       IF ( control_integer(Cascadegw_flag, 'cascadegw_flag')/=0 ) Cascadegw_flag = 1
@@ -1011,6 +1012,10 @@
       IF ( Ncascade==-1 ) CALL read_error(7, 'ncascade')
       Ncascdgw = getdim('ncascdgw')
       IF ( Ncascdgw==-1 ) CALL read_error(7, 'ncascdgw')
+      IF ( Cascade_flag==2 ) THEN
+        Ncascade = Nhru
+        Cascadegw_flag = 2
+      ENDIF
       IF ( Cascadegw_flag==2 ) Ncascdgw = Ncascade
       IF ( Ncascade==0 ) Cascade_flag = 0
       IF ( Ncascdgw==0 .OR. Model==0 .OR. Model==2 ) Cascadegw_flag = 0
@@ -1018,6 +1023,10 @@
         Call_cascade = 1
       ELSE
         Call_cascade = 0
+      ENDIF
+      IF ( Model==0 .AND. Call_cascade==0 ) THEN
+        PRINT *, 'ERROR, GSFLOW requires that PRMS cascade routing is active'
+        Inputerror_flag = 1
       ENDIF
 
       Nwateruse = getdim('nwateruse')
