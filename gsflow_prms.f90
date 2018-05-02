@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 04/20/2018'
+      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 05/01/2018'
       CHARACTER(LEN=8), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -77,7 +77,7 @@
       INTEGER, EXTERNAL :: water_use_read, dynamic_param_read, potet_pm_sta
       INTEGER, EXTERNAL :: stream_temp
       EXTERNAL :: module_error, print_module, PRMS_open_output_file
-      EXTERNAL :: call_modules_restart, check_nhru_params, water_balance, basin_summary, nsegment_summary
+      EXTERNAL :: call_modules_restart, water_balance, basin_summary, nsegment_summary
       EXTERNAL :: prms_summary, nhru_summary, module_doc, convert_params, read_error, nsub_summary
       INTEGER, EXTERNAL :: gsflow_modflow, gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
       INTEGER, EXTERNAL :: declparam, getparam
@@ -99,7 +99,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2018-04-19 16:38:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-05-01 15:42:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -516,7 +516,6 @@
         WRITE ( Logunt, '(A)') EQULS
         IF ( Model==10 ) CALL convert_params()
       ELSEIF ( Process_flag==2 ) THEN
-        IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
         IF ( Inputerror_flag==1 ) THEN
           PRINT '(//,A,//,A,/,A,/,A)', '**Fix input errors in your Parameter File to continue**', &
      &          '  Set control parameter parameter_check_flag to 0 after', &
@@ -1021,7 +1020,7 @@
       IF ( Cascadegw_flag==2 ) Ncascdgw = Ncascade
       IF ( Ncascade==0 ) Cascade_flag = 0
       IF ( Ncascdgw==0 .OR. Model==0 .OR. Model==2 ) Cascadegw_flag = 0
-      IF ( (Cascade_flag==1 .OR. Cascadegw_flag>0) .AND. Model/=10 ) THEN ! don't call if model_mode = CONVERT
+      IF ( (Cascade_flag>0 .OR. Cascadegw_flag>0) .AND. Model/=10 ) THEN ! don't call if model_mode = CONVERT
         Call_cascade = 1
       ELSE
         Call_cascade = 0
