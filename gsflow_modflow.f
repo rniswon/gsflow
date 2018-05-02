@@ -449,7 +449,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       CALL SETMFTIME()
       IF ( Model==0 ) THEN
         CALL set_cell_values()
-        IF ( Init_vars_from_file==1 ) CALL gsflow_modflow_restart(1)
+        IF ( Init_vars_from_file>0 ) CALL gsflow_modflow_restart(1)
         CALL check_gvr_cell_pct()
         ! make the default number of soilzone iterations equal to the
         ! maximum MF iterations, which is a good practice using NWT and cells=nhru
@@ -524,7 +524,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       IF ( Kkper_new.NE.KKPER ) THEN
         KPER = Kkper_new
         KKPER = Kkper_new
-        IF ( Init_vars_from_file==1 ) THEN
+        IF ( Init_vars_from_file>0 ) THEN
           IF ( KPER>Modflow_skip_stress+1 ) KSTP = 0
         ELSE
           KSTP = 0
@@ -1557,7 +1557,7 @@ C
 !      Modflow_time_in_stress = Modflow_time_in_stress - time   !RGN
       Modflow_time_in_stress = Modflow_skip_time - kstpskip
       IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
-!      IF ( Init_vars_from_file==1 ) THEN    !RGN 4/3/2018 This should always be called.
+!      IF ( Init_vars_from_file>0 ) THEN    !RGN 4/3/2018 This should always be called.
       IF ( Init_vars_from_file==0 ) Modflow_skip_stress = 0   !RGN 4/30/2018 need to read first SP if not restart
         DO i = 1, Modflow_skip_stress + 1
           KPER = i                   !RGN
@@ -1577,7 +1577,7 @@ C
       IF ( KSTP<0 ) KSTP = 0
 
       ! read restart files to Modflow_time_in_stress
-      IF ( Init_vars_from_file==1 ) THEN
+      IF ( Init_vars_from_file>0 ) THEN
         IF ( Iunit(69)==0 ) THEN
           WRITE(Logunt,111)
           PRINT 111
