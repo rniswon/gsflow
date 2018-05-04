@@ -13,7 +13,8 @@
       INTEGER, SAVE, ALLOCATABLE :: Gwc_col(:), Gwc_row(:)
       REAL, SAVE :: Delt_save
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Stress_dates(:)
-      INTEGER, SAVE :: Modflow_skip_stress, Kkper_new
+      INTEGER, SAVE :: Modflow_skip_stress, Kkper_new, 
+     +                 Modflow_skip_time_step
       DOUBLE PRECISION, SAVE :: Modflow_time_in_stress,Modflow_skip_time
       DOUBLE PRECISION, SAVE :: Mft_to_sec, Totalarea_mf
       DOUBLE PRECISION, SAVE :: Mfl2_to_acre, Mfl3_to_ft3, Sfr_conv
@@ -394,14 +395,6 @@ c      IF(IUNIT(14).GT.0) CALL LMG7AR(IUNIT(14),MXITER,IGRID)
 !     1  IUNIT(61),IUNIT(44),IUNIT(52),IUNIT(55),IGRID)                  !FMP2AR CALL ADDED BY SCHMID
 !        CALL FMP2RQ(IUNIT(61),IUNIT(44),IUNIT(52),IGRID)                !FMP2RQ CALL ADDED BY SCHMID
 !      ENDIF
-C
-C  Observation allocate and read
-      CALL OBS2BAS7AR(IUNIT(28),IGRID)
-      IF(IUNIT(33).GT.0) CALL OBS2DRN7AR(IUNIT(33),IUNIT(3),IGRID)
-      IF(IUNIT(34).GT.0) CALL OBS2RIV7AR(IUNIT(34),IUNIT(4),IGRID)
-      IF(IUNIT(35).GT.0) CALL OBS2GHB7AR(IUNIT(35),IUNIT(7),IGRID)
-      IF(IUNIT(36).GT.0) CALL OBS2STR7AR(IUNIT(36),IUNIT(18),IGRID)
-      IF(IUNIT(38).GT.0) CALL OBS2CHD7AR(IUNIT(38),IGRID)
 ! Modify conductance for HFB when using UPW.
       !IF ( IUNIT(62).GT.0 ) THEN
       !  IF(IUNIT(21).GT.0) CALL GWF2HFB7UPW(IGRID)
@@ -459,7 +452,15 @@ C7------SIMULATE EACH STRESS PERIOD.
       ! run SS if needed, read to current stress period, read restart if needed
       CALL SET_STRESS_DATES()
       CALL SETCONVFACTORS()
-
+C
+C  Observation allocate and read    rgn 5/4/2018 MOVED IN ORDER TO SKIP STEPS FOR OBS PACKAGES
+      CALL OBS2BAS7AR(IUNIT(28),IGRID)
+      IF(IUNIT(33).GT.0) CALL OBS2DRN7AR(IUNIT(33),IUNIT(3),IGRID)
+      IF(IUNIT(34).GT.0) CALL OBS2RIV7AR(IUNIT(34),IUNIT(4),IGRID)
+      IF(IUNIT(35).GT.0) CALL OBS2GHB7AR(IUNIT(35),IUNIT(7),IGRID)
+      IF(IUNIT(36).GT.0) CALL OBS2STR7AR(IUNIT(36),IUNIT(18),IGRID)
+      IF(IUNIT(38).GT.0) CALL OBS2CHD7AR(IUNIT(38),IGRID)
+C
       Delt_save = DELT
       IF ( ISSFLG(1).EQ.1 ) DELT = 1.0/Mft_to_days
 C
@@ -734,7 +735,7 @@ C7C2B---MAKE ONE CUT AT AN APPROXIMATE SOLUTION.
             END IF
             IF (IUNIT(13).GT.0) THEN
 !rgn increase damping factor for transient solution.
-                   IF ( iss.EQ.0 ) DAMPPCG = DAMPPCGT
+!                   IF ( iss.EQ.0 ) DAMPPCG = DAMPPCGTmod
                    CALL PCG7PNT(IGRID)
                    CALL PCG7AP(HNEW,IBOUND,CR,CC,CV,HCOF,RHS,VPCG,SS,
      1               P,CD,HCHG,LHCH,RCHG,LRCHPCG,KKITER,NITER,
@@ -1448,7 +1449,8 @@ C
       USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT, NSTP
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
-     &    Steady_state, ICNVG, KPER, KSTP, Mft_to_days
+     &    Steady_state, ICNVG, KPER, KSTP, Mft_to_days, 
+     &    Modflow_skip_time_step
       USE PRMS_MODULE, ONLY: Init_vars_from_file, Kkiter, Model,
      &    Starttime, Start_year, Start_month, Start_day, Logunt,
      &    Print_debug
@@ -1539,6 +1541,7 @@ C
 !      print *, 'stress dates:', Stress_dates
 
       Modflow_skip_stress = 0
+      Modflow_skip_time_step = 0
       kstpskip = 0.0D0
       Modflow_time_in_stress = 0.0D0
       Modflow_skip_time = start_jul - mfstrt_jul
@@ -1550,6 +1553,7 @@ C
 !           IF ( time<Modflow_skip_time ) THEN   !RGN
           Modflow_skip_stress = i
           kstpskip = kstpskip + PERLEN(i)*Mft_to_days
+          Modflow_skip_time_step = Modflow_skip_time_step + NSTP(i)
         ELSE
           EXIT
         ENDIF
@@ -1575,7 +1579,7 @@ C
       IF ( ISSFLG(1)/=1 ) TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time 6/28/17 need to include SS time
       KSTP = Modflow_time_in_stress ! caution, in days
       IF ( KSTP<0 ) KSTP = 0
-
+      Modflow_skip_time_step = Modflow_skip_time_step + KSTP ! caution, in days
       ! read restart files to Modflow_time_in_stress
       IF ( Init_vars_from_file==1 ) THEN
         IF ( Iunit(69)==0 ) THEN
