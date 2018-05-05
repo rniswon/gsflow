@@ -1455,6 +1455,7 @@ C
      &    Starttime, Start_year, Start_month, Start_day, Logunt,
      &    Print_debug
       USE GWFBASMODULE, ONLY: TOTIM
+      USE OBSBASMODULE, ONLY: OBSTART
       IMPLICIT NONE
       EXTERNAL :: READ_STRESS, RESTART1READ
       INTEGER, EXTERNAL :: control_integer_array, gsfrun
@@ -1589,7 +1590,7 @@ C
         ENDIF
         CALL RESTART1READ()
       END IF
-
+      OBSTART = Modflow_skip_time_step
   111 FORMAT('Restart option active and no restart file listed in Name',
      +        ' file. Model stopping ')
       END SUBROUTINE SET_STRESS_DATES
