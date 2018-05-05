@@ -448,10 +448,6 @@ C7------SIMULATE EACH STRESS PERIOD.
         ! maximum MF iterations, which is a good practice using NWT and cells=nhru
         IF ( Mxsziter<1 ) Mxsziter = MXITER
       ENDIF
-
-      ! run SS if needed, read to current stress period, read restart if needed
-      CALL SET_STRESS_DATES()
-      CALL SETCONVFACTORS()
 C
 C  Observation allocate and read    rgn 5/4/2018 MOVED IN ORDER TO SKIP STEPS FOR OBS PACKAGES
       CALL OBS2BAS7AR(IUNIT(28),IGRID)
@@ -460,6 +456,10 @@ C  Observation allocate and read    rgn 5/4/2018 MOVED IN ORDER TO SKIP STEPS FO
       IF(IUNIT(35).GT.0) CALL OBS2GHB7AR(IUNIT(35),IUNIT(7),IGRID)
       IF(IUNIT(36).GT.0) CALL OBS2STR7AR(IUNIT(36),IUNIT(18),IGRID)
       IF(IUNIT(38).GT.0) CALL OBS2CHD7AR(IUNIT(38),IGRID)
+
+      ! run SS if needed, read to current stress period, read restart if needed
+      CALL SET_STRESS_DATES()
+      CALL SETCONVFACTORS()
 C
       Delt_save = DELT
       IF ( ISSFLG(1).EQ.1 ) DELT = 1.0/Mft_to_days
@@ -1455,7 +1455,7 @@ C
      &    Starttime, Start_year, Start_month, Start_day, Logunt,
      &    Print_debug
       USE GWFBASMODULE, ONLY: TOTIM
-      USE OBSBASMODULE, ONLY: OBSTART
+      USE OBSBASMODULE, ONLY: OBSTART,ITS
       IMPLICIT NONE
       EXTERNAL :: READ_STRESS, RESTART1READ
       INTEGER, EXTERNAL :: control_integer_array, gsfrun
@@ -1591,6 +1591,7 @@ C
         CALL RESTART1READ()
       END IF
       OBSTART = Modflow_skip_time_step
+      ITS = OBSTART
   111 FORMAT('Restart option active and no restart file listed in Name',
      +        ' file. Model stopping ')
       END SUBROUTINE SET_STRESS_DATES
