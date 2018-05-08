@@ -55,7 +55,7 @@
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2018-04-11 13:25:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-05-02 13:44:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -369,24 +369,25 @@
       IF ( Process_flag==0 ) THEN
         RETURN
       ELSEIF ( Process_flag==3 ) THEN
-        CALL DATE_AND_TIME(VALUES=Elapsed_time_end)
-        Execution_time_end = Elapsed_time_end(5)*3600 + Elapsed_time_end(6)*60 + &
-     &                       Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
-        Elapsed_time = Execution_time_end - Execution_time_start
-        Elapsed_time_minutes = INT(Elapsed_time/60.0)
-        IF ( Print_debug>-1 ) THEN
-          PRINT 9001
-          PRINT 9003, 'start', (Elapsed_time_start(i),i=1,3), (Elapsed_time_start(i),i=5,7)
-          PRINT 9003, 'end  ', (Elapsed_time_end(i),i=1,3), (Elapsed_time_end(i),i=5,7)
-          PRINT '(A,I5,A,F6.2,A,/)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                               Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+        IF ( PRMS_flag==1 ) THEN
+          CALL DATE_AND_TIME(VALUES=Elapsed_time_end)
+          Execution_time_end = Elapsed_time_end(5)*3600 + Elapsed_time_end(6)*60 + &
+     &                         Elapsed_time_end(7) + Elapsed_time_end(8)*0.001
+          Elapsed_time = Execution_time_end - Execution_time_start
+          Elapsed_time_minutes = INT(Elapsed_time/60.0)
+          IF ( Print_debug>-1 ) THEN
+            PRINT 9001
+            PRINT 9003, 'start', (Elapsed_time_start(i),i=1,3), (Elapsed_time_start(i),i=5,7)
+            PRINT 9003, 'end  ', (Elapsed_time_end(i),i=1,3), (Elapsed_time_end(i),i=5,7)
+            PRINT '(A,I5,A,F6.2,A,/)', 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                 Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+          ENDIF
+          IF ( Print_debug>-2 ) &
+     &         WRITE ( PRMS_output_unit,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                                       Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
+          WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
+     &                                        Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         ENDIF
-        IF ( Print_debug>-2 ) &
-     &       WRITE ( PRMS_output_unit,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                                                     Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
-        WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
-     &                                      Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
-        CLOSE ( Logunt )
       ELSEIF ( Process_flag==1 ) THEN
         CALL read_parameter_file_params()
         IF ( Print_debug>-2 ) THEN
@@ -396,7 +397,6 @@
         WRITE ( Logunt, '(A)' ) EQULS
         IF ( Model==25 ) CALL convert_params()
       ELSEIF ( Process_flag==2 ) THEN
-        IF ( Parameter_check_flag>0 ) CALL check_parameters()
         IF ( Inputerror_flag==1 ) THEN
           PRINT '(//,A,//,A,/,A,/,A)', '**Fix input errors in your Parameter File to continue**', &
      &          '  Set control parameter parameter_check_flag to 0 after', &
@@ -416,7 +416,6 @@
         IF ( Print_debug>-2 ) &
      &       PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
         WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day, EQULS
-
       ENDIF
 
     4 FORMAT (/, 2(A, I5, 2('/',I2.2)), //, A, /)
@@ -470,7 +469,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 02/13/2018', //, &
+     &        22X, 'Version 1.2 MODSIM 05/02/2018', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -712,9 +711,15 @@
         PRINT '(/,2A)', 'ERROR, invalid et_module value: ', Et_module
         Inputerror_flag = 1
       ENDIF
+
+      ! stream_temp
+      IF ( control_integer(Stream_temp_flag, 'stream_temp_flag')/=0 ) Stream_temp_flag = 0
+      ! 0 = CBH File; 1 = specified constant; 2 = Stations
+      IF ( control_integer(Strmtemp_humidity_flag, 'strmtemp_humidity_flag')/=0 ) Strmtemp_humidity_flag = 0
+
       Humidity_cbh_flag = 0
       Windspeed_cbh_flag = 0
-      IF ( Et_flag==11 .OR. Et_flag==5 ) Humidity_cbh_flag = 1
+      IF ( Et_flag==11 .OR. Et_flag==5 .OR. (Stream_temp_flag==1 .AND. Strmtemp_humidity_flag==0) ) Humidity_cbh_flag = 1
       IF ( Et_flag==11 ) Windspeed_cbh_flag = 1
 
       IF ( Srunoff_module(:13)=='srunoff_smidx' ) THEN
@@ -834,9 +839,6 @@
 ! nsegment_summary
       IF ( control_integer(NsegmentOutON_OFF, 'nsegmentOutON_OFF')/=0 ) NsegmentOutON_OFF = 0
 
-! stream_temp
-      IF ( control_integer(Stream_temp_flag, 'stream_temp_flag')/=0 ) Stream_temp_flag = 0
-
       IF ( control_integer(Prms_warmup, 'prms_warmup')/=0 ) Prms_warmup = 0
       IF ( NhruOutON_OFF>0 .OR. NsubOutON_OFF>0 .OR. BasinOutON_OFF>0 .OR. NsegmentOutON_OFF>0 ) THEN
         IF ( Start_year+Prms_warmup>End_year ) THEN ! change to start full date ???
@@ -846,6 +848,7 @@
       ENDIF
 
 ! cascade
+      ! if cascade_flag = 2, use hru_segment parameter for cascades, ncascade=ncascdgw=nhru (typical polygon HRUs)
       IF ( control_integer(Cascade_flag, 'cascade_flag')/=0 ) Cascade_flag = 1
       ! if cascadegw_flag = 2, use same cascades as HRUs
       IF ( control_integer(Cascadegw_flag, 'cascadegw_flag')/=0 ) Cascadegw_flag = 1
@@ -932,13 +935,21 @@
       IF ( Ncascade==-1 ) CALL read_error(7, 'ncascade')
       Ncascdgw = getdim('ncascdgw')
       IF ( Ncascdgw==-1 ) CALL read_error(7, 'ncascdgw')
+      IF ( Cascade_flag==2 ) THEN
+        Ncascade = Nhru
+        Cascadegw_flag = 2
+      ENDIF
       IF ( Cascadegw_flag==2 ) Ncascdgw = Ncascade
       IF ( Ncascade==0 ) Cascade_flag = 0
       IF ( Ncascdgw==0 .OR. GSFLOW_flag==1 .OR. Model==2 ) Cascadegw_flag = 0
-      IF ( (Cascade_flag==1 .OR. Cascadegw_flag>0) .AND. Model/=25 ) THEN ! don't call if model_mode = CONVERT
+      IF ( (Cascade_flag>0 .OR. Cascadegw_flag>0) .AND. Model/=25 ) THEN ! don't call if model_mode = CONVERT
         Call_cascade = 1
       ELSE
         Call_cascade = 0
+      ENDIF
+      IF ( Model==0 .AND. Call_cascade==0 ) THEN
+        PRINT *, 'ERROR, GSFLOW requires that PRMS cascade routing is active'
+        Inputerror_flag = 1
       ENDIF
 
       Nwateruse = getdim('nwateruse')
@@ -1464,10 +1475,10 @@
      &        '       Groundwater: gwflow', /, &
      &        'Streamflow Routing: strmflow, strmflow_in_out, muskingum,', /, &
      &        '                    muskingum_lake', /, &
+     &        'Stream Temperature: stream_temp', /, &
      &        '    Output Summary: basin_sum, subbasin, map_results, prms_summary,', /, &
      &        '                    nhru_summary, nsub_summary, water_balance', /, &
      &        '                    basin_summary, nsegment_summary', /, &
-     &        'Stream Temperature: stream_temp', /, &
      &        '     Preprocessing: write_climate_hru, frost_date', /, 68('-'))
   16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 19X, &
      &        'Module', 16X, 'Version Date', /, A)

@@ -97,6 +97,7 @@
 		<File RelativePath="..\..\..\..\..\prms.git\muskingum.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\muskingum_lake.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\nhru_summary.f90"/>
+		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\nogmg.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\nsegment_summary.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\nsub_summary.f90"/>
 		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.3\src\NWT1_gmres.f90"/>

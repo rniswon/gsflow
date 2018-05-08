@@ -6,7 +6,7 @@ C
 C     ******************************************************************
 C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER 1.1.3, 8/01/2017
+!rgn------NEW VERSION NUMBER 1.1.4, 4/01/2018
 !rsr------MODIFIED for use in GSFLOW and MODSIM-GSFLOW
 C     ******************************************************************
 
@@ -481,7 +481,7 @@ C1------USE package modules.
 c     USE LMGMODULE
       USE SIPMODULE
       USE DE4MODULE
-!      USE GMGMODULE
+!gsf  USE GMGMODULE
 !gsf  USE PCGN
       USE GWFNWTMODULE, ONLY:ITREAL !,ICNVGFLG
       IMPLICIT NONE
@@ -551,23 +551,11 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
             IF(IUNIT(16).GT.0) CALL GWF2FHB7AD(IGRID)
             IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
      1                                             IGRID)
+!??rsr          IF(IUNIT(55).GT.0) CALL GWF2UZF1AD(IUNIT(55), KKPER, Igrid) ! in GSFLOW release
             IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
-            IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(44), IUNIT(22), 
-     &                                             kkstp, kkper, IGRID)  !rgn 6/12/12
+            IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(44),IUNIT(22),
+     2                                           KKSTP,KKPER,IGRID)
           END IF
-
-C--EDM----RGN THIS IS ALL DONE INSIDE SFR NOW
-C--Overwrite MODFLOW's diversions with those passed by MODSIM
-!          IF ( Model>11 ) THEN ! not ready to do this
-!              do i = 1, ndiversion
-!                seg(2,diversion_segment(i) = DIVS(diversion_index(i))
-!              enddo
-! DIVS in MODSIM must equal MODFLOW diversions, i.e., all values of SEG(2,NSS) must related to MODSIM
-!            DO i = 1, NSS
-!              SEG(2,i) = DIVS(i)
-!            ENDDO
-!          ENDIF
-C
           IF(IUNIT(50).GT.0) THEN
             IF (IUNIT(1).GT.0) THEN
               CALL GWF2MNW27BCF(KPER,IGRID)
@@ -616,6 +604,7 @@ C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
    26     FORMAT('Skipping:  Stress period: ',i5,4x,
      &       'Time step:',I6)
           ENDIF
+C
       END SUBROUTINE MFNWT_TIMEADVANCE
 
 C     *************************************************************
@@ -1296,7 +1285,7 @@ c      IF(IUNIT(14).GT.0) CALL LMG7DA(IGRID)
       IF(IUNIT(39).GT.0) CALL GWF2ETS7DA(IGRID)
       IF(IUNIT(40).GT.0) CALL GWF2DRT7DA(IGRID)
 !      IF(IUNIT(42).GT.0) CALL GMG7DA(IGRID)
-!gsf  IF(IUNIT(59).GT.0) CALL PCGN2DA(IGRID)
+!      IF(IUNIT(59).GT.0) CALL PCGN2DA(IGRID)
       IF(IUNIT(44).GT.0) CALL GWF2SFR7DA(IGRID)
       IF(IUNIT(46).GT.0) CALL GWF2GAG7DA(IGRID)
       IF(IUNIT(50).GT.0) CALL GWF2MNW27DA(IGRID)
@@ -1350,7 +1339,7 @@ C10-----END OF PROGRAM.
       END IF
 
 !gsf  CALL USTOP(' ')
-      IF ( Model==2 ) CALL USTOP(' ')
+      IF ( Model.EQ.2 ) CALL USTOP(' ')
 
  9001 FORMAT (' Number of time steps:', I7,
      &        ';  Number of non-convergence:', I4, /, ' MF iterations:'
@@ -1424,6 +1413,7 @@ C        CALL GETCL(COMLIN)
 C
       RETURN
       END SUBROUTINE GETNAMFIL
+C
       SUBROUTINE GLO1BAS6ET(IOUT,IBDT,IPRTIM)
 C     ******************************************************************
 C     Get end time and calculate elapsed time
@@ -1737,7 +1727,7 @@ C
 !***********************************************************************
       SUBROUTINE SET_STRESS_DATES(AFR, Diversions, Idivert, 
      &    EXCHANGE, DELTAVOL, LAKEVOL,Nsegshold, Nlakeshold)
-      USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT
+      USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT, NSTP
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
      &    Steady_state, ICNVG, KPER, KSTP, Mft_to_days
@@ -1755,13 +1745,13 @@ C
      &                                   DELTAVOL(Nlakeshold),
      &                                   LAKEVOL(Nlakeshold)
       ! Functions
-      INTRINSIC :: INT, DBLE
       EXTERNAL :: RESTART1READ
       INTEGER, EXTERNAL :: compute_julday, control_integer_array
 !      DOUBLE PRECISION, EXTERNAL :: compute_julday
 ! Local Variables
-      INTEGER :: i, j, mfstrt_jul, start_jul
-      DOUBLE PRECISION :: plen, time, kstpskip
+      INTEGER :: i, j
+      DOUBLE PRECISION :: seconds, start_jul, mfstrt_jul, plen, time
+      DOUBLE PRECISION :: kstpskip
 !***********************************************************************
       ! get modflow_time_zero and determine julian day
       DO j = 1, 6
@@ -1785,11 +1775,12 @@ C
       IF ( Print_debug>-1 )
      &     PRINT ( '(/, A, I5,2("/",I2.2))' ), 'modflow_time_zero:',
      &  Modflow_time_zero(1), Modflow_time_zero(2), Modflow_time_zero(3)
+      seconds = Modflow_time_zero(6)
       ALLOCATE ( Stress_dates(NPER+1) )
       Stress_dates = 0.0D0
       Stress_dates(1) = compute_julday(Modflow_time_zero(1),
      &                  Modflow_time_zero(2), Modflow_time_zero(3))
-      mfstrt_jul = INT( Stress_dates(1) )
+      mfstrt_jul = Stress_dates(1)
 
       ! determine julian day
       start_jul = compute_julday(Start_year, Start_month, Start_day)
@@ -1799,6 +1790,7 @@ C
      &           mfstrt_jul, start_jul
         STOP
       ENDIF
+
 ! TODO add test to compare MODFLOW_TIME_ZERO to MODSIM start data
 !
       IF ( Mft_to_days>1.0 ) PRINT *, 'CAUTION, MF time step /= 1 day'
@@ -1841,13 +1833,13 @@ C
       Modflow_skip_stress = 0
       kstpskip = 0.0D0
       Modflow_time_in_stress = 0.0D0
-      Modflow_skip_time = DBLE( start_jul - mfstrt_jul )
+      Modflow_skip_time = start_jul - mfstrt_jul
       time = 0.0D0
       Modflow_time_in_stress = Modflow_skip_time
       DO i = 1, NPER
         IF ( ISSFLG(i)/=1 ) time = time + PERLEN(i)*Mft_to_days
-!      IF ( time<=Modflow_skip_time ) THEN     !RGN
-           IF ( time<Modflow_skip_time ) THEN   !RGN
+      IF ( time<=Modflow_skip_time ) THEN     !RGN
+!           IF ( time<Modflow_skip_time ) THEN   !RGN
           Modflow_skip_stress = i
           kstpskip = kstpskip + PERLEN(i)*Mft_to_days
         ELSE
@@ -1857,17 +1849,21 @@ C
 !      Modflow_time_in_stress = Modflow_time_in_stress - time   !RGN
       Modflow_time_in_stress = Modflow_skip_time - kstpskip
       IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
-      IF ( Init_vars_from_file>0 ) THEN
+!      IF ( Init_vars_from_file>0 ) THEN    !RGN 4/3/2018 This should always be called.
+      IF ( Init_vars_from_file==0 ) Modflow_skip_stress = 0   !RGN 4/30/2018 need to read first SP if not restart
         DO i = 1, Modflow_skip_stress + 1
           KPER = i                   !RGN
           CALL MFNWT_RDSTRESS(KPER)
-!       KPER = KPER + 1              !RGN         
+          IF ( i < Modflow_skip_stress + 1 ) THEN
+            DO KSTP = 1, NSTP(KPER)
+              CALL GWF2BAS7OC(KSTP,i,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
+            END DO
+          END IF
         ENDDO
-      END IF
-!      IF ( Modflow_skip_stress.EQ.0 .and. Steady_state==0 )  !RGN
-!     +     CALL MFNWT_RDSTRESS(KPER)           !RGN read stress was called already
-      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1)
-     &     CALL MFNWT_RDSTRESS(KPER)
+!      END IF
+!      IF ( Init_vars_from_file==0 .and. Steady_state==0 )  !RGN
+!     +     CALL MFNWT_RDSTRESS(KPER)           !RGN need to read first SP or
+!      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) CALL MFNWT_RDSTRESS(KPER) !RGN 4/3/2018 already read to current stress
       IF ( ISSFLG(1)/=1 ) TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time 6/28/17 need to include SS time
       KSTP = Modflow_time_in_stress ! caution, in days
       IF ( KSTP<0 ) KSTP = 0
@@ -1912,7 +1908,7 @@ C
             STRM(j,i) = ZERO
           END DO
         END DO
-        IF ( TESTSFR.GT.1.0E-5 ) THEN
+        IF ( TESTSFR.GT.1.0 ) THEN
           WRITE (Logunt, *)
           WRITE (Logunt, *)'***WARNING***'
           WRITE (Logunt, 10)
@@ -1933,7 +1929,7 @@ C
           RNF(i) = ZERO
           WTHDRW(i) = ZERO
         END DO
-        IF ( TESTLAK.GT.1.0E-5 ) THEN
+        IF ( TESTLAK.GT.1.0 ) THEN
           WRITE (Logunt, *)
           WRITE (Logunt, *)'***WARNING***'
           WRITE (Logunt, 11)

@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 04/11/2018'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 05/02/2018'
       CHARACTER(LEN=8), SAVE :: Process, Arg
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -23,7 +23,8 @@
       INTEGER, SAVE :: Precip_combined_flag, Temp_combined_flag
       INTEGER, SAVE :: Inputerror_flag, Timestep
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
-      INTEGER, SAVE :: Stream_temp_flag, PRMS4_flag, Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF
+      INTEGER, SAVE :: Stream_temp_flag, Strmtemp_humidity_flag, PRMS4_flag
+      INTEGER, SAVE :: Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF
       INTEGER, SAVE :: Grid_flag, Logunt, First_timestep
       INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag, Number_timesteps
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
