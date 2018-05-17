@@ -558,7 +558,8 @@ C7C1----CALCULATE TIME STEP LENGTH. SET HOLD=HNEW.
           IF(IUNIT(16).GT.0) CALL GWF2FHB7AD(IGRID)
           IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
      1                                           IGRID)
-          IF(IUNIT(55).GT.0) CALL GWF2UZF1AD(IUNIT(55), KKPER, Igrid)
+          IF(IUNIT(55).GT.0) CALL GWF2UZF1AD(IUNIT(55), KKPER, KKSTP, 
+     1                                       Igrid)
           IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
           IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(44),IUNIT(22),
      2                                         KKSTP,KKPER,IGRID)
@@ -1574,9 +1575,7 @@ C
           END IF
         ENDDO
 !      END IF
-!      IF ( Init_vars_from_file==0 .and. Steady_state==0 )  !RGN
-!     +     CALL READ_STRESS()           !RGN need to read first SP or
-!      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) CALL READ_STRESS() !RGN 4/3/2018 already read to current stress
+      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) CALL READ_STRESS() !start with TR and no restart
       IF ( ISSFLG(1)/=1 ) TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time 6/28/17 need to include SS time
       KSTP = Modflow_time_in_stress ! caution, in days
       IF ( KSTP<0 ) KSTP = 0
