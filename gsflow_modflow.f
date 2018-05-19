@@ -1337,7 +1337,7 @@ C
 !***********************************************************************
       SUBROUTINE READ_STRESS()
       USE GSFMODFLOW, ONLY: IGRID, KKPER, KPER, NSOL, IOUTS, KKSTP,
-     &                      Mft_to_sec
+     &                      Mft_to_sec, KSTP
       USE GLOBAL, ONLY: IUNIT, ISSFLG, IOUT
       USE PRMS_MODULE, ONLY: Model
       USE PRMS_SET_TIME, ONLY: Timestep_seconds
@@ -1376,12 +1376,12 @@ C----------READ USING PACKAGE READ AND PREPARE MODULES.
      1                     CALL GWF2HYD7STR7RP(IUNIT(43),KKPER,IGRID)
         IF(IUNIT(20).GT.0) CALL GWF2CHD7RP(IUNIT(20),IGRID)
         IF(IUNIT(44).GT.0) CALL GWF2SFR7RP(IUNIT(44),IUNIT(15),
-     1                                     IUNIT(22),KKPER,KKSTP,
+     1                                     IUNIT(22),KKPER,KSTP,
      2                                     NSOL,IOUTS,IUNIT(55),IGRID)
         IF(IUNIT(43).GT.0 .AND. IUNIT(44).GT.0)
      1                     CALL GWF2HYD7SFR7RP(IUNIT(43),KKPER,IGRID)
-        IF(IUNIT(55).GT.0) CALL GWF2UZF1RP(IUNIT(55),KKPER,IUNIT(44),
-     1                                     IGRID)
+        IF(IUNIT(55).GT.0) CALL GWF2UZF1RP(IUNIT(55),KKPER,KSTP,
+     1                                     IUNIT(44),IGRID)
         IF(IUNIT(22).GT.0) CALL GWF2LAK7RP(IUNIT(22),IUNIT(1),
      1               IUNIT(15),IUNIT(23),IUNIT(37),IUNIT(44),IUNIT(55),
      2               IUNIT(62),KKPER,NSOL,IOUTS,IGRID)
@@ -1575,10 +1575,12 @@ C
           END IF
         ENDDO
 !      END IF
-      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) CALL READ_STRESS() !start with TR and no restart
       IF ( ISSFLG(1)/=1 ) TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time 6/28/17 need to include SS time
       KSTP = Modflow_time_in_stress ! caution, in days
-      IF ( KSTP<0 ) KSTP = 0
+      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) THEN
+          IF ( KSTP<1 ) KSTP = 1
+          CALL READ_STRESS() !start with TR and no restart
+      END IF
       Modflow_skip_time_step = Modflow_skip_time_step + KSTP ! caution, in days
       ! read restart files to Modflow_time_in_stress
       IF ( Init_vars_from_file==1 ) THEN
