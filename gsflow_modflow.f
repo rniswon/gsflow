@@ -81,14 +81,13 @@ C
       Version_gsflow_modflow = 'gsflow_modflow.f 2018-04-05 11:23:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
-!gsf  WRITE (*,1) MFVNAM,VERSION,VERSION2,VERSION3
-      WRITE (*,1) MFVNAM,VERSION(:17),VERSION2(:17)
-      WRITE ( Logunt, 1 ) MFVNAM,VERSION(:17),VERSION2(:17)
+      WRITE (*,1) MFVNAM,VERSION(:15),VERSION2(:17),VERSION3(:17)
+      WRITE (Logunt,1) MFVNAM,VERSION(:15),VERSION2(:17),VERSION3(:17)
     1 FORMAT (/,28X,'MODFLOW',A,/,
-     &'  U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
+     &2X,'U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
      &' GROUNDWATER-FLOW MODEL',/,25X,'WITH NEWTON FORMULATION',
-     &  /,25X,'VERSION ',A/,14X,'BASED ON MODFLOW-2005 VERSION ',A,/)
-!gsf &  /,20X,'SWR1 Version ',A/)
+     &  /,25X,'Version ',A/,14X,'BASED ON MODFLOW-2005 Version ',A,
+     &  /,22X,'SWR1 Version ',A/)
 
       IF ( Print_debug>-1 ) WRITE ( *, 8 )
       WRITE ( Logunt, 8 )
@@ -557,7 +556,8 @@ C7C1----CALCULATE TIME STEP LENGTH. SET HOLD=HNEW.
           IF(IUNIT(16).GT.0) CALL GWF2FHB7AD(IGRID)
           IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
      1                                           IGRID)
-          IF(IUNIT(55).GT.0) CALL GWF2UZF1AD(IUNIT(55), KKPER, Igrid)
+          IF(IUNIT(55).GT.0) CALL GWF2UZF1AD(IUNIT(55),KKPER,KKSTP,
+     1                                       Igrid)
           IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
           IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(44),IUNIT(22),
      2                                         KKSTP,KKPER,IGRID)
@@ -1378,8 +1378,8 @@ C----------READ USING PACKAGE READ AND PREPARE MODULES.
      2                                     NSOL,IOUTS,IUNIT(55),IGRID)
         IF(IUNIT(43).GT.0 .AND. IUNIT(44).GT.0)
      1                     CALL GWF2HYD7SFR7RP(IUNIT(43),KKPER,IGRID)
-        IF(IUNIT(55).GT.0) CALL GWF2UZF1RP(IUNIT(55),KKPER,IUNIT(44),
-     1                                     IGRID)
+        IF(IUNIT(55).GT.0) CALL GWF2UZF1RP(IUNIT(55),KKPER,KKSTP,
+     1                                     IUNIT(44),IGRID)
         IF(IUNIT(22).GT.0) CALL GWF2LAK7RP(IUNIT(22),IUNIT(1),
      1               IUNIT(15),IUNIT(23),IUNIT(37),IUNIT(44),IUNIT(55),
      2               IUNIT(62),KKPER,NSOL,IOUTS,IGRID)
