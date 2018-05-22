@@ -551,7 +551,6 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
             IF(IUNIT(16).GT.0) CALL GWF2FHB7AD(IGRID)
             IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
      1                                             IGRID)
-!??rsr          IF(IUNIT(55).GT.0) CALL GWF2UZF1AD(IUNIT(55), KKPER, Igrid) ! in GSFLOW release
             IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
             IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(44),IUNIT(22),
      2                                           KKSTP,KKPER,IGRID)
