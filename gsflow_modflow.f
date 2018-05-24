@@ -90,14 +90,14 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
      &  /,25X,'Version ',A/,14X,'BASED ON MODFLOW-2005 Version ',A,
      &  /,22X,'SWR1 Version ',A/)
 
-      IF ( Print_debug>-1 ) WRITE ( *, 8 )
-      WRITE ( Logunt, 8 )
+      IF ( Model==0 ) THEN
+        IF ( Print_debug>-1 ) WRITE ( *, 8 )
+        WRITE ( Logunt, 8 )
     8 FORMAT (14X, 'PROCESSES: GWF and OBS', /, 14X,
      &        'PACKAGES:  BAS, BCF, CHD, DE4, FHB, GAG, GHB,',
      &        /, 25X, 'HFB, HUF, LAK LPF, MNW1, MNW2, NWT,',
      &        /, 25X, 'PCG, SFR, SIP, UPW, UZF, WEL, SWI, SWT, LMT', /)
 
-      IF ( Model==0 ) THEN
         ! Allocate local module variables
         ALLOCATE ( Mfq2inch_conv(Nhrucell), Mfvol2inch_conv(Nhrucell) )
         ALLOCATE ( Gvr2cell_conv(Nhrucell), Cellarea(Ngwcell) )
@@ -402,7 +402,7 @@ C
 C7------SIMULATE EACH STRESS PERIOD.
       CALL print_module(Version_gsflow_modflow,
      &                  'GSFLOW MODFLOW main         ', 77)
-      IF ( Print_debug>-1 )
+      IF ( Print_debug>-2 )
      &     PRINT '(A,/A,/A)', EQULS, 'MODFLOW Packages', EQULS
       WRITE ( Logunt, '(A,/A,/A)') EQULS, 'MODFLOW Packages', EQULS
       CALL print_module(Version_uzf,
@@ -735,7 +735,7 @@ C7C2B---MAKE ONE CUT AT AN APPROXIMATE SOLUTION.
             END IF
             IF (IUNIT(13).GT.0) THEN
 !rgn increase damping factor for transient solution.
-!                   IF ( iss.EQ.0 ) DAMPPCG = DAMPPCGTmod
+                   IF ( iss.EQ.0 ) DAMPPCG = DAMPPCGT
                    CALL PCG7PNT(IGRID)
                    CALL PCG7AP(HNEW,IBOUND,CR,CC,CV,HCOF,RHS,VPCG,SS,
      1               P,CD,HCHG,LHCH,RCHG,LRCHPCG,KKITER,NITER,
