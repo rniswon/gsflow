@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 05/01/2018'
+      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 5.0.0 06/01/2018'
       CHARACTER(LEN=8), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -99,7 +99,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2018-05-01 15:42:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-05-25 14:41:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -473,6 +473,11 @@
         IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
       ENDIF
 
+      IF ( Subbasin_flag==1 ) THEN
+        call_modules = subbasin()
+        IF ( call_modules/=0 ) CALL module_error('subbasin', Arg, call_modules)
+      ENDIF
+
       IF ( NhruOutON_OFF>0 ) CALL nhru_summary()
 
       IF ( NsubOutON_OFF==1 ) CALL nsub_summary()
@@ -480,11 +485,6 @@
       IF ( BasinOutON_OFF==1 ) CALL basin_summary()
 
       IF ( NsegmentOutON_OFF>0 ) CALL nsegment_summary()
-
-      IF ( Subbasin_flag==1 ) THEN
-        call_modules = subbasin()
-        IF ( call_modules/=0 ) CALL module_error('subbasin', Arg, call_modules)
-      ENDIF
 
       IF ( Process_flag==0 ) THEN
         RETURN
