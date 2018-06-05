@@ -56,7 +56,8 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
 !***********************************************************************
 C
       SUBROUTINE MFNWT_INIT(AFR, Diversions, Idivert,EXCHANGE,DELTAVOL,
-     &                      LAKEVOL, Nsegshold, Nlakeshold) 
+     &                      LAKEVOL, Nsegshold, Nlakeshold, 
+     &                      RELEASABLE_STOR) 
 C      
 C
 !     ------------------------------------------------------------------
@@ -82,8 +83,9 @@ C1------USE package modules.
       INTEGER, INTENT(INOUT) :: Nlakeshold
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
       DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(Nsegshold), 
-     &                                   DELTAVOL(Nlakeshold),
-     +                                   LAKEVOL(Nlakeshold)
+     +                                   DELTAVOL(Nlakeshold),
+     +                                   LAKEVOL(Nlakeshold),
+     +                                   RELEASABLE_STOR(Nlakeshold)
 ! Functions
       INTRINSIC DBLE
       INTEGER, EXTERNAL :: numchars
@@ -431,7 +433,8 @@ C7------SIMULATE EACH STRESS PERIOD.
 
       ! run SS if needed, read to current stress period, read restart if needed
       CALL SET_STRESS_DATES(AFR, Diversions, Idivert, EXCHANGE,DELTAVOL,
-     +                      LAKEVOL,Nsegshold, Nlakeshold)
+     +                      LAKEVOL,Nsegshold, Nlakeshold, 
+     +                      RELEASABLE_STOR)
       CALL SETCONVFACTORS()
 
       Delt_save = DELT
@@ -613,7 +616,8 @@ C     RUN THE MODFLOW SOLVER ROUTINE WITH THE LATEST VALUES OF
 C     ISEG UPDATED BY MODSIM.
 C     *************************************************************
       SUBROUTINE MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, 
-     &                     DELTAVOL,LAKEVOL,Nsegshold, Nlakeshold)
+     &                     DELTAVOL,LAKEVOL,Nsegshold, Nlakeshold,
+     &                     RELEASABLE_STOR)
 C
 C
 !     ------------------------------------------------------------------
@@ -643,7 +647,8 @@ c     USE LMGMODULE
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold), 
      &                                   EXCHANGE(Nsegshold)
       DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Nlakeshold), 
-     &                                   LAKEVOL(Nlakeshold)
+     &                                   LAKEVOL(Nlakeshold),
+     &                                   RELEASABLE_STOR(Nlakeshold)
       INTEGER, INTENT(IN) :: Idivert(Nsegshold)
 !      CHARACTER*16 TEXT
 !      DATA TEXT /'            HEAD'/
@@ -660,13 +665,19 @@ c     USE LMGMODULE
 !***********************************************************************
 C
 C1----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
-          Szcheck = 0
-          iss = ISSFLG(KKPER)
-          IF ( gsflag==1 ) Szcheck = 1
-!          DO 30 KITER = 1, MXITER
-           KITER = 0
-           ITREAL2 = 0
-           IF ( IUNIT(63).GT.0 ) ITREAL = 0
+      Szcheck = 0
+      iss = ISSFLG(KKPER)
+      IF ( gsflag==1 ) Szcheck = 1
+!     DO 30 KITER = 1, MXITER
+      KITER = 0
+      ITREAL2 = 0
+      IF ( IUNIT(63).GT.0 ) ITREAL = 0
+C
+C0----Plug in MODSIM values before PRMS-MODFLOW iterations
+      IF ( Model>=10 ) THEN
+        IF(IUNIT(44).GT.0.AND.iss==0) CALL MODSIM2SFR(Diversions)
+      ENDIF
+C
            DO WHILE (ITREAL2.LT.MXITER)
             KITER = KITER + 1
             KKITER = KITER
@@ -728,26 +739,14 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Maxgziter = KKITER
             ENDIF
 !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
-            IF ( Model>=10 ) THEN
-              IF(IUNIT(44).GT.0.AND.iss==0) CALL MODSIM2SFR(Diversions)
-            ENDIF
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
-     1                           IUNIT(44),IUNIT(22),IUNIT(63),
-     2                           IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
+     1                              IUNIT(44),IUNIT(22),IUNIT(63),
+     2                              IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
      1                              IUNIT(22),IUNIT(63),IUNIT(8), 
      2                              IUNIT(55),IGRID)   !cjm (added IUNIT(8))
-            IF ( Model>=10 ) THEN
-              IF(IUNIT(44).GT.0 .AND. iss==0) CALL SFR2MODSIM(EXCHANGE, 
-     1                              Diversions, Idivert, Nsegshold)
-            ENDIF            
-            IF(IUNIT(22).GT.0) THEN
-                CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
-     1                                     IUNIT(44),IUNIT(55),IGRID)
-                IF(Model>=10 .AND. iss==0) 
-     1            CALL LAK2MODSIM(DELTAVOL, LAKEVOL, Diversions, 
-     2                            Nsegshold)
-            ENDIF
+            IF(IUNIT(22).GT.0) CALL GWF2LAK7FM(KKITER,KKPER,KKSTP,
+     1                              IUNIT(44),IUNIT(55),IGRID)
 C
             IF(IUNIT(50).GT.0) THEN
               IF (IUNIT(1).GT.0) THEN
@@ -883,7 +882,16 @@ C       PRINT 9002, KKPER, KKSTP,KKITER, Maxgziter
  !9002 FORMAT('Stress:', I3, '; Step:', I6,
  !    &       /, 18X, 'MF iterations:', I9,
  !    &       '; SZ iterations:', I7, /)
-
+      IF (Model>=10 .AND. iss==0) THEN
+        IF(IUNIT(44).GT.0) CALL SFR2MODSIM(EXCHANGE, 
+     1                              Diversions, Idivert, Nsegshold)
+      ENDIF            
+C
+      IF (Model>=10 .AND. iss==0) THEN
+        IF(IUNIT(44).GT.0) CALL LAK2MODSIM(DELTAVOL, LAKEVOL, 
+     1                              Diversions, Nsegshold, 
+     2                              RELEASABLE_STOR)
+      ENDIF                  
       END SUBROUTINE MFNWT_RUN
 C
 C     ************************************************************************
@@ -1726,7 +1734,8 @@ C
 !     READ AND PREPARE INFORMATION FOR STRESS PERIOD.
 !***********************************************************************
       SUBROUTINE SET_STRESS_DATES(AFR, Diversions, Idivert, 
-     &    EXCHANGE, DELTAVOL, LAKEVOL,Nsegshold, Nlakeshold)
+     &    EXCHANGE, DELTAVOL, LAKEVOL,Nsegshold, Nlakeshold, 
+     &    RELEASABLE_STOR)
       USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
@@ -1742,7 +1751,8 @@ C
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
       DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(Nsegshold), 
      &                                   DELTAVOL(Nlakeshold),
-     &                                   LAKEVOL(Nlakeshold)
+     &                                   LAKEVOL(Nlakeshold),
+     &                                   RELEASABLE_STOR(Nlakeshold)
       ! Functions
       INTRINSIC :: INT, DBLE
       EXTERNAL :: RESTART1READ
@@ -1805,8 +1815,9 @@ C
             ! DELT = 1.0 ! ?? what if steady state PERLEN not equal one day, DELT set in MFNWT_RDSTRESS
             Steady_state = 1
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-            CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL,
-     +                     LAKEVOL,Nsegshold, Nlakeshold)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+            CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL,        ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+     +                     LAKEVOL,Nsegshold, Nlakeshold, 
+     +                     RELEASABLE_STOR)                    
             CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
             Steady_state = 0
             IF ( ICNVG==0 ) THEN
