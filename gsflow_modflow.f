@@ -884,8 +884,7 @@ C       PRINT 9002, KKPER, KKSTP,KKITER, Maxgziter
 C
       IF (Model>=10 .AND. iss==0) THEN
         IF(IUNIT(44).GT.0) CALL LAK2MODSIM(DELTAVOL, LAKEVOL, 
-     1                              Diversions, Nsegshold, 
-     2                              RELEASABLE_STOR)
+     1                              Diversions, Nsegshold)
       ENDIF                  
       END SUBROUTINE MFNWT_RUN
 C
