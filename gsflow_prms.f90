@@ -1579,7 +1579,7 @@
       ENDIF
 
       IF ( GSFLOW_flag==1 ) THEN
-        CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, NSegshold, Nlakeshold
+        CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, NSegshold, Nlakeshold)
         IF ( Have_lakes==1 .AND. Nlake/=NLAKES ) THEN
           PRINT *, 'ERROR, NLAKES not equal to Nlake'
           PRINT *, '       NLAKES=', NLAKES, '; Nlake=', Nlake
