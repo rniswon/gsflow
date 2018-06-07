@@ -79,10 +79,11 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2018-04-05 11:23:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2018-06-01 12:31:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
-      WRITE (*,1) MFVNAM,VERSION(:15),VERSION2(:17),VERSION3(:17)
+      IF ( Print_debug>-2 )
+     &     WRITE (*,1) MFVNAM,VERSION(:15),VERSION2(:17),VERSION3(:17)
       WRITE (Logunt,1) MFVNAM,VERSION(:15),VERSION2(:17),VERSION3(:17)
     1 FORMAT (/,28X,'MODFLOW',A,/,
      &2X,'U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
@@ -621,7 +622,6 @@ C7C2----ITERATIVELY FORMULATE AND SOLVE THE FLOW EQUATIONS.
             KKITER = KITER
             IF ( IUNIT(63).EQ.0 ) ITREAL2 = KITER
             IF(IUNIT(62).GT.0) CALL GWF2UPWUPDATE(2,Igrid)
-      
 C
 C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
             CALL GWF2BAS7FM(IGRID)
@@ -662,26 +662,23 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
 !     1                              IUNIT(44),IUNIT(52),IUNIT(55),IGRID)
 
 !  Call the PRMS modules that need to be inside the iteration loop
-            IF ( Model==0 ) THEN
-              IF ( Szcheck>0 ) THEN
-                retval = soilzone()
-                IF ( retval.NE.0 ) THEN
-                  PRINT 9001, 'soilzone', retval
-                  RETURN
-                ENDIF
-                retval = gsflow_prms2mf()
-                IF ( retval.NE.0 ) THEN
-                  PRINT 9001, 'gsflow_prms2mf', retval
-                  RETURN
-                ENDIF
-                Sziters = Sziters + 1
-                Maxgziter = KKITER
-                IF ( KKITER==Mxsziter ) Szcheck = 0 ! stop calling soilzone in iteration loop
-              ELSEIF ( iss==0 ) THEN
-                IF ( KKITER==Mxsziter+1 ) Stopcount = Stopcount + 1
+            IF ( Szcheck>0 ) THEN
+              retval = soilzone()
+              IF ( retval.NE.0 ) THEN
+                PRINT 9001, 'soilzone', retval
+                RETURN
               ENDIF
+              retval = gsflow_prms2mf()
+              IF ( retval.NE.0 ) THEN
+                PRINT 9001, 'gsflow_prms2mf', retval
+                RETURN
+              ENDIF
+              Sziters = Sziters + 1
+              Maxgziter = KKITER
+              IF ( KKITER==Mxsziter ) Szcheck = 0 ! stop calling soilzone in iteration loop
+            ELSEIF ( iss==0 ) THEN
+              IF ( KKITER==Mxsziter+1 ) Stopcount = Stopcount + 1
             ENDIF
-
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
      1                           IUNIT(44),IUNIT(22),IUNIT(63),
      2                           IUNIT(64),IGRID)  !SWR - JDH ADDED IUNIT(64)
@@ -1460,6 +1457,7 @@ C
       IMPLICIT NONE
       EXTERNAL :: READ_STRESS, RESTART1READ
       INTEGER, EXTERNAL :: control_integer_array, gsfrun
+      INTRINSIC :: INT
       DOUBLE PRECISION, EXTERNAL :: getjulday
 ! Local Variables
       INTEGER :: i, j
@@ -1508,6 +1506,11 @@ C
         STOP
       ENDIF
 
+      IF ( mfstrt_jul==start_jul .AND. Init_vars_from_file==1 .AND.
+     &     ISSFLG(1)==1 ) STOP
+     &    'ERROR, modflow_time_zero = start_time for restart'//
+     &    ' simulation with steady state as first stress period'
+
       IF ( Mft_to_days>1.0 ) PRINT *, 'CAUTION, MF time step /= 1 day'
 
       IF ( Model>0 ) PRINT *, ' '
@@ -1537,52 +1540,52 @@ C
         Stress_dates(i+1) = Stress_dates(i) + plen
 !        print *, 'PERLEN', PERLEN(i), plen, Mft_to_days
       ENDDO
- 222  FORMAT ( /, 'Steady state simulation did not converge', I6)
- 223  FORMAT ( /, 'Steady state simulation successful, used:', I6,
+ 222  FORMAT ( /, 'Steady state simulation did not converged ', I0)
+ 223  FORMAT ( /, 'Steady state simulation successful, used ', I0,
      &         ' iterations')
 !      print *, 'stress dates:', Stress_dates
 
       Modflow_skip_stress = 0
       Modflow_skip_time_step = 0
-      kstpskip = 0.0D0
-      Modflow_time_in_stress = 0.0D0
       Modflow_skip_time = start_jul - mfstrt_jul
-      time = 0.0D0
       Modflow_time_in_stress = Modflow_skip_time
-      DO i = 1, NPER
-        IF ( ISSFLG(i)/=1 ) time = time + PERLEN(i)*Mft_to_days
-      IF ( time<=Modflow_skip_time ) THEN     !RGN
-!           IF ( time<Modflow_skip_time ) THEN   !RGN
-          Modflow_skip_stress = i
-          kstpskip = kstpskip + PERLEN(i)*Mft_to_days
-          Modflow_skip_time_step = Modflow_skip_time_step + NSTP(i)
-        ELSE
-          EXIT
-        ENDIF
-      ENDDO
-!      Modflow_time_in_stress = Modflow_time_in_stress - time   !RGN
-      Modflow_time_in_stress = Modflow_skip_time - kstpskip
-      IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
-!      IF ( Init_vars_from_file>0 ) THEN    !RGN 4/3/2018 This should always be called.
-      IF ( mfstrt_jul==start_jul ) Modflow_skip_stress = -1   !RGN 4/9/2018 mf start time equals start time then no skip
-        DO i = 1, Modflow_skip_stress + 1
-          KPER = i                   !RGN
-          CALL READ_STRESS()
-          IF ( i < Modflow_skip_stress + 1 ) THEN
-            DO KSTP = 1, NSTP(KPER)
-              CALL GWF2BAS7OC(KSTP,i,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
-            END DO
-          END IF
+      IF ( Modflow_skip_time>0.0D0 ) THEN
+        kstpskip = 0.0D0
+        time = 0.0D0
+        DO i = 1, NPER
+          IF ( ISSFLG(i)/=1 ) time = time + PERLEN(i)*Mft_to_days
+          IF ( time<=Modflow_skip_time ) THEN     !RGN
+!          IF ( time<Modflow_skip_time ) THEN   !RGN
+            Modflow_skip_stress = i
+            kstpskip = kstpskip + PERLEN(i)*Mft_to_days
+            Modflow_skip_time_step = Modflow_skip_time_step + NSTP(i)
+          ELSE
+            EXIT
+          ENDIF
         ENDDO
-!      END IF
-      IF ( ISSFLG(1)/=1 ) TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time 6/28/17 need to include SS time
-      KSTP = Modflow_time_in_stress ! caution, in days
-      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) THEN
-          CALL READ_STRESS() !start with TR and no restart
-      END IF
+!        Modflow_time_in_stress = Modflow_time_in_stress - time   !RGN
+        Modflow_time_in_stress = Modflow_skip_time - kstpskip
+        IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
+        ! skip stress periods from modflow_time_zero to start_time
+        KPER = 1
+        DO i = 1, Modflow_skip_stress
+          CALL READ_STRESS()
+          DO KSTP = 1, NSTP(i)
+            CALL GWF2BAS7OC(KSTP,i,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
+          END DO
+          KPER = KPER + 1 ! set to next stress period
+        ENDDO
+      ENDIF
+      TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time 6/28/17 need to include SS time
+      KSTP = INT( Modflow_time_in_stress ) ! caution, in days
       Modflow_skip_time_step = Modflow_skip_time_step + KSTP ! caution, in days
+
+      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) CALL READ_STRESS() !start with TR and no restart, what if skipping, but, not to a stress period
+
       ! read restart files to Modflow_time_in_stress
       IF ( Init_vars_from_file>0 ) THEN
+        IF ( Modflow_skip_time==0.0D0 .AND. ISSFLG(1)/=1 )
+     +       CALL READ_STRESS() ! make sure first stress period is read for a restart simulation, if not skipping ??
         IF ( Iunit(69)==0 ) THEN
           WRITE(Logunt,111)
           PRINT 111
@@ -1622,7 +1625,7 @@ C
             STRM(j,i) = ZERO
           END DO
         END DO
-        IF ( TESTSFR.GT.1.0 ) THEN
+        IF ( TESTSFR.GT.1.0E-5 ) THEN
           WRITE (Logunt, *)
           WRITE (Logunt, *)'***WARNING***'
           WRITE (Logunt, 10)
@@ -1643,7 +1646,7 @@ C
           RNF(i) = ZERO
           WTHDRW(i) = ZERO
         END DO
-        IF ( TESTLAK.GT.1.0 ) THEN
+        IF ( TESTLAK.GT.1.0E-5 ) THEN
           WRITE (Logunt, *)
           WRITE (Logunt, *)'***WARNING***'
           WRITE (Logunt, 11)
