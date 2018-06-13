@@ -99,7 +99,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2018-05-25 14:41:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-06-25 14:41:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -572,7 +572,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 1.3.0 03/13/2018', //, &
+     &        25X, 'Version 2.0.0 06/25/2018', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 

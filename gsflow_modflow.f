@@ -79,7 +79,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2018-06-01 12:31:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2018-06-13 12:07:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       IF ( Print_debug>-2 )
@@ -967,7 +967,7 @@ C7C6---JUMP TO END OF PROGRAM IF CONVERGENCE WAS NOT ACHIEVED.
 !gsf        END IF
           END IF
 !----INCREMENT CONTINUOUS TIME COUNTER FOR MODFLOW
-!          TOTIM = TOTIM + DELT    
+!          TOTIM = TOTIM + DELT
 C
 C-----END OF TIME STEP (KSTP) AND STRESS PERIOD (KPER) LOOPS
 !gsf 90   CONTINUE
@@ -1514,6 +1514,7 @@ C
       IF ( Mft_to_days>1.0 ) PRINT *, 'CAUTION, MF time step /= 1 day'
 
       IF ( Model>0 ) PRINT *, ' '
+      TOTIM = 0.0
       Steady_state = 0
       ! run steady state and load Stress_dates array (Julian days)
       DO i = 1, NPER
@@ -1528,6 +1529,7 @@ C
             Steady_state = 1
             IF ( gsfrun()/=0 ) STOP 'ERROR, steady state failed'
             Steady_state = 0
+            TOTIM = PERLEN(1)*Mft_to_days
             IF ( ICNVG==0 ) THEN
               PRINT 222, KKITER
               WRITE ( Logunt, 222 ) KKITER
@@ -1576,7 +1578,7 @@ C
           KPER = KPER + 1 ! set to next stress period
         ENDDO
       ENDIF
-      TOTIM = Modflow_skip_time/Mft_to_days ! put in MF time 6/28/17 need to include SS time
+      TOTIM = TOTIM + Modflow_skip_time/Mft_to_days ! TOTIM includes SS time as set above, rsr
       KSTP = INT( Modflow_time_in_stress ) ! caution, in days
       Modflow_skip_time_step = Modflow_skip_time_step + KSTP ! caution, in days
 
