@@ -79,7 +79,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2018-06-13 12:07:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2018-06-14 13:42:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       IF ( Print_debug>-2 )
@@ -1515,6 +1515,8 @@ C
 
       IF ( Model>0 ) PRINT *, ' '
       TOTIM = 0.0
+      KPER = 0
+      KSTP = 0
       Steady_state = 0
       ! run steady state and load Stress_dates array (Julian days)
       DO i = 1, NPER
@@ -1522,14 +1524,13 @@ C
         IF ( ISSFLG(i)==1 ) THEN
           IF ( i/=1 ) STOP 'ERROR, only first time step can be SS'
           Stress_dates(i) = Stress_dates(i) - plen
+          KPER = 1
+          CALL READ_STRESS()
           IF ( Init_vars_from_file==0 ) THEN
-            CALL READ_STRESS()
-            KSTP = 0
-            ! DELT = 1.0 ! ?? what if steady state PERLEN not equal one day, DELT set in READ_STRESS
             Steady_state = 1
             IF ( gsfrun()/=0 ) STOP 'ERROR, steady state failed'
             Steady_state = 0
-            TOTIM = PERLEN(1)*Mft_to_days
+            TOTIM = plen
             IF ( ICNVG==0 ) THEN
               PRINT 222, KKITER
               WRITE ( Logunt, 222 ) KKITER
@@ -1542,7 +1543,7 @@ C
         Stress_dates(i+1) = Stress_dates(i) + plen
 !        print *, 'PERLEN', PERLEN(i), plen, Mft_to_days
       ENDDO
- 222  FORMAT ( /, 'Steady state simulation did not converged ', I0)
+ 222  FORMAT ( /, 'Steady state simulation did not converge ', I0)
  223  FORMAT ( /, 'Steady state simulation successful, used ', I0,
      &         ' iterations')
 !      print *, 'stress dates:', Stress_dates
@@ -1569,25 +1570,24 @@ C
         Modflow_time_in_stress = Modflow_skip_time - kstpskip
         IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
         ! skip stress periods from modflow_time_zero to start_time
-        KPER = 1
         DO i = 1, Modflow_skip_stress
-          CALL READ_STRESS()
-          DO KSTP = 1, NSTP(i)
-            CALL GWF2BAS7OC(KSTP,i,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
-          END DO
           KPER = KPER + 1 ! set to next stress period
+          CALL READ_STRESS()
+          DO KSTP = 1, NSTP(KPER)
+            CALL GWF2BAS7OC(KSTP,KPER,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
+          END DO
         ENDDO
+        TOTIM = TOTIM + Modflow_skip_time/Mft_to_days ! TOTIM includes SS time as set above, rsr
+      ELSEIF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) THEN
+        !start with TR and no restart
+        KPER = KPER + 1 ! set to next stress period
+        CALL READ_STRESS()
       ENDIF
-      TOTIM = TOTIM + Modflow_skip_time/Mft_to_days ! TOTIM includes SS time as set above, rsr
       KSTP = INT( Modflow_time_in_stress ) ! caution, in days
       Modflow_skip_time_step = Modflow_skip_time_step + KSTP ! caution, in days
 
-      IF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) CALL READ_STRESS() !start with TR and no restart, what if skipping, but, not to a stress period
-
       ! read restart files to Modflow_time_in_stress
       IF ( Init_vars_from_file>0 ) THEN
-        IF ( Modflow_skip_time==0.0D0 .AND. ISSFLG(1)/=1 )
-     +       CALL READ_STRESS() ! make sure first stress period is read for a restart simulation, if not skipping ??
         IF ( Iunit(69)==0 ) THEN
           WRITE(Logunt,111)
           PRINT 111
