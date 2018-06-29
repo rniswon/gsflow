@@ -1538,6 +1538,8 @@ C
               PRINT 223, KKITER
               WRITE ( Logunt, 223 ) KKITER
             ENDIF
+          ELSE
+            CALL GWF2BAS7OC(1,1,1,IUNIT(12),1)  !assumes only SP1 can be SS
           ENDIF
         ENDIF
         Stress_dates(i+1) = Stress_dates(i) + plen
@@ -1570,9 +1572,9 @@ C
         Modflow_time_in_stress = Modflow_skip_time - kstpskip
         IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
         ! skip stress periods from modflow_time_zero to start_time
-        DO i = 1, Modflow_skip_stress
+        DO i = 1, Modflow_skip_stress - ISSFLG(1)   !RGN because SP1 already read if SS during first period.
           KPER = KPER + 1 ! set to next stress period
-          CALL READ_STRESS()
+          if ( ISSFLG(i) == 0 ) CALL READ_STRESS()
           DO KSTP = 1, NSTP(KPER)
             CALL GWF2BAS7OC(KSTP,KPER,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
           END DO
