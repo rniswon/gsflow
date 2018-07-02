@@ -5,7 +5,7 @@
 !   Local Variables
       INTEGER, PARAMETER :: ITDIM = 80
       INTEGER, SAVE :: Convfail_cnt, Steady_state, Ncells
-      INTEGER, SAVE :: IGRID, KKPER, ICNVG, NSOL, IOUTS
+      INTEGER, SAVE :: IGRID, KKPER, ICNVG, NSOL, IOUTS,KPERSTART
       INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters
       INTEGER, SAVE :: Mfiter_cnt(ITDIM), Iter_cnt(ITDIM), Iterations
       INTEGER, SAVE :: Szcheck, Sziters, INUNIT, KPER, NCVGERR
@@ -432,6 +432,7 @@ C7------SIMULATE EACH STRESS PERIOD.
    14 FORMAT (/, 'Using Solver Package: ', A)
       Sziters = 0
       KPER = 1
+      KPERSTART = 1
 
       Convfail_cnt = 0
       Max_iters = 0
@@ -1333,7 +1334,7 @@ C
 !***********************************************************************
       SUBROUTINE READ_STRESS()
       USE GSFMODFLOW, ONLY: IGRID, KKPER, KPER, NSOL, IOUTS, KKSTP,
-     &                      Mft_to_sec, KSTP
+     &                      Mft_to_sec, KSTP, KPERSTART
       USE GLOBAL, ONLY: IUNIT, ISSFLG, IOUT
       USE PRMS_MODULE, ONLY: Model
       USE PRMS_SET_TIME, ONLY: Timestep_seconds
@@ -1382,8 +1383,8 @@ C----------READ USING PACKAGE READ AND PREPARE MODULES.
         IF(IUNIT(22).GT.0) CALL GWF2LAK7RP(IUNIT(22),IUNIT(1),
      1               IUNIT(15),IUNIT(23),IUNIT(37),IUNIT(44),IUNIT(55),
      2               IUNIT(62),KKPER,NSOL,IOUTS,IGRID)
-        IF(IUNIT(46).GT.0.AND.KKPER.EQ.1) CALL GWF2GAG7RP(IUNIT(15),
-     1             IUNIT(22),IUNIT(55),NSOL,IGRID)
+        IF(IUNIT(46).GT.0.AND.KKPER.EQ.1) 
+     1    CALL GWF2GAG7RP(IUNIT(15),IUNIT(22),IUNIT(55),NSOL,IGRID)
         IF(IUNIT(39).GT.0) CALL GWF2ETS7RP(IUNIT(39),IGRID)
         IF(IUNIT(40).GT.0) CALL GWF2DRT7RP(IUNIT(40),IGRID)
         IF(IUNIT(50).GT.0) CALL GWF2MNW27RP(IUNIT(50),kkper,IUNIT(9),
@@ -1417,9 +1418,12 @@ C
       DOUBLE PRECISION, EXTERNAL :: nowjt, getjulday
 ! Local Variables
       DOUBLE PRECISION :: now, seconds
+      INTEGER :: KPERTEST
 !     ------------------------------------------------------------------
       GET_KPER = -1
       now = nowjt()
+      KPERTEST = 1
+      IF ( KPER > KPERTEST ) KPERTEST = KPER
 !
 !     If called from init, then "now" isn't set yet.
 !     Set "now" to model start date.
@@ -1428,7 +1432,7 @@ C
         now = getjulday(Start_month, Start_day, Start_year,
      &                  Starttime(4), Starttime(5), seconds)
       ENDIF
-      IF ( now.LT.Stress_dates(KPER) )
+      IF ( now.LT.Stress_dates(KPERTEST) )
      &     STOP 'ERROR, now<stress period time'
       IF ( now.GT.Stress_dates(NPER) ) THEN
         GET_KPER = NPER
@@ -1447,7 +1451,7 @@ C
       USE GLOBAL, ONLY: NPER, ISSFLG, PERLEN, IUNIT, NSTP
       USE GSFMODFLOW, ONLY: Modflow_skip_time, Modflow_skip_stress,
      &    Modflow_time_in_stress, Stress_dates, Modflow_time_zero,
-     &    Steady_state, ICNVG, KPER, KSTP, Mft_to_days, 
+     &    Steady_state, ICNVG, KPER, KSTP, Mft_to_days, KPERSTART,
      &    Modflow_skip_time_step
       USE PRMS_MODULE, ONLY: Init_vars_from_file, Kkiter, Model,
      &    Starttime, Start_year, Start_month, Start_day, Logunt,
@@ -1579,6 +1583,7 @@ C
             CALL GWF2BAS7OC(KSTP,KPER,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
           END DO
         ENDDO
+        KPERSTART = KPER
         TOTIM = TOTIM + Modflow_skip_time/Mft_to_days ! TOTIM includes SS time as set above, rsr
       ELSEIF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) THEN
         !start with TR and no restart
