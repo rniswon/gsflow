@@ -4,7 +4,7 @@
 		<Platform Name="Win32"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" ConfigurationType="typeDynamicLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" EnableRecursion="true" WarnIgnoreLOC="true" SuppressUsageMessages="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" EnableRecursion="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemWindows" LinkDLL="true"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -91,7 +91,6 @@
 		<File RelativePath="..\..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\lmt8_NWT.f"/>
 		<File RelativePath="..\..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\mach_mod.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\map_results.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\MF_NWT.f"/>
 		<File RelativePath="..\..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\mhc7.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\mmf_utils.f90"/>
 		<File RelativePath="..\..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\modules.f90"/>
@@ -132,6 +131,7 @@
 		<File RelativePath="..\..\..\..\..\prms.git\read_data_file.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\read_parameter_file.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\routing.f90"/>
+		<File RelativePath="..\..\..\..\..\prms.git\setup_param.f90"/>
 		<File RelativePath="..\..\..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\sip7_NWT.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\snowcomp.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\soilzone.f90"/>
