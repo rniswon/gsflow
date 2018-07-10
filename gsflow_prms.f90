@@ -508,6 +508,10 @@
           WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                                        Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         ENDIF
+        CLOSE ( Logunt )
+        IF ( Print_debug>-2 ) CLOSE ( PRMS_output_unit )
+        IF ( Save_vars_to_file>0 ) CLOSE ( Restart_outunit )
+        STOP
       ELSEIF ( Process_flag==1 ) THEN
         IF ( Print_debug>-2 ) THEN
           PRINT '(A)', EQULS

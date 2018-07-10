@@ -79,7 +79,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2018-06-14 13:42:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2018-07-06 13:58:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       IF ( Print_debug>-2 )
@@ -1576,17 +1576,22 @@ C
         Modflow_time_in_stress = Modflow_skip_time - kstpskip
         IF ( Modflow_time_in_stress<0.0D0 ) Modflow_time_in_stress = 0.0D0
         ! skip stress periods from modflow_time_zero to start_time
-        DO i = 1, Modflow_skip_stress - ISSFLG(1)   !RGN because SP1 already read if SS during first period.
-          KPER = KPER + 1 ! set to next stress period
-          if ( ISSFLG(i) == 0 ) CALL READ_STRESS()
-          DO KSTP = 1, NSTP(KPER)
-            CALL GWF2BAS7OC(KSTP,KPER,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
-          END DO
-        ENDDO
+        IF ( Modflow_skip_stress - ISSFLG(1) == 0 ) THEN
+          KPER = 1
+          IF ( ISSFLG(1)==0 ) CALL READ_STRESS()
+        ELSE
+          DO i = 1, Modflow_skip_stress - ISSFLG(1)   !RGN because SP1 already read if SS during first period.
+            KPER = KPER + 1 ! set to next stress period
+            IF ( ISSFLG(i) == 0 ) CALL READ_STRESS()
+            DO KSTP = 1, NSTP(KPER)
+              CALL GWF2BAS7OC(KSTP,KPER,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
+            END DO
+          ENDDO
+        ENDIF
         KPERSTART = KPER
         TOTIM = TOTIM + Modflow_skip_time/Mft_to_days ! TOTIM includes SS time as set above, rsr
       ELSEIF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) THEN
-        !start with TR and no restart
+        !start with TR and no restart and no skip time
         KPER = KPER + 1 ! set to next stress period
         CALL READ_STRESS()
       ENDIF
