@@ -35,7 +35,7 @@ MF_NWT/MF_NWT/Release/
 MF_NWT/MF_NWT/Debug/
 
 # msds
-*.vfproj
+#*.vfproj
 *.vcxproj
 *.vcxproj.filters
 *.sdf
