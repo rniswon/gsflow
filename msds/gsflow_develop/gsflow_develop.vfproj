@@ -66,6 +66,7 @@
 		<File RelativePath="..\..\gsflow_prms.f90"/>
 		<File RelativePath="..\..\gsflow_prms2mf.f90"/>
 		<File RelativePath="..\..\gsflow_sum.f90"/>
+		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\gwf2awu1_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\gwf2bas7_NWT.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\gwf2bcf7.f"/>
 		<File RelativePath="..\..\..\mfnwt.git\MODFLOW-NWT_1.1.4\src\gwf2chd7.f"/>
