@@ -1407,6 +1407,7 @@ C----------READ USING PACKAGE READ AND PREPARE MODULES.
 !        IF(IUNIT(61).GT.0) CALL FMP2RP(IUNIT(61),ISTARTFL,KKPER,        !FMP2AR CALL ADDED BY SCHMID
 !     1                          IUNIT(44),IUNIT(52),IGRID)     
         IF(IUNIT(64).GT.0) CALL GWF2SWR7RP(IUNIT(64),KKPER,IGRID)  !SWR - JDH
+       IF ( IUNIT(66).GT.0 ) CALL GWF2AWU7RP(IUNIT(66),IUNIT(44),KKPER)
 C
         IF ( Model.EQ.0 .AND. ISSFLG(KPER).EQ.0 )
      1                   CALL ZERO_SPECIFIED_FLOWS(IUNIT(22),IUNIT(44))
@@ -1543,7 +1544,8 @@ C
             Steady_state = 1
             IF ( gsfrun()/=0 ) STOP 'ERROR, steady state failed'
             Steady_state = 0
-            TOTIM = plen
+ !           TOTIM = plen !RGN 9/4/2018 TOTIM needs to stay in MF time units
+            TOTIM = PERLEN(i)  !RGN 9/4/2018 TOTIM needs to stay in MF time units
             IF ( ICNVG==0 ) THEN
               PRINT 222, KKITER
               WRITE ( Logunt, 222 ) KKITER
