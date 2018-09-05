@@ -8,6 +8,7 @@
       USE PRMS_MODULE
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_CLEAN, MFNWT_TIMEADVANCE, MFNWT_OCBUDGET
       USE GWFSFRMODULE, ONLY: NSS
+      USE GWFLAKMODULE, ONLY: NLAKES
       IMPLICIT NONE
 ! Arguments
       INTEGER, INTENT(IN) :: Process_mode, Idivert(Nsegshold)
@@ -53,6 +54,9 @@
           CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
           CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)  !SOLVE GW SW EQUATIONS FOR MODSIM-GSFLOW ITERATION
           RETURN
+        ELSEIF( Model==12 .AND. MS_GSF_converge ) THEN
+          CALL MFNWT_OCBUDGET()
+          ! Return
         ENDIF
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
@@ -67,7 +71,11 @@
 
         ! GSFLOW, MODSIM-GSFLOW
         IF ( GSFLOW_flag==1 .OR. Model==12 ) THEN
-          IF ( Model==12 ) Nsegshold = NSS
+          IF ( Model==12 ) THEN
+            Nsegshold = NSS
+            Nlakeshold = NLAKES
+            RETURN
+          END IF
           call_modules = gsfdecl()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
