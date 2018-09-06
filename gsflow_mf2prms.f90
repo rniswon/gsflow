@@ -13,7 +13,7 @@
       USE GWFUZFMODULE, ONLY: SEEPOUT
       USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id, soilzone_gain
       USE GLOBAL,       ONLY:IUNIT
-      USE PRMS_BASIN, ONLY: HRU_PERV
+      USE PRMS_BASIN, ONLY: Hru_perv
       USE GWFBASMODULE, ONLY:DELT
       USE GWFAWUMODULE, ONLY: NUMIRRWELSP,IRRWELVAR,NUMCELLS,WELLIRRPRMS,  &
                               NUMIRRSFRSP,IRRSEG,DVRCH,SFRIRRPRMS,UZFROW,  &
@@ -30,7 +30,7 @@
       CHARACTER(LEN=80), SAVE :: Version_gsflow_mf2prms
 !***********************************************************************
       gsflow_mf2prms = 0
-      mf_q2prms_inch = 0.0
+
       IF ( Process(:3)=='run' ) THEN
         DO i = 1, Nhrucell
           IF ( Hrucheck(Gvr_hru_id(i))==1 ) &
@@ -41,15 +41,15 @@
 !
 ! From irrigation wells
 !
-        soilzone_gain = 0.0
-        mf_q2prms_inch = DELT*Mfl2_to_acre*Mfl_to_inch
-        IF ( Iunit(66) > 0 ) then
+        IF ( Iunit(66) > 0 ) THEN
+          soilzone_gain = 0.0
+          mf_q2prms_inch = DELT*Mfl2_to_acre*Mfl_to_inch
           DO J = 1, NUMIRRWELSP
             IRWL = IRRWELVAR(J)
             NMCL = NUMCELLS(IRWL)
             DO K = 1, NMCL
               ihru = UZFROW(K,IRWL)
-              soilzone_gain(ihru) = soilzone_gain(ihru) + WELLIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(IHRU)
+              soilzone_gain(ihru) = soilzone_gain(ihru) + WELLIRRPRMS(k,j)*mf_q2prms_inch/Hru_perv(ihru)
             END DO
           END DO
 !
@@ -60,13 +60,13 @@
             NMCL = DVRCH(SGNM)
             DO K=1,NMCL        
               ihru = IRRROW(K,SGNM)
-              soilzone_gain(ihru) = soilzone_gain(ihru) + SFRIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(ihru)
+              soilzone_gain(ihru) = soilzone_gain(ihru) + SFRIRRPRMS(k,j)*mf_q2prms_inch/Hru_perv(ihru)
             END DO
           END DO
         END IF
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2018-03-02 10:18:00Z'
+        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2018-09-05 14:06:00Z'
         CALL print_module(Version_gsflow_mf2prms, 'GSFLOW MODFLOW to PRMS      ', 90)
 !        MODNAME = 'gsflow_mf2prms'
       ENDIF

@@ -8,13 +8,16 @@
       USE PRMS_MODULE
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_CLEAN, MFNWT_TIMEADVANCE, MFNWT_OCBUDGET
       USE GWFSFRMODULE, ONLY: NSS
+      USE GWFLAKMODULE, ONLY: NLAKES
       IMPLICIT NONE
 ! Arguments
       INTEGER, INTENT(IN) :: Process_mode, Idivert(Nsegshold)
       INTEGER, INTENT(INOUT) :: Nsegshold, Nlakeshold
       LOGICAL, INTENT(INOUT) :: AFR, MS_GSF_converge
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
-      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Nlakeshold), EXCHANGE(Nsegshold), LAKEVOL(Nlakeshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Nlakeshold), &
+     &                                   EXCHANGE(Nsegshold),  &
+     &                                   LAKEVOL(Nlakeshold)
 ! Functions
       INTRINSIC :: DATE_AND_TIME, INT
       INTEGER, EXTERNAL :: check_dims, basin, climateflow, prms_time
@@ -44,28 +47,38 @@
 
       ! Process_mode set in MODSIM interface
       Process_flag = Process_mode !(0=run, 1=declare, 2=init, 3=clean, 4=setdims)
+!     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
 
       IF ( Process_flag==0 ) THEN
-        IF ( Model==12 .AND. .NOT. MS_GSF_converge ) THEN
+        IF ( Model==MODSIM_MODFLOW ) THEN
+          IF ( .NOT. MS_GSF_converge ) THEN
 ! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST MODSIM-MODFLOW ITERATION
-          CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-          CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)  !SOLVE GW SW EQUATIONS FOR MODSIM-GSFLOW ITERATION
+            CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
+            CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)  !SOLVE GW SW EQUATIONS FOR MODSIM-MODFLOW ITERATION
+          ELSE !IF( MS_GSF_converge ) THEN
+            CALL MFNWT_OCBUDGET()
+          ENDIF
           RETURN
         ENDIF
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2018-05-02 13:44:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-09-06 10:00:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
           IF ( check_dims()/=0 ) STOP
           Nsegshold = Nsegment
+          Nlakeshold = Nlake
         ENDIF
 
         ! GSFLOW, MODSIM-GSFLOW
-        IF ( GSFLOW_flag==1 .OR. Model==12 ) THEN
-          IF ( Model==12 ) Nsegshold = NSS
+        IF ( GSFLOW_flag==1 .OR. Model==MODSIM_MODFLOW ) THEN
+          IF ( Model==MODSIM_MODFLOW ) THEN
+            Nsegshold = NSS
+            Nlakeshold = NLAKES
+            RETURN
+          END IF
           call_modules = gsfdecl()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
@@ -87,7 +100,7 @@
 
         CALL setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold) ! if MODFLOW only the execution stops in setdims
 
-        IF ( Model==12 .OR. Model==13 ) RETURN ! MODSIM or MODSIM-MODFLOW modes
+        IF ( Model==MODSIM_MODFLOW .OR. Model==MODSIM ) RETURN
 
         IF ( PRMS_flag==1 ) THEN ! PRMS is active
           CALL setup_params()
@@ -109,7 +122,7 @@
 
       Process = Arg
 
-      IF ( Model==99 ) THEN
+      IF ( Model==DOCUMENTATION ) THEN
         !(0=run, 1=declare, 2=init, 3=clean, 4=setdims)
         IF ( Process_flag==4 .OR. Process_flag==1 ) THEN
           Init_vars_from_file = 0 ! make sure this is set so all variables and parameters are declared
@@ -259,7 +272,7 @@
       IF ( call_modules/=0 ) CALL module_error(Srunoff_module, Arg, call_modules)
 
 ! for PRMS-only and MODSIM-PRMS simulations
-      IF ( Model==1 .OR. Model==11 ) THEN
+      IF ( PRMS_flag==1 ) THEN
         call_modules = soilzone(AFR)
         IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
@@ -267,12 +280,12 @@
         call_modules = gwflow()
         IF ( call_modules/=0 ) CALL module_error('gwflow', Arg, call_modules)
 
-        IF ( Model==1 ) THEN
-          IF ( Stream_order_flag==1 ) THEN
-            call_modules = routing()
-            IF ( call_modules/=0 ) CALL module_error('routing', Arg, call_modules)
-          ENDIF
+        IF ( Stream_order_flag==1 ) THEN
+          call_modules = routing()
+          IF ( call_modules/=0 ) CALL module_error('routing', Arg, call_modules)
+        ENDIF
 
+        IF ( Model==PRMS ) THEN
           IF ( Strmflow_flag==1 ) THEN
             call_modules = strmflow()
           ELSEIF ( Strmflow_flag==4 ) THEN
@@ -285,25 +298,26 @@
           IF ( call_modules/=0 ) CALL module_error(Strmflow_module, Arg, call_modules)
 
           IF ( Stream_temp_flag==1 ) call_modules = stream_temp()
-
-          IF ( Print_debug>-2 ) THEN
-            call_modules = basin_sum()
-            IF ( call_modules/=0 ) CALL module_error('basin_sum', Arg, call_modules)
-          ENDIF
-
-          IF ( Print_debug==1 ) CALL water_balance()
-
-          IF ( CsvON_OFF>0 ) CALL prms_summary()
         ENDIF
+
+        IF ( Print_debug>-2 ) THEN
+          call_modules = basin_sum()
+          IF ( call_modules/=0 ) CALL module_error('basin_sum', Arg, call_modules)
+        ENDIF
+
+        IF ( Print_debug==1 ) CALL water_balance()
+
+        IF ( CsvON_OFF>0 ) CALL prms_summary()
+
       ENDIF
     ENDIF ! AFR = TRUE
 
 ! for GSFLOW simulations
 ! TODO below need this for MODSIM-GSFLOW and GSFLOW
-      IF ( GSFLOW_flag==1 .OR. Model==11 ) THEN
+      IF ( GSFLOW_flag==1 ) THEN
 
         IF ( Process_flag==0 ) THEN
-          IF ( GSFLOW_flag==1 .AND. .NOT. MS_GSF_converge ) THEN
+          IF ( .NOT. MS_GSF_converge ) THEN
 ! TODO: TIMEADVANCE ONLY SHOULD BE CALLED BEFORE FIRST MODSIM-GSFLOW ITERATION
             CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
             CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)  !SOLVE GW SW EQUATIONS FOR MODSIM-GSFLOW ITERATION
@@ -316,15 +330,13 @@
 
 ! SOILZONE for GSFLOW is in the MODFLOW iteration loop,
 ! only call for declare, initialize, and cleanup.
-          IF ( GSFLOW_flag==1 ) THEN
-            call_modules = soilzone(AFR)
-            IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
+          call_modules = soilzone(AFR)
+          IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
-            call_modules = gsflow_prms2mf()
-            IF ( call_modules/=0 ) CALL module_error('gsflow_prms2mf', Arg, call_modules)
-            call_modules = gsflow_mf2prms()
-            IF ( call_modules/=0 ) CALL module_error('gsflow_mf2prms', Arg, call_modules)
-          ENDIF
+          call_modules = gsflow_prms2mf()
+          IF ( call_modules/=0 ) CALL module_error('gsflow_prms2mf', Arg, call_modules)
+          call_modules = gsflow_mf2prms()
+          IF ( call_modules/=0 ) CALL module_error('gsflow_mf2prms', Arg, call_modules)
         ENDIF
 
         IF ( MS_GSF_converge .OR. Process_flag/=0 .OR. Model==0 ) THEN
@@ -339,18 +351,18 @@
         ENDIF
       ENDIF
 
-      IF ( Model==11 ) THEN
-        call_modules = gsflow_prms2modsim(Lake_In_out_vol)
-!        DELTAVOL = Lake_In_out_vol
-      ENDIF
-
-      IF ( Model==10 ) THEN
+      IF ( Model==MODSIM_GSFLOW ) THEN
         IF ( Process_flag==0 .AND. .NOT.MS_GSF_converge ) RETURN
       ENDIF
 
       IF ( MapOutON_OFF>0 ) THEN
         call_modules = map_results()
         IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
+      ENDIF
+
+      IF ( Subbasin_flag==1 ) THEN
+        call_modules = subbasin()
+        IF ( call_modules/=0 ) CALL module_error('subbasin', Arg, call_modules)
       ENDIF
 
       IF ( NhruOutON_OFF>0 ) CALL nhru_summary()
@@ -361,10 +373,7 @@
 
       IF ( NsegmentOutON_OFF>0 ) CALL nsegment_summary()
 
-      IF ( Subbasin_flag==1 ) THEN
-        call_modules = subbasin()
-        IF ( call_modules/=0 ) CALL module_error('subbasin', Arg, call_modules)
-      ENDIF
+      IF ( Model==MODSIM_PRMS ) call_modules = gsflow_prms2modsim(EXCHANGE, DELTAVOL)
 
       IF ( Process_flag==0 ) THEN
         RETURN
@@ -388,6 +397,10 @@
           WRITE ( Logunt,'(A,I5,A,F6.2,A,/)') 'Execution elapsed time', Elapsed_time_minutes, ' minutes', &
      &                                        Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         ENDIF
+        CLOSE ( Logunt )
+        IF ( Print_debug>-2 ) CLOSE ( PRMS_output_unit )
+        IF ( Save_vars_to_file>0 ) CLOSE ( Restart_outunit )
+        !STOP
       ELSEIF ( Process_flag==1 ) THEN
         CALL read_parameter_file_params()
         IF ( Print_debug>-2 ) THEN
@@ -438,7 +451,9 @@
       INTEGER, INTENT(INOUT) :: Nsegshold, Nlakeshold
       INTEGER, INTENT(IN) :: Idivert(Nsegshold)
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
-      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(Nsegshold), DELTAVOL(Nlakeshold), LAKEVOL(Nlakeshold)
+      DOUBLE PRECISION, INTENT(INOUT) :: EXCHANGE(Nsegshold),   &
+     &                                   DELTAVOL(Nlakeshold),  &
+     &                                   LAKEVOL(Nlakeshold)
 ! Functions
       INTEGER, EXTERNAL :: decldim, declfix, control_integer_array
       INTEGER, EXTERNAL :: control_string, control_integer, compute_julday
@@ -469,7 +484,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        22X, 'Version 1.2 MODSIM 05/02/2018', //, &
+     &        22X, 'Version 1.2 MODSIM 09/06/2018', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -481,26 +496,28 @@
       MODSIM_flag = 0
 !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
       IF ( Model_mode(:13)=='MODSIM-GSFLOW' ) THEN
-        Model = 10
+        Model = MODSIM_GSFLOW
         GSFLOW_flag = 1
         MODSIM_flag = 1
+        PRMS4_flag = 0
       ELSEIF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:6)=='gsflow' .OR. Model_mode(:4)=='    ') THEN
-        Model = 0
+        Model = GSFLOW
         GSFLOW_flag = 1
       ELSEIF ( Model_mode(:4)=='PRMS' .OR. Model_mode(:4)=='prms' .OR. Model_mode(:5)=='DAILY' )THEN
-        Model = 1
+        Model = PRMS
       ELSEIF ( Model_mode(:7)=='MODFLOW' .OR. Model_mode(:7)=='modflow') THEN
-        Model = 2
+        Model = MODFLOW
         PRMS_flag = 0
       ELSEIF ( Model_mode(:14)=='MODSIM-MODFLOW' ) THEN
-        Model = 12
+        Model = MODSIM_GSFLOW
         PRMS_flag = 0
         MODSIM_flag = 1
       ELSEIF ( Model_mode(:11)=='MODSIM-PRMS' ) THEN
-        Model = 11
+        Model = MODSIM_PRMS
         MODSIM_flag = 1
+        PRMS4_flag = 0
       ELSEIF ( Model_mode(:6)=='MODSIM' ) THEN
-        Model = 13
+        Model = MODSIM
         PRMS_flag = 0
         MODSIM_flag = 1
       ELSEIF ( Model_mode(:5)=='FROST' ) THEN
@@ -568,7 +585,7 @@
         CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
         PRINT *, ' '
         WRITE (Logunt, '(1X)')
-        IF ( Model==12 ) RETURN
+        IF ( Model==MODSIM_MODFLOW ) RETURN
         DO WHILE ( Kper_mfo<=Nper )
           IF ( mf_nowtime>endday ) EXIT
           CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
@@ -583,7 +600,7 @@
         ENDDO
         CALL MFNWT_CLEAN()
         STOP
-      ELSEIF ( Model==13 ) THEN ! MODSIM
+      ELSEIF ( Model==MODSIM ) THEN
         RETURN
       ENDIF
 
@@ -941,13 +958,13 @@
       ENDIF
       IF ( Cascadegw_flag==2 ) Ncascdgw = Ncascade
       IF ( Ncascade==0 ) Cascade_flag = 0
-      IF ( Ncascdgw==0 .OR. GSFLOW_flag==1 .OR. Model==2 ) Cascadegw_flag = 0
+      IF ( Ncascdgw==0 .OR. GSFLOW_flag==1 .OR. Model==MODFLOW ) Cascadegw_flag = 0
       IF ( (Cascade_flag>0 .OR. Cascadegw_flag>0) .AND. Model/=25 ) THEN ! don't call if model_mode = CONVERT
         Call_cascade = 1
       ELSE
         Call_cascade = 0
       ENDIF
-      IF ( Model==0 .AND. Call_cascade==0 ) THEN
+      IF ( GSFLOW_flag==1 .AND. Call_cascade==0 ) THEN
         PRINT *, 'ERROR, GSFLOW requires that PRMS cascade routing is active'
         Inputerror_flag = 1
       ENDIF
@@ -1019,7 +1036,7 @@
         Stream_order_flag = 1 ! strmflow_in_out, muskingum, or muskingum_lake
       ENDIF
 
-      IF ( Nsegment<1 .AND. Model/=99 ) THEN
+      IF ( Nsegment<1 .AND. Model/=DOCUMENTATION ) THEN
         IF ( Stream_order_flag==1 .OR. Call_cascade==1 ) THEN
           PRINT *, 'ERROR, streamflow and cascade routing require nsegment > 0, specified as:', Nsegment
           STOP
@@ -1050,7 +1067,7 @@
         IF ( Print_debug>-1 ) PRINT *, 'WARNING, nsegmentOutON_OFF = 1 and nsegment = 0, thus nsegment_summary not used'
       ENDIF
 
-      IF ( Model==99 .OR. Parameter_check_flag>0 ) CALL check_dimens()
+      IF ( Model==DOCUMENTATION .OR. Parameter_check_flag>0 ) CALL check_dimens()
 
       check_dims = Inputerror_flag
       END FUNCTION check_dims
@@ -1083,7 +1100,7 @@
 
       IF ( ierr==1 ) STOP
 
-      IF ( Model==99 ) THEN
+      IF ( Model==DOCUMENTATION ) THEN
         IF ( Ntemp==0 ) Ntemp = 1
         IF ( Nrain==0 ) Nrain = 1
         IF ( Nlake==0 ) Nlake = 1
@@ -1498,6 +1515,7 @@
      &       'Maximum number of iterations soilzone states are computed', &
      &       'none')/=0 ) CALL read_error(1, 'mxsziter')
         ALLOCATE ( Gvr_cell_pct(Nhrucell), Soilzone_gain(Nhru) )
+        Soilzone_gain = 0.0
         IF ( Nhru/=Nhrucell ) THEN
           IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
      &         '0.0', '0.0', '1.0', &

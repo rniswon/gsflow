@@ -508,7 +508,7 @@
 !
 ! soil water deficit
 !
-      IF ( IUNIT(66)>0 ) Soil_water_deficit(icol, irow) = Soil_water_deficit(icol, irow) + &
+        IF ( IUNIT(66)>0 ) Soil_water_deficit(icol, irow) = Soil_water_deficit(icol, irow) + &
      &                                          (Soil_moist_max(ihru)-Soil_moist(ihru))*Hru_frac_perv(ihru)*Gvr2cell_conv(j)
 
       ENDDO

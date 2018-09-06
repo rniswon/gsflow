@@ -13,11 +13,11 @@
 !     ******************************************************************
 !     Mapping module to convert PRMS states for use by MODSIM
 !     ******************************************************************
-      INTEGER FUNCTION gsflow_prms2modsim(Lake_In_Out_vol)
-      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file, Nlake
+      INTEGER FUNCTION gsflow_prms2modsim(EXCHANGE,DELTAVOL)
+      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file, Nlake, Nsegment
       IMPLICIT NONE
 ! Arguments
-      DOUBLE PRECISION :: Lake_In_Out_vol(Nlake)
+      DOUBLE PRECISION, INTENT(OUT) :: EXCHANGE(Nsegment), DELTAVOL(Nlake)
 ! Functions
       INTEGER, EXTERNAL :: prms2modsimdecl, prms2modsiminit, prms2modsimrun
       EXTERNAL :: gsflow_prms2modsim_restart
@@ -25,7 +25,7 @@
       gsflow_prms2modsim = 0
 
       IF ( Process(:3)=='run' ) THEN
-        gsflow_prms2modsim = prms2modsimrun(Lake_In_Out_vol)
+        gsflow_prms2modsim = prms2modsimrun(EXCHANGE, DELTAVOL)
       ELSEIF ( Process(:4)=='decl' ) THEN
         gsflow_prms2modsim = prms2modsimdecl()
       ELSEIF ( Process(:4)=='init' ) THEN
@@ -52,7 +52,7 @@
 !***********************************************************************
       prms2modsimdecl = 0
 
-      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2017-10-18 16:08:00Z'
+      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-09-06 16:35:00Z'
       CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
       MODNAME = 'gsflow_prms2modsim'
 
@@ -134,7 +134,7 @@
 !***********************************************************************
 !     prms2modsimrun - Maps the PRMS results to MODSIM lakes and segments
 !***********************************************************************
-      INTEGER FUNCTION prms2modsimrun(Lake_In_Out_vol)
+      INTEGER FUNCTION prms2modsimrun(EXCHANGE, DELTAVOL)
       USE GSFPRMS2MODSIM
       USE PRMS_MODULE, ONLY: Nsegment, Nlake
       USE PRMS_BASIN, ONLY: FT2_PER_ACRE, Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_hru_id
@@ -146,7 +146,7 @@
 !      USE PRMS_GWFLOW, ONLY: 
       IMPLICIT NONE
 ! Arguments
-      DOUBLE PRECISION :: Lake_In_Out_vol(*)
+      DOUBLE PRECISION, INTENT(OUT) :: EXCHANGE(Nsegment), DELTAVOL(Nlake)
 ! Local Variables
       INTEGER :: ii, ilake, j, i
 !***********************************************************************
@@ -158,6 +158,7 @@
       Cfs_conv = FT2_PER_ACRE/12.0D0/Timestep_seconds ! need segment_latflow in acre-ft
       DO i = 1, Nsegment
         Segment_latflow(i) = Strm_seg_in(i) / Cfs_conv
+        EXCHANGE(i) = Segment_latflow(i)
       ENDDO
 
 !-----------------------------------------------------------------------
@@ -181,7 +182,7 @@
       ENDDO
 ! need different array to pass back to MODSIM to avoid circular dependences.
       DO i = 1, Nlake
-        Lake_In_Out_vol(i) = Lake_InOut_flow(i)
+        DELTAVOL(i) = Lake_InOut_flow(i)
       ENDDO
  
       END FUNCTION prms2modsimrun

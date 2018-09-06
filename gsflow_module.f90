@@ -8,7 +8,11 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 05/02/2018'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 09/06/2018'
+      !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
+      INTEGER, PARAMETER :: GSFLOW = 0, PRMS = 1, MODFLOW = 2, MODSIM_GSFLOW = 10
+      INTEGER, PARAMETER :: MODSIM_PRMS = 11, MODSIM_MODFLOW = 12, MODSIM = 13
+      INTEGER, PARAMETER :: DOCUMENTATION = 99
       CHARACTER(LEN=8), SAVE :: Process, Arg
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -66,15 +70,15 @@
 !   Local Variables
       INTEGER, PARAMETER :: ITDIM = 80
       INTEGER, SAVE :: Convfail_cnt, Steady_state, Ncells, Gsflag
-      INTEGER, SAVE :: IGRID, KKPER, ICNVG, NSOL, IOUTS
-      INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters, Nszchanging
+      INTEGER, SAVE :: IGRID, KKPER, ICNVG, NSOL, IOUTS,KPERSTART
+      INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters
       INTEGER, SAVE :: Mfiter_cnt(ITDIM), Iter_cnt(ITDIM), Iterations
       INTEGER, SAVE :: Szcheck, Sziters, INUNIT, KPER, NCVGERR
       INTEGER, SAVE :: Max_sziters, Maxgziter
       INTEGER, SAVE, ALLOCATABLE :: Gwc_col(:), Gwc_row(:)
       REAL, SAVE :: Delt_save
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Stress_dates(:)
-      INTEGER, SAVE :: Modflow_skip_stress, Kkper_new
+      INTEGER, SAVE :: Modflow_skip_stress, Kkper_new, Modflow_skip_time_step
       DOUBLE PRECISION, SAVE :: Modflow_time_in_stress, Modflow_skip_time
       DOUBLE PRECISION, SAVE :: Mft_to_sec, Totalarea_mf
       DOUBLE PRECISION, SAVE :: Mfl2_to_acre, Mfl3_to_ft3, Sfr_conv
