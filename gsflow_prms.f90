@@ -1,7 +1,8 @@
 !***********************************************************************
 ! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
-      SUBROUTINE gsflow_prms(Process_mode, AFR, MS_GSF_converge, Nsegshold, Nlakeshold, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL) BIND(C,NAME="gsflow_prms")
+      SUBROUTINE gsflow_prms(Process_mode, AFR, MS_GSF_converge, Nsegshold, Nlakeshold, &
+     &                       Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, LAKEVAP) BIND(C,NAME="gsflow_prms")
       
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
       
@@ -17,7 +18,8 @@
       DOUBLE PRECISION, INTENT(INOUT) :: Diversions(Nsegshold)
       DOUBLE PRECISION, INTENT(INOUT) :: DELTAVOL(Nlakeshold), &
      &                                   EXCHANGE(Nsegshold),  &
-     &                                   LAKEVOL(Nlakeshold)
+     &                                   LAKEVOL(Nlakeshold), &
+     &                                   LAKEVAP(Nlakeshold)
 ! Functions
       INTRINSIC :: DATE_AND_TIME, INT
       INTEGER, EXTERNAL :: check_dims, basin, climateflow, prms_time
@@ -63,7 +65,7 @@
         Arg = 'run'
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2018-09-06 10:00:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-09-07 14:06:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -272,7 +274,7 @@
       IF ( call_modules/=0 ) CALL module_error(Srunoff_module, Arg, call_modules)
 
 ! for PRMS-only and MODSIM-PRMS simulations
-      IF ( PRMS_flag==1 ) THEN
+      IF ( Model==PRMS .OR. Model==MODSIM_PRMS ) THEN
         call_modules = soilzone(AFR)
         IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
@@ -280,12 +282,12 @@
         call_modules = gwflow()
         IF ( call_modules/=0 ) CALL module_error('gwflow', Arg, call_modules)
 
-        IF ( Stream_order_flag==1 ) THEN
-          call_modules = routing()
-          IF ( call_modules/=0 ) CALL module_error('routing', Arg, call_modules)
-        ENDIF
-
         IF ( Model==PRMS ) THEN
+          IF ( Stream_order_flag==1 ) THEN
+            call_modules = routing()
+            IF ( call_modules/=0 ) CALL module_error('routing', Arg, call_modules)
+          ENDIF
+
           IF ( Strmflow_flag==1 ) THEN
             call_modules = strmflow()
           ELSEIF ( Strmflow_flag==4 ) THEN
@@ -298,17 +300,16 @@
           IF ( call_modules/=0 ) CALL module_error(Strmflow_module, Arg, call_modules)
 
           IF ( Stream_temp_flag==1 ) call_modules = stream_temp()
+
+          IF ( Print_debug>-2 ) THEN
+            call_modules = basin_sum()
+            IF ( call_modules/=0 ) CALL module_error('basin_sum', Arg, call_modules)
+          ENDIF
+
+          IF ( Print_debug==1 ) CALL water_balance()
+
+          IF ( CsvON_OFF>0 ) CALL prms_summary()
         ENDIF
-
-        IF ( Print_debug>-2 ) THEN
-          call_modules = basin_sum()
-          IF ( call_modules/=0 ) CALL module_error('basin_sum', Arg, call_modules)
-        ENDIF
-
-        IF ( Print_debug==1 ) CALL water_balance()
-
-        IF ( CsvON_OFF>0 ) CALL prms_summary()
-
       ENDIF
     ENDIF ! AFR = TRUE
 
@@ -355,6 +356,7 @@
         IF ( Process_flag==0 .AND. .NOT.MS_GSF_converge ) RETURN
       ENDIF
 
+    IF ( AFR ) THEN
       IF ( MapOutON_OFF>0 ) THEN
         call_modules = map_results()
         IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
@@ -373,7 +375,8 @@
 
       IF ( NsegmentOutON_OFF>0 ) CALL nsegment_summary()
 
-      IF ( Model==MODSIM_PRMS ) call_modules = gsflow_prms2modsim(EXCHANGE, DELTAVOL)
+      IF ( Model==MODSIM_PRMS ) call_modules = gsflow_prms2modsim(EXCHANGE, DELTAVOL, LAKEVAP)
+    ENDIF
 
       IF ( Process_flag==0 ) THEN
         RETURN

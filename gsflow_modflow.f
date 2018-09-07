@@ -491,7 +491,6 @@ c     USE LMGMODULE
       INCLUDE 'openspec.inc'
 ! FUNCTIONS AND SUBROUTINES
       INTEGER, EXTERNAL :: soilzone
-      INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms
       INTRINSIC MIN
 ! Local Variables
 !      INTEGER :: retval, KITER, iss, iprt

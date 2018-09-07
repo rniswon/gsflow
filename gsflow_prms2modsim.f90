@@ -6,18 +6,18 @@
 !   Module Variables
       CHARACTER(LEN=18), SAVE :: MODNAME
 !   Declared Variables
-      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Segment_latflow(:), Lake_InOut_flow(:)
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Segment_latflow(:), Lake_In_flow(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Lake_latflow(:), Lake_precip(:), Lake_et(:)
       END MODULE GSFPRMS2MODSIM
 
 !     ******************************************************************
 !     Mapping module to convert PRMS states for use by MODSIM
 !     ******************************************************************
-      INTEGER FUNCTION gsflow_prms2modsim(EXCHANGE,DELTAVOL)
+      INTEGER FUNCTION gsflow_prms2modsim(EXCHANGE,DELTAVOL,LAKEVAP)
       USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file, Nlake, Nsegment
       IMPLICIT NONE
 ! Arguments
-      DOUBLE PRECISION, INTENT(OUT) :: EXCHANGE(Nsegment), DELTAVOL(Nlake)
+      DOUBLE PRECISION, INTENT(OUT) :: EXCHANGE(Nsegment), DELTAVOL(Nlake), LAKEVAP(Nlake)
 ! Functions
       INTEGER, EXTERNAL :: prms2modsimdecl, prms2modsiminit, prms2modsimrun
       EXTERNAL :: gsflow_prms2modsim_restart
@@ -25,7 +25,7 @@
       gsflow_prms2modsim = 0
 
       IF ( Process(:3)=='run' ) THEN
-        gsflow_prms2modsim = prms2modsimrun(EXCHANGE, DELTAVOL)
+        gsflow_prms2modsim = prms2modsimrun(EXCHANGE, DELTAVOL, LAKEVAP)
       ELSEIF ( Process(:4)=='decl' ) THEN
         gsflow_prms2modsim = prms2modsimdecl()
       ELSEIF ( Process(:4)=='init' ) THEN
@@ -52,7 +52,7 @@
 !***********************************************************************
       prms2modsimdecl = 0
 
-      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-09-06 16:35:00Z'
+      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-09-07 14:04:00Z'
       CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
       MODNAME = 'gsflow_prms2modsim'
 
@@ -102,13 +102,13 @@
       CALL declvar_dble(MODNAME, 'Lake_et', 'nlake', Nlake, 'double', &
      &     'Evaporation from each lake', &
      &     'acre-ft', Lake_et)
-      ALLOCATE ( Lake_InOut_flow(Nlake) )
+      ALLOCATE ( Lake_In_flow(Nlake) )
       IF ( Init_vars_from_file==0 ) THEN
         Segment_latflow = 0.0D0
         Lake_latflow = 0.0D0
         Lake_precip = 0.0D0
         Lake_et = 0.0D0
-        Lake_InOut_flow = 0.0D0
+        Lake_In_flow = 0.0D0
       ENDIF
 
       ! sanity check
@@ -134,7 +134,7 @@
 !***********************************************************************
 !     prms2modsimrun - Maps the PRMS results to MODSIM lakes and segments
 !***********************************************************************
-      INTEGER FUNCTION prms2modsimrun(EXCHANGE, DELTAVOL)
+      INTEGER FUNCTION prms2modsimrun(EXCHANGE, DELTAVOL, LAKEVAP)
       USE GSFPRMS2MODSIM
       USE PRMS_MODULE, ONLY: Nsegment, Nlake
       USE PRMS_BASIN, ONLY: FT2_PER_ACRE, Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_hru_id
@@ -146,7 +146,7 @@
 !      USE PRMS_GWFLOW, ONLY: 
       IMPLICIT NONE
 ! Arguments
-      DOUBLE PRECISION, INTENT(OUT) :: EXCHANGE(Nsegment), DELTAVOL(Nlake)
+      DOUBLE PRECISION, INTENT(OUT) :: EXCHANGE(Nsegment), DELTAVOL(Nlake), LAKEVAP(Nlake)
 ! Local Variables
       INTEGER :: ii, ilake, j, i
 !***********************************************************************
@@ -168,7 +168,6 @@
       Lake_latflow = 0.0D0
       Lake_precip = 0.0D0
       Lake_et = 0.0D0
-      Lake_InOut_flow = 0.0D0
       DO ii = 1, Active_hrus
         j = Hru_route_order(ii)
         IF ( Hru_type(j)==2 ) THEN
@@ -177,12 +176,13 @@
           Lake_latflow(ilake) = Lake_latflow(ilake) + (Lakein_sz(j)+Hortonian_lakes(j))*Hru_area(j)/12.0D0 
           Lake_precip(ilake) = Lake_precip(ilake) + Hru_ppt(j)*Hru_area(j)/12.0D0 
           Lake_et(ilake) = Lake_et(ilake) + Hru_actet(j)*Hru_area(j)/12.0D0 ! acre-ft per day.
-          Lake_InOut_flow(ilake) = Lake_InOut_flow(ilake) + Lake_latflow(ilake) + Lake_precip(ilake) - Lake_et(ilake)
         ENDIF
       ENDDO
 ! need different array to pass back to MODSIM to avoid circular dependences.
       DO i = 1, Nlake
-        DELTAVOL(i) = Lake_InOut_flow(i)
+        Lake_In_flow(i) = Lake_latflow(i) + Lake_precip(i)
+        DELTAVOL(i) = Lake_In_flow(i)
+        LAKEVAP(i) = Lake_et(i)
       ENDDO
  
       END FUNCTION prms2modsimrun
@@ -206,7 +206,7 @@
         WRITE ( Restart_outunit ) Lake_latflow
         WRITE ( Restart_outunit ) Lake_precip
         WRITE ( Restart_outunit ) Lake_et
-        WRITE ( Restart_outunit ) Lake_InOut_flow
+        WRITE ( Restart_outunit ) Lake_In_flow
       ELSE
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
@@ -214,6 +214,6 @@
         READ ( Restart_inunit ) Lake_latflow
         READ ( Restart_inunit ) Lake_precip
         READ ( Restart_inunit ) Lake_et
-        READ ( Restart_inunit ) Lake_InOut_flow
+        READ ( Restart_inunit ) Lake_In_flow
       ENDIF
       END SUBROUTINE gsflow_prms2modsim_restart
