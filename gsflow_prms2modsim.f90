@@ -5,6 +5,7 @@
       IMPLICIT NONE
 !   Module Variables
       CHARACTER(LEN=18), SAVE :: MODNAME
+      DOUBLE PRECISION, SAVE :: Acre_inches_to_MSl3
 !   Declared Variables
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Segment_latflow(:), Lake_In_flow(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Lake_latflow(:), Lake_precip(:), Lake_et(:)
@@ -52,7 +53,7 @@
 !***********************************************************************
       prms2modsimdecl = 0
 
-      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-09-07 14:04:00Z'
+      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-09-07 16:22:00Z'
       CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
       MODNAME = 'gsflow_prms2modsim'
 
@@ -64,12 +65,13 @@
       INTEGER FUNCTION prms2modsiminit()
       USE GSFPRMS2MODSIM
       USE PRMS_MODULE, ONLY: Nsegment, Nlake, Init_vars_from_file
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Lake_hru_id
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Lake_hru_id, FT2_PER_ACRE
       IMPLICIT NONE
       EXTERNAL read_error, declvar_dble
       INTRINSIC ABS, DBLE
 ! Local Variables
       INTEGER :: i, ii, ierr
+      DOUBLE PRECISION :: MSl3_to_ft3
 !      DOUBLE PRECISION, ALLOCATABLE, DIMENSION(:) :: seg_area
 !***********************************************************************
       prms2modsiminit = 0
@@ -89,19 +91,19 @@
       ALLOCATE ( Segment_latflow(Nsegment) )
       CALL declvar_dble(MODNAME, 'Segment_latflow', 'nsegment', Nsegment, 'double', &
      &     'Lateral flow to each segment', &
-     &     'acre-ft', Segment_latflow)
+     &     'acre-inches', Segment_latflow)
       ALLOCATE ( Lake_latflow(Nlake) )
       CALL declvar_dble(MODNAME, 'Lake_latflow', 'nlake', Nlake, 'double', &
      &     'Total lateral flow into each lake', &
-     &     'acre-ft', Lake_latflow)
+     &     'acre-inches', Lake_latflow)
       ALLOCATE ( Lake_precip(Nlake) )
       CALL declvar_dble(MODNAME, 'Lake_precip', 'nlake', Nlake, 'double', &
      &     'Precipitation into each lake', &
-     &     'acre-ft', Lake_precip)
+     &     'acre-inches', Lake_precip)
       ALLOCATE ( Lake_et(Nlake) )
       CALL declvar_dble(MODNAME, 'Lake_et', 'nlake', Nlake, 'double', &
      &     'Evaporation from each lake', &
-     &     'acre-ft', Lake_et)
+     &     'acre-inches', Lake_et)
       ALLOCATE ( Lake_In_flow(Nlake) )
       IF ( Init_vars_from_file==0 ) THEN
         Segment_latflow = 0.0D0
@@ -126,6 +128,10 @@
       IF ( ierr==1 ) STOP
 
       !DEALLOCATE ( nseg_rch, seg_area ) ! need seg_area
+
+      ! MODSIM in meters
+      MSl3_to_ft3 = 3.280839895D0**3.0D0
+      Acre_inches_to_MSl3 = FT2_PER_ACRE/(MSl3_to_ft3*12.0D0)
 
  9001 FORMAT ('ERROR, HRU:', I7, ' is specified as a lake (hru_type=2) and lake_hru_id is specified as 0', /)
 
@@ -155,10 +161,10 @@
 !-----------------------------------------------------------------------
 ! Flow to stream segments in Strm_seg_in, units cfs
 !-----------------------------------------------------------------------
-      Cfs_conv = FT2_PER_ACRE/12.0D0/Timestep_seconds ! need segment_latflow in acre-ft
+      Cfs_conv = FT2_PER_ACRE/Timestep_seconds ! need segment_latflow in acre-inches
       DO i = 1, Nsegment
         Segment_latflow(i) = Strm_seg_in(i) / Cfs_conv
-        EXCHANGE(i) = Segment_latflow(i)
+        EXCHANGE(i) = Segment_latflow(i) * Acre_inches_to_MSl3
       ENDDO
 
 !-----------------------------------------------------------------------
@@ -173,16 +179,16 @@
         IF ( Hru_type(j)==2 ) THEN
           ilake = Lake_hru_id(j)
           ! need gwflow ??
-          Lake_latflow(ilake) = Lake_latflow(ilake) + (Lakein_sz(j)+Hortonian_lakes(j))*Hru_area(j)/12.0D0 
-          Lake_precip(ilake) = Lake_precip(ilake) + Hru_ppt(j)*Hru_area(j)/12.0D0 
-          Lake_et(ilake) = Lake_et(ilake) + Hru_actet(j)*Hru_area(j)/12.0D0 ! acre-ft per day.
+          Lake_latflow(ilake) = Lake_latflow(ilake) + (Lakein_sz(j)+Hortonian_lakes(j))*Hru_area(j)
+          Lake_precip(ilake) = Lake_precip(ilake) + Hru_ppt(j)*Hru_area(j) 
+          Lake_et(ilake) = Lake_et(ilake) + Hru_actet(j)*Hru_area(j) ! acre-inches per day.
         ENDIF
       ENDDO
 ! need different array to pass back to MODSIM to avoid circular dependences.
       DO i = 1, Nlake
         Lake_In_flow(i) = Lake_latflow(i) + Lake_precip(i)
-        DELTAVOL(i) = Lake_In_flow(i)
-        LAKEVAP(i) = Lake_et(i)
+        DELTAVOL(i) = Lake_In_flow(i) * Acre_inches_to_MSl3
+        LAKEVAP(i) = Lake_et(i) * Acre_inches_to_MSl3
       ENDDO
  
       END FUNCTION prms2modsimrun
