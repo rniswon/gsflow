@@ -63,6 +63,9 @@
           RETURN
         ENDIF
         Arg = 'run'
+        IF ( Model==MODSIM_PRMS ) THEN
+          IF ( .NOT.AFR ) RETURN
+        ENDIF
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
         PRMS_versn = 'gsflow_prms.f90 2018-09-07 14:06:00Z'
@@ -356,7 +359,6 @@
         IF ( Process_flag==0 .AND. .NOT.MS_GSF_converge ) RETURN
       ENDIF
 
-    IF ( AFR ) THEN
       IF ( MapOutON_OFF>0 ) THEN
         call_modules = map_results()
         IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
@@ -376,7 +378,6 @@
       IF ( NsegmentOutON_OFF>0 ) CALL nsegment_summary()
 
       IF ( Model==MODSIM_PRMS ) call_modules = gsflow_prms2modsim(EXCHANGE, DELTAVOL, LAKEVAP)
-    ENDIF
 
       IF ( Process_flag==0 ) THEN
         RETURN
