@@ -35,6 +35,7 @@
       INTEGER, SAVE :: Mxsziter
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
       REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
+      REAL, SAVE, ALLOCATABLE :: soilzone_gain(:)
 ! Precip_flag (1=precip_1sta; 2=precip_laps; 3=precip_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
 ! Temp_flag (1=temp_1sta; 2=temp_laps; 3=temp_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru; 8=temp_sta
 ! Control parameters
@@ -161,7 +162,7 @@
      &         'Maximum number of iterations soilzone states are computed', &
      &         'Maximum number of iterations soilzone states are computed', &
      &         'none')/=0 ) CALL read_error(1, 'mxsziter')
-          ALLOCATE ( Gvr_cell_pct(Nhrucell) )
+          ALLOCATE ( Gvr_cell_pct(Nhrucell), Soilzone_gain(Nhru) )
           IF ( Nhru/=Nhrucell ) THEN
             IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
      &           '0.0', '0.0', '1.0', &
