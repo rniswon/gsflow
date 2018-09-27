@@ -79,7 +79,7 @@ C
 !***********************************************************************
       gsfdecl = 0
 
-      Version_gsflow_modflow = 'gsflow_modflow.f 2018-09-17 11:07:00Z'
+      Version_gsflow_modflow = 'gsflow_modflow.f 2018-09-26 17:23:00Z'
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       IF ( Print_debug>-2 )
@@ -241,10 +241,10 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
         PRINT *, 'FMP Package not supported'
         ierr = 1
       ENDIF
-      !IF ( IUNIT(66)>0 ) THEN   !this is now Ag Package
-      !  PRINT *, 'GFB Package not supported'
-      !  ierr = 1
-      !ENDIF
+      IF ( IUNIT(66)>0 ) THEN
+        PRINT *, 'AWU Package not supported'
+        ierr = 1
+      ENDIF
 
 ! Packages available in NWT but not in GSFLOW
       IF ( Model==0 ) THEN

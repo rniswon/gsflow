@@ -35,7 +35,6 @@
       INTEGER, SAVE :: Mxsziter
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
       REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
-      REAL, SAVE, ALLOCATABLE :: soilzone_gain(:)
 ! Precip_flag (1=precip_1sta; 2=precip_laps; 3=precip_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
 ! Temp_flag (1=temp_1sta; 2=temp_laps; 3=temp_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru; 8=temp_sta
 ! Control parameters
@@ -100,7 +99,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2018-09-17 11:02:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-09-26 17:24:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -162,7 +161,7 @@
      &         'Maximum number of iterations soilzone states are computed', &
      &         'Maximum number of iterations soilzone states are computed', &
      &         'none')/=0 ) CALL read_error(1, 'mxsziter')
-          ALLOCATE ( Gvr_cell_pct(Nhrucell), Soilzone_gain(Nhru) )
+          ALLOCATE ( Gvr_cell_pct(Nhrucell) )
           IF ( Nhru/=Nhrucell ) THEN
             IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
      &           '0.0', '0.0', '1.0', &
@@ -577,7 +576,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 2.0.0 09/17/2018', //, &
+     &        25X, 'Version 2.0.0 10/01/2018', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
