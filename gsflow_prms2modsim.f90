@@ -53,7 +53,7 @@
 !***********************************************************************
       prms2modsimdecl = 0
 
-      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-09-07 16:22:00Z'
+      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-10-02 17:18:00Z'
       CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
       MODNAME = 'gsflow_prms2modsim'
 
@@ -143,7 +143,7 @@
       INTEGER FUNCTION prms2modsimrun(EXCHANGE, DELTAVOL, LAKEVAP)
       USE GSFPRMS2MODSIM
       USE PRMS_MODULE, ONLY: Nsegment, Nlake
-      USE PRMS_BASIN, ONLY: FT2_PER_ACRE, Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_hru_id
+      USE PRMS_BASIN, ONLY: FT2_PER_ACRE, Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_hru_id, Lake_area
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
       USE PRMS_FLOWVARS, ONLY: Hru_actet
       USE PRMS_SET_TIME, ONLY: Cfs_conv, Timestep_seconds
@@ -187,8 +187,8 @@
 ! need different array to pass back to MODSIM to avoid circular dependences.
       DO i = 1, Nlake
         Lake_In_flow(i) = Lake_latflow(i) + Lake_precip(i)
-        DELTAVOL(i) = Lake_In_flow(i) * Acre_inches_to_MSl3
-        LAKEVAP(i) = Lake_et(i) * Acre_inches_to_MSl3
+        DELTAVOL(i) = Lake_In_flow(i) * Acre_inches_to_MSl3 ! m3 / day
+        LAKEVAP(i) = Lake_et(i) / Lake_area(i) ! inches / day
       ENDDO
  
       END FUNCTION prms2modsimrun
