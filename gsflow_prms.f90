@@ -25,7 +25,7 @@
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
       INTEGER, SAVE :: Stream_temp_flag, Strmtemp_humidity_flag, PRMS4_flag
       INTEGER, SAVE :: Grid_flag, Logunt, First_timestep
-      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag
+      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
       INTEGER, SAVE :: Dynamic_flag, Water_use_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Prms_warmup
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
@@ -35,6 +35,7 @@
       INTEGER, SAVE :: Mxsziter
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
       REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
+      REAL, SAVE, ALLOCATABLE :: soilzone_gain(:)
 ! Precip_flag (1=precip_1sta; 2=precip_laps; 3=precip_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
 ! Temp_flag (1=temp_1sta; 2=temp_laps; 3=temp_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru; 8=temp_sta
 ! Control parameters
@@ -99,7 +100,7 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = 'gsflow_prms.f90 2018-09-26 17:24:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-06-25 14:41:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
@@ -137,7 +138,7 @@
   16  FORMAT (//, 4X, 'Active modules listed in the order in which they are called', //, 8X, 'Process', 19X, &
      &        'Module', 16X, 'Version Date', /, A)
 
-        IF ( GSFLOW_flag==1 ) THEN
+        IF ( Model==0 ) THEN
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
@@ -153,7 +154,7 @@
         WRITE ( Logunt, 16 ) EQULS
         CALL print_module(PRMS_versn, 'GSFLOW Computation Order    ', 90)
 
-        IF ( GSFLOW_flag==1 .OR. Model==99 ) THEN
+        IF ( Model==0 .OR. Model==99 ) THEN
           IF ( declvar(MODNAME, 'KKITER', 'one', 1, 'integer', &
      &         'Current iteration in GSFLOW simulation', 'none', KKITER)/=0 ) CALL read_error(3, 'KKITER')
           IF ( declparam(MODNAME, 'mxsziter', 'one', 'integer', &
@@ -161,7 +162,7 @@
      &         'Maximum number of iterations soilzone states are computed', &
      &         'Maximum number of iterations soilzone states are computed', &
      &         'none')/=0 ) CALL read_error(1, 'mxsziter')
-          ALLOCATE ( Gvr_cell_pct(Nhrucell) )
+          ALLOCATE ( Gvr_cell_pct(Nhrucell), Soilzone_gain(Nhru) )
           IF ( Nhru/=Nhrucell ) THEN
             IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
      &           '0.0', '0.0', '1.0', &
@@ -191,7 +192,7 @@
 
         Grid_flag = 0
         IF ( Nhru==Nhrucell ) Grid_flag = 1
-        IF ( GSFLOW_flag==1 ) THEN
+        IF ( Model==0 ) THEN
           IF ( Nhru==Nhrucell ) THEN
             Gvr_cell_pct = 1.0
           ELSE
@@ -255,7 +256,7 @@
           IF ( iret/=0 ) STOP
           CALL call_modules_restart(0)
         ENDIF
-        IF ( GSFLOW_flag==1 ) THEN
+        IF ( Model==0 ) THEN
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
@@ -403,7 +404,7 @@
       IF ( call_modules/=0 ) CALL module_error(Srunoff_module, Arg, call_modules)
 
 ! for PRMS-only simulations
-      IF ( PRMS_flag==1 ) THEN
+      IF ( Model==1 ) THEN
         call_modules = soilzone()
         IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
 
@@ -438,7 +439,7 @@
         IF ( CsvON_OFF>0 ) CALL prms_summary()
 
 ! for GSFLOW simulations
-      ELSEIF ( GSFLOW_flag==1 ) THEN
+      ELSEIF ( Model==0 ) THEN
 
         IF ( Process_flag==0 ) THEN
           call_modules = gsflow_modflow()
@@ -576,7 +577,7 @@
       WRITE ( Logunt, 3 )
     3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        25X, 'Version 2.0.0 10/01/2018', //, &
+     &        25X, 'Version 2.0.0 06/25/2018', //, &
      &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
      &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
@@ -594,12 +595,10 @@
       PRMS4_flag = 1
       IF ( Model_mode(:5)=='PRMS5' .OR. Model_mode(:7)=='GSFLOW5' ) PRMS4_flag = 0
       PRMS_flag = 1
-      GSFLOW_flag = 0
       ! Model (0=GSFLOW; 1=PRMS; 2=MODFLOW)
       IF ( Model_mode(:6)=='GSFLOW' .OR. Model_mode(:4)=='    ') THEN
         Model = 0
-        GSFLOW_flag = 1
-        PRMS_flag = 0
+        PRMS_flag = 1
       ELSEIF ( Model_mode(:4)=='PRMS' .OR. Model_mode(:5)=='DAILY' )THEN
         Model = 1
       ELSEIF ( Model_mode(:7)=='MODFLOW' ) THEN
@@ -871,7 +870,7 @@
 ! map results dimensions
       IF ( control_integer(MapOutON_OFF, 'mapOutON_OFF')/=0 ) MapOutON_OFF = 0
       idim = 0
-      IF ( GSFLOW_flag==1 .OR. MapOutON_OFF==1 ) idim = 1
+      IF ( Model==0 .OR. MapOutON_OFF==1 ) idim = 1
       IF ( decldim('nhrucell', idim, MAXDIM, &
      &     'Number of unique intersections between HRUs and spatial units of a target map for mapped results')/=0 ) &
      &     CALL read_error(7, 'nhrucell')
@@ -1025,13 +1024,13 @@
       ENDIF
       IF ( Cascadegw_flag==2 ) Ncascdgw = Ncascade
       IF ( Ncascade==0 ) Cascade_flag = 0
-      IF ( Ncascdgw==0 .OR. GSFLOW_flag==1 .OR. Model==2 ) Cascadegw_flag = 0
+      IF ( Ncascdgw==0 .OR. Model==0 .OR. Model==2 ) Cascadegw_flag = 0
       IF ( (Cascade_flag>0 .OR. Cascadegw_flag>0) .AND. Model/=10 ) THEN ! don't call if model_mode = CONVERT
         Call_cascade = 1
       ELSE
         Call_cascade = 0
       ENDIF
-      IF ( GSFLOW_flag==1 .AND. Call_cascade==0 ) THEN
+      IF ( Model==0 .AND. Call_cascade==0 ) THEN
         PRINT *, 'ERROR, GSFLOW requires that PRMS cascade routing is active'
         Inputerror_flag = 1
       ENDIF
