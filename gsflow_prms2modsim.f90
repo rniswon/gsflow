@@ -53,7 +53,7 @@
 !***********************************************************************
       prms2modsimdecl = 0
 
-      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-10-02 17:18:00Z'
+      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-10-03 12:04:00Z'
       CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
       MODNAME = 'gsflow_prms2modsim'
 
@@ -161,7 +161,7 @@
 !-----------------------------------------------------------------------
 ! Flow to stream segments in Strm_seg_in, units cfs
 !-----------------------------------------------------------------------
-      Cfs_conv = FT2_PER_ACRE/Timestep_seconds ! need segment_latflow in acre-inches
+      Cfs_conv = FT2_PER_ACRE/Timestep_seconds/12.0D0 ! need segment_latflow in acre-inches
       DO i = 1, Nsegment
         Segment_latflow(i) = Strm_seg_in(i) / Cfs_conv
         EXCHANGE(i) = Segment_latflow(i) * Acre_inches_to_MSl3
