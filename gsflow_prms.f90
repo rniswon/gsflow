@@ -890,6 +890,7 @@
       IF ( decldim('nevap', 0, MAXDIM, 'Number of pan-evaporation data sets')/=0 ) CALL read_error(7, 'nevap')
       IF ( decldim('nratetbl', 0, MAXDIM, 'Number of rating-table data sets for lake elevations') &
      &     /=0 ) CALL read_error(7, 'nratetbl')
+      IF ( decldim('nsnow', 0, MAXDIM, 'Number of snow-depth-measurement stations')/=0 ) CALL read_error(7, 'nsnow')
 
 ! depletion curves
       IF ( decldim('ndepl', 1, MAXDIM, 'Number of snow-depletion curves')/=0 ) CALL read_error(7, 'ndelp')
@@ -945,6 +946,9 @@
 
       Nsol = getdim('nsol')
       IF ( Nsol==-1 ) CALL read_error(6, 'nsol')
+
+      Nsnow = getdim('nsnow')
+      IF ( Nsnow==-1 ) CALL read_error(6, 'nsnow')
 
       Nobs = getdim('nobs')
       IF ( Nobs==-1 ) CALL read_error(6, 'nobs')

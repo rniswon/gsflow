@@ -16,7 +16,7 @@
       USE PRMS_BASIN, ONLY: Hru_perv
       USE GWFBASMODULE, ONLY:DELT
       USE GWFAWUMODULE, ONLY: NUMIRRWELSP,IRRWELVAR,NUMCELLS,WELLIRRPRMS,  &
-                              NUMIRRSFRSP,IRRSEG,DVRCH,SFRIRRPRMS,UZFROW,  &
+                              NUMIRRDIVERSIONSP,IRRSEG,DVRCH,DIVERSIONIRRPRMS,UZFROW,  &
                               IRRROW
       IMPLICIT NONE
 ! Functions
@@ -55,12 +55,12 @@
 !
 ! From segment diversions     
 !
-          DO J = 1, NUMIRRSFRSP
+          DO J = 1, NUMIRRDIVERSIONSP
             SGNM = IRRSEG(J)
             NMCL = DVRCH(SGNM)
             DO K=1,NMCL        
               ihru = IRRROW(K,SGNM)
-              soilzone_gain(ihru) = soilzone_gain(ihru) + SFRIRRPRMS(k,j)*mf_q2prms_inch/Hru_perv(ihru)
+              soilzone_gain(ihru) = soilzone_gain(ihru) + DIVERSIONIRRPRMS(k,j)*mf_q2prms_inch/Hru_perv(ihru)
             END DO
           END DO
         END IF
