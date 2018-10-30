@@ -64,11 +64,11 @@
         ENDIF
         Arg = 'run'
         IF ( Model==MODSIM_PRMS ) THEN
-          IF ( .NOT.AFR ) RETURN
+          IF ( .NOT.AFR .AND. Diversion2soil_flag==0 ) RETURN !do not return if diversion applied to soils
         ENDIF
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2018-09-07 14:06:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2018-10-10 14:52:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -76,6 +76,7 @@
           Nsegshold = Nsegment
           Nlakeshold = Nlake
         ENDIF
+        Diversion2soil_flag = 0
 
         ! GSFLOW, MODSIM-GSFLOW
         IF ( GSFLOW_flag==1 .OR. Model==MODSIM_MODFLOW ) THEN
@@ -355,14 +356,26 @@
         ENDIF
       ENDIF
 
+! for MODSIM-PRMS simulations
+      IF ( Model==MODSIM_PRMS .AND. .NOT.AFR ) THEN
+        call_modules = soilzone(AFR)
+        IF ( call_modules/=0 ) CALL module_error(Soilzone_module, Arg, call_modules)
+
+        ! rsr, need to do something if gwflow_cbh_flag=1
+        call_modules = gwflow()
+        IF ( call_modules/=0 ) CALL module_error('gwflow', Arg, call_modules)
+      ENDIF
+
       IF ( Model==MODSIM_GSFLOW ) THEN
         IF ( Process_flag==0 .AND. .NOT.MS_GSF_converge ) RETURN
       ENDIF
 
-      IF ( MapOutON_OFF>0 ) THEN
-        call_modules = map_results()
-        IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
-      ENDIF
+
+
+        IF ( MapOutON_OFF>0 ) THEN
+          call_modules = map_results()
+          IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
+        ENDIF
 
       IF ( Subbasin_flag==1 ) THEN
         call_modules = subbasin()
