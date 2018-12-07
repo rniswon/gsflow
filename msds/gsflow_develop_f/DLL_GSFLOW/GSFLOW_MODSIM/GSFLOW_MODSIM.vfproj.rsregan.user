@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioUserFile ProjectType="typeDynamicLibrary" ProjectCreator="Intel Fortran" Keyword="Dll" Version="11.0" ProjectIdGuid="{6437F820-C92A-44E9-8974-B65F67F63EA8}">
+	<Configurations>
+		<Configuration Name="Debug|Win32" CommandArguments="gsflow_gsflow.control" WorkingDirectory="C:\Workspace\gsflow.git\gsflow_examples.git\sagehen_3lay_modsim\windows"/>
+		<Configuration Name="Release|Win32"/></Configurations></VisualStudioUserFile>
