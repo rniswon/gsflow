@@ -9,7 +9,7 @@
       INTEGER, SAVE :: NTRAIL_CHK, Nlayp1
       ! Number of stream reaches in each stream segment
       INTEGER, SAVE, ALLOCATABLE :: Numreach_segment(:)
-      REAL, SAVE, ALLOCATABLE :: Excess(:)
+      REAL, SAVE, ALLOCATABLE :: Excess(:), Soil_water_deficit(:, :)
       DOUBLE PRECISION, SAVE :: Totalarea
       CHARACTER(LEN=14), SAVE :: MODNAME
 !   Declared Variables
@@ -58,22 +58,22 @@
       USE GSFPRMS2MF
       USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Nhru, Nsegment, Model
       IMPLICIT NONE
-      INTEGER, EXTERNAL :: declparam, declvar
-      EXTERNAL read_error, print_module
+      INTEGER, EXTERNAL :: declparam
+      EXTERNAL read_error, print_module, declvar_dble, declvar_real
 ! Save Variables
       CHARACTER(LEN=80), SAVE :: Version_gsflow_prms2mf
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2017-11-15 14:24:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2018-02-09 16:56:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
 ! Declared Variables
-      IF ( declvar(MODNAME, 'net_sz2gw', 'one', 1, 'double', &
+      CALL declvar_dble(MODNAME, 'net_sz2gw', 'one', 1, 'double', &
      &     'Net volumetric flow rate of gravity drainage from the'// &
      &     ' soil zone to the unsaturated and saturated zones', &
-     &     'L3/T', Net_sz2gw)/=0 ) CALL read_error(3, 'net_sz2gw')
+     &     'L3/T', Net_sz2gw)
 
 !     ALLOCATE (Reach_latflow(Nreach))
 !     IF ( decl var(MODNAME, 'reach_latflow', 'nreach', Nreach, 'double', &
@@ -87,24 +87,24 @@
 !    &     'none', Reach_id)/=0 ) CALL read_error(3, 'reach_id')
 
       ALLOCATE (Cell_drain_rate(Ngwcell))
-      IF ( declvar(MODNAME, 'cell_drain_rate', 'ngwcell', Ngwcell, 'real', &
+      CALL declvar_real(MODNAME, 'cell_drain_rate', 'ngwcell', Ngwcell, 'real', &
      &     'Recharge rate for each cell', &
-     &     'L/T', Cell_drain_rate)/=0 ) CALL read_error(3, 'Cell_drain_rate')
+     &     'L/T', Cell_drain_rate)
 
-      IF ( declvar(MODNAME, 'basin_reach_latflow', 'one', 1, 'double', &
+      CALL declvar_dble(MODNAME, 'basin_reach_latflow', 'one', 1, 'double', &
      &     'Lateral flow into all reaches in basin', &
-     &     'cfs', Basin_reach_latflow)/=0 ) CALL read_error(3, 'basin_reach_latflow')
+     &     'cfs', Basin_reach_latflow)
 
       ALLOCATE (Gw_rejected_grav(Nhrucell))
-      IF ( declvar(MODNAME, 'gw_rejected_grav', 'nhrucell', Nhrucell, 'real', &
+      CALL declvar_real(MODNAME, 'gw_rejected_grav', 'nhrucell', Nhrucell, 'real', &
      &   'Recharge rejected by UZF for each gravity-flow reservoir', &
-     &   'inches', Gw_rejected_grav)/=0 ) CALL read_error(3, 'gw_rejected_grav')
+     &   'inches', Gw_rejected_grav)
 
       !rsr, all reaches receive same precentage of flow to each segment
       ALLOCATE (Segment_pct_area(Nsegment))
-!      IF ( declvar(MODNAME, 'segment_pct_area', 'nsegment', Nsegment, 'double', &
+!      CALL declvar_dble(MODNAME, 'segment_pct_area', 'nsegment', Nsegment, 'double', &
 !     &     'Proportion of each segment that contributes flow to a stream reach', &
-!     &     'decimal fraction', Segment_pct_area)/=0 ) CALL read_error(3, 'segment_pct_area')
+!     &     'decimal fraction', Segment_pct_area)
 
       ! Allocate local arrays
       ALLOCATE ( Excess(Ngwcell) )
@@ -153,13 +153,13 @@
       USE GWFUZFMODULE, ONLY: NTRAIL, NWAV
       USE GWFSFRMODULE, ONLY: ISEG, NSS
       USE GWFLAKMODULE, ONLY: NLAKES
-      USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes
+      USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col
       USE PRMS_MODULE, ONLY: Nhru, Nsegment, Nlake, Print_debug, &
-     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Mxsziter
+     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Mxsziter, Have_lakes
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area
       USE PRMS_SOILZONE, ONLY: Gvr_hru_id, Gvr_hru_pct_adjusted
-      USE GLOBAL, ONLY: NLAY, NROW, NCOL
+      USE GLOBAL, ONLY: NLAY, NROW, NCOL, IUNIT
       USE GWFUZFMODULE, ONLY: IUZFBND
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
@@ -321,6 +321,11 @@
       ENDDO
       IF ( ierr==1 ) STOP
 
+      IF ( IUNIT(66)>0 ) THEN
+        ALLOCATE ( Soil_water_deficit(Ncol,Nrow) )
+        Soil_water_deficit = 0.0
+      ENDIF
+
       IF ( Nhru/=Nhrucell ) THEN
 ! way to adjust gvr_hru_pct, rsr
 !        WRITE ( 840, 9002 ) 'gvr_hru_pct 12', 'nhrucell', Nhrucell
@@ -356,7 +361,7 @@
             PRINT *, 'ERROR, HRU to cell mapping is < 0.0', i, pct
             ierr = 1
           ELSEIF ( pct<PCT_CHK ) THEN
-            PRINT *, 'WARNING, active HRU is not mapped to any cell', i, pct
+            IF ( Print_debug>-1 ) PRINT *, 'WARNING, active HRU is not mapped to any cell', i, pct
           ENDIF
           Totalarea = Totalarea + pct*DBLE( Hru_area(i) )
         ELSE
@@ -368,6 +373,7 @@
             WRITE (*, 9001) i
             ierr = 1
 ! must separate condition as lake_hru_id not allocated if have_lakes=0
+            ! rsr, need to check that lake_hru_id not 0
           ENDIF
         ENDIF
       ENDDO
@@ -403,15 +409,15 @@
       INTEGER FUNCTION prms2mfrun()
       USE GSFPRMS2MF
       USE GSFMODFLOW, ONLY: Gvr2cell_conv, Acre_inches_to_mfl3, &
-     &    Inch_to_mfl_t, Gwc_row, Gwc_col, Have_lakes, Mft_to_days
-      USE GLOBAL, ONLY: IBOUND
+     &    Inch_to_mfl_t, Gwc_row, Gwc_col, Mft_to_days
+      USE GLOBAL, ONLY: IBOUND, IUNIT
 !     USE GLOBAL, ONLY: IOUT
       USE GWFUZFMODULE, ONLY: IUZFBND, NWAVST, PETRATE, IGSFLOW, FINF
       USE GWFLAKMODULE, ONLY: RNF, EVAPLK, PRCPLK, NLAKES
-      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO
+      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Have_lakes, Water_use_flag
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO, Hru_frac_perv
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
-      USE PRMS_FLOWVARS, ONLY: Hru_actet
+      USE PRMS_FLOWVARS, ONLY: Hru_actet, Soil_moist_max, Soil_moist
       USE PRMS_SRUNOFF, ONLY: Hortonian_lakes
       USE PRMS_SOILZONE, ONLY: Sm2gw_grav, Lakein_sz, Hrucheck, Gvr_hru_id, Unused_potet, Gvr_hru_pct_adjusted
       IMPLICIT NONE
@@ -499,6 +505,12 @@
           Unused_potet(ihru) = Unused_potet(ihru) - Unused_potet(ihru)*Gvr_hru_pct_adjusted(j)
           IF ( Unused_potet(ihru)<0.0 ) Unused_potet(ihru) = 0.0
         ENDIF
+!
+! soil water deficit
+!
+        IF ( IUNIT(66)>0 ) Soil_water_deficit(icol, irow) = Soil_water_deficit(icol, irow) + &
+     &                                          (Soil_moist_max(ihru)-Soil_moist(ihru))*Hru_frac_perv(ihru)*Gvr2cell_conv(j)
+
       ENDDO
  
 !-----------------------------------------------------------------------

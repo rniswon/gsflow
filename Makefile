@@ -4,8 +4,8 @@
 
 include ../makelist
 TARGET		= $(BINDIR)/gsflow
-MFNWTLIB	= $(LIBDIR)/libmfnwt.a
-LIBS 		= -L$(LIBDIR) -lmfnwt -lprmsiv -lmmf $(FLIBS)
+MF2K5LIB	= $(LIBDIR)/libmf2k5.a
+LIBS 		= -L$(LIBDIR) -lmf2k5 -lprmsiv -lmmf $(FLIBS)
 
 ###################################################
 
@@ -26,7 +26,7 @@ MFMODDEPN = $(MODFLOWDIR)/global.mod $(MODFLOWDIR)/gwfbasmodule.mod $(MODFLOWDIR
 ####################################################
 all: $(TARGET)
 
-$(TARGET): $(MFNWTLIB) $(PRMSLIB) $(MODOBJS) $(LIBDIR)/libmmf.a
+$(TARGET): $(MF2K5LIB) $(PRMSLIB) $(MODOBJS) $(LIBDIR)/libmmf.a
 	$(RM) $(TARGET)
 	$(CC) $(LDFLAGS) -o $(TARGET) $(MODOBJS) $(LIBS)
 

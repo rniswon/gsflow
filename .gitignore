@@ -35,22 +35,39 @@ MF_NWT/MF_NWT/Release/
 MF_NWT/MF_NWT/Debug/
 
 # msds
-#*.vfproj
-*.vcxproj
-*.vcxproj.filters
 *.sdf
 *.u2d
 *.suo
 *.VC.db
 *.opendb
 *.log
+
+# The following lines of gitignore are based on guidance from this stackoverflow post
+# https://stackoverflow.com/questions/5533050/gitignore-exclude-folder-but-include-specific-subfolder/
+# 
+# This ignores entire directories except for pointed exceptions.  The sequence below is important
+#msds/*
+#!msds/gsflow_develop_f/
+
+#msds/gsflow_develop_f/*
+#!msds/gsflow_develop_f/DLL_GSFLOW/
+
+#msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/*
+#!msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/debug
+
+# Other specific ignores
+#
+
+msds/gsflow_develop_f/gsflow_develop.vfproj.rsregan.user
+msds/gsflow_develop_f/Debug/gsflow_develop.exp
 msds/gsflow_develop_f/gsflow_develop.opensdf
-msds/gsflow_develop_f/gsflow_develop.sln
-msds/gsflow_develop_f/x64/Debug/gsflow_develop.exp
-msds/gsflow_develop_f/x64/Release/gsflow_develop.exp
-/msds/gsflow_develop_f/x64/Release/gsflow_SWI_beta.zip
-/msds/gsflow_develop_f/x64/Release/gsflow_SWI_beta.txt
-msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/Release/GSFLOW_MODSIM.exp
-msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/Release/GSFLOW_MODSIM.dll
-msds/gsflow_develop/gsflow_develop.opensdf
-msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/GSFLOW_MODSIM.sln
+GSFLOW_1.2.2/data/sagehen/output/gsflow.csv
+GSFLOW_1.2.2/data/sagehen/output/modflow/sagehen.mf.list
+GSFLOW_1.2.2/data/sagehen/output/modflow/sagehen.mfonly.list
+GSFLOW_1.2.2/data/sagehen/windows/basinOut.csv
+GSFLOW_1.2.2/data/sagehen/windows/basinOut_monthly.csv
+GSFLOW_1.2.2/data/sagehen/windows/nsub_test_hortonian_flow.csv
+GSFLOW_1.2.2/data/sagehen/windows/nsub_test_soil_moist.csv
+GSFLOW_1.2.2/
+/msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/Debug/GSFLOW_MODSIM.dll
+/msds/gsflow_develop_f/DLL_GSFLOW/GSFLOW_MODSIM/Debug/GSFLOW_MODSIM.exp
