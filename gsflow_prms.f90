@@ -526,7 +526,7 @@
         Model = MODFLOW
         PRMS_flag = 0
       ELSEIF ( Model_mode(:14)=='MODSIM-MODFLOW' ) THEN
-        Model = MODSIM_GSFLOW
+        Model = MODSIM_MODFLOW
         PRMS_flag = 0
         MODSIM_flag = 1
       ELSEIF ( Model_mode(:11)=='MODSIM-PRMS' ) THEN
