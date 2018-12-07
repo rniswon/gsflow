@@ -15,7 +15,7 @@
       USE GLOBAL,       ONLY:IUNIT
       USE PRMS_BASIN, ONLY: HRU_PERV
       USE GWFBASMODULE, ONLY:DELT
-      USE GWFAWUMODULE, ONLY: NUMIRRWELSP,IRRWELVAR,NUMCELLS,WELLIRRPRMS,  &
+      USE GWFAGMODULE, ONLY: NUMIRRWELSP,IRRWELVAR,NUMCELLS,WELLIRRPRMS,  &
                               NUMIRRDIVERSIONSP,IRRSEG,DVRCH,DIVERSIONIRRPRMS,UZFROW,  &
                               IRRROW
       IMPLICIT NONE
@@ -37,7 +37,7 @@
      &         Gw2sm_grav(i) = SEEPOUT(Gwc_col(Gvr_cell_id(i)), Gwc_row(Gvr_cell_id(i)))*Mfq2inch_conv(i)
         ENDDO
 !
-! Add irrigation to HRU from AWU Package
+! Add irrigation to HRU from AG Package
 !
 ! From irrigation wells
 !
