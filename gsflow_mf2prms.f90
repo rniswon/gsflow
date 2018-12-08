@@ -37,19 +37,19 @@
      &         Gw2sm_grav(i) = SEEPOUT(Gwc_col(Gvr_cell_id(i)), Gwc_row(Gvr_cell_id(i)))*Mfq2inch_conv(i)
         ENDDO
 !
-! Add irrigation to HRU from AWU Package
+! Add irrigation to HRU from AG Package
 !
 ! From irrigation wells
 !
-        IF ( Iunit(66) > 0 ) THEN
-          soilzone_gain = 0.0
-          mf_q2prms_inch = DELT*Mfl2_to_acre*Mfl_to_inch
+        soilzone_gain = 0.0
+        mf_q2prms_inch = DELT*Mfl2_to_acre*Mfl_to_inch
+        IF ( Iunit(66) > 0 ) then
           DO J = 1, NUMIRRWELSP
             IRWL = IRRWELVAR(J)
             NMCL = NUMCELLS(IRWL)
             DO K = 1, NMCL
               ihru = UZFROW(K,IRWL)
-              soilzone_gain(ihru) = soilzone_gain(ihru) + WELLIRRPRMS(k,j)*mf_q2prms_inch/Hru_perv(ihru)
+              soilzone_gain(ihru) = soilzone_gain(ihru) + WELLIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(IHRU)
             END DO
           END DO
 !
@@ -60,7 +60,7 @@
             NMCL = DVRCH(SGNM)
             DO K=1,NMCL        
               ihru = IRRROW(K,SGNM)
-              soilzone_gain(ihru) = soilzone_gain(ihru) + DIVERSIONIRRPRMS(k,j)*mf_q2prms_inch/Hru_perv(ihru)
+              soilzone_gain(ihru) = soilzone_gain(ihru) + DIVERSIONIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(ihru)
             END DO
           END DO
         END IF
