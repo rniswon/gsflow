@@ -441,7 +441,7 @@ C
       IF ( ISSFLG(1).EQ.1 ) DELT = 1.0/Mft_to_days
 C
       KKPER = KPER
-      IF ( Model==2 .OR. Model==12 ) THEN
+      IF ( Model==2 ) THEN
         Kkper_new = GET_KPER()
         Kper_mfo = Kkper_new
       ENDIF
@@ -488,6 +488,16 @@ c     USE LMGMODULE
 !***********************************************************************
 C
 C7------SIMULATE EACH STRESS PERIOD.
+! moved this from below
+      IF ( AFR ) KSTP = KSTP + 1
+      KKSTP = KSTP
+! Need to increment time for MODSIM-MODFLOW simulations
+      IF ( Model==12 .and. AFR ) THEN
+        IF ( KSTP>=NSTP(Kper_mfo) ) THEN
+          Kper_mfo = Kper_mfo + 1
+          KSTP = 1
+        ENDIF
+      END IF
       IF ( Steady_state.EQ.1 ) THEN
         Kkper_new = 1
         Kper_mfo = 2
@@ -503,7 +513,7 @@ C7------SIMULATE EACH STRESS PERIOD.
         IF ( Init_vars_from_file>0 ) THEN
           IF ( KPER>Modflow_skip_stress+1 ) KSTP = 0
         ELSE
-          KSTP = 0
+ !         KSTP = 0   !messing up Wes' modflow only model
         END IF
         CALL MFNWT_RDSTRESS(KPER) ! second time in run, read stress period
         IF ( ISSFLG(KKPER).EQ.1 ) STOP
@@ -517,8 +527,6 @@ C7------SIMULATE EACH STRESS PERIOD.
 C
 C7C-----SIMULATE EACH TIME STEP.
 !gsf    DO 90 KSTP = 1, NSTP(KPER) ! maybe a problem, need loop for MFNWT and probably MODSIM
-          IF ( AFR ) KSTP = KSTP + 1
-          KKSTP = KSTP
           IF ( IUNIT(63).GT.0 )itreal = 0
 C
 C7C1----CALCULATE TIME STEP LENGTH. SET HOLD=HNEW.
@@ -607,7 +615,8 @@ C
 !        SPECIFICATIONS:
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Model, Kkiter, GSFLOW_flag, Mxsziter
+      USE PRMS_MODULE, ONLY: Model, Kkiter, GSFLOW_flag, Mxsziter,
+     &                       timestep
 C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
@@ -838,7 +847,7 @@ C
 
       IF (Model>=10 .AND. iss==0) THEN
         IF(IUNIT(44).GT.0) CALL SFR2MODSIM(EXCHANGE, Diversions, 
-     1                             Idivert, Nsegshold)
+     1                             Idivert, Nsegshold, Timestep,KITER)
       ENDIF            
 C
       IF (Model>=10 .AND. iss==0) THEN
