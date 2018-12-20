@@ -407,6 +407,7 @@ C7------SIMULATE EACH STRESS PERIOD.
       Sziters = 0
       KPER = 1
       KPERSTART = 1
+      KSTP = 1
 
       Convfail_cnt = 0
       Max_iters = 0
@@ -440,7 +441,7 @@ C
       Delt_save = DELT
       IF ( ISSFLG(1).EQ.1 ) DELT = 1.0/Mft_to_days
 C
-      KKPER = KPER
+!      KKPER = KPER
       IF ( Model==2 ) THEN
         Kkper_new = GET_KPER()
         Kper_mfo = Kkper_new
@@ -488,34 +489,9 @@ c     USE LMGMODULE
 !***********************************************************************
 C
 C7------SIMULATE EACH STRESS PERIOD.
-! moved this from below
-      IF ( AFR ) KSTP = KSTP + 1
-      KKSTP = KSTP
-! Need to increment time for MODSIM-MODFLOW simulations
-      IF ( Model==12 .and. AFR ) THEN
-        IF ( KSTP>=NSTP(Kper_mfo) ) THEN
-          Kper_mfo = Kper_mfo + 1
-          KSTP = 1
-        ENDIF
-      END IF
-      IF ( Steady_state.EQ.1 ) THEN
-        Kkper_new = 1
-        Kper_mfo = 2
-      ELSEIF ( GSFLOW_flag==1 ) THEN
-        Kkper_new = GET_KPER()
-      ELSE
-        Kkper_new = Kper_mfo
-      ENDIF
-
-      IF ( Kkper_new.NE.KKPER ) THEN
-        KPER = Kkper_new
-        KKPER = Kkper_new
-        IF ( Init_vars_from_file>0 ) THEN
-          IF ( KPER>Modflow_skip_stress+1 ) KSTP = 0
-        ELSE
- !         KSTP = 0   !messing up Wes' modflow only model
-        END IF
-        CALL MFNWT_RDSTRESS(KPER) ! second time in run, read stress period
+      IF ( KSTP == 0 ) KSTP = 1
+      IF ( AFR ) THEN
+        IF ( KKPER > 1 ) CALL MFNWT_RDSTRESS(KKPER) ! second time in run, read stress period
         IF ( ISSFLG(KKPER).EQ.1 ) STOP
      &       'ERROR, cannot run steady state after first stress period.'
         IF ( ISSFLG(1).EQ.1 ) Delt_save = DELT
@@ -524,6 +500,11 @@ C7------SIMULATE EACH STRESS PERIOD.
       iss = ISSFLG(KKPER)
       gsflag = 0
       IF ( GSFLOW_flag==1 .AND. iss==0 ) gsflag = 1
+      IF ( Init_vars_from_file>0 ) THEN
+        IF ( KPER>Modflow_skip_stress+1 ) KSTP = 0
+      ELSE
+ !         KSTP = 0   !messing up Wes' modflow only model
+      END IF
 C
 C7C-----SIMULATE EACH TIME STEP.
 !gsf    DO 90 KSTP = 1, NSTP(KPER) ! maybe a problem, need loop for MFNWT and probably MODSIM
@@ -902,8 +883,8 @@ C
 !      USE GWFNWTMODULE, ONLY:ICNVGFLG
       USE GSFMODFLOW
       USE PRMS_MODULE, ONLY: Print_debug, Logunt, Timestep,
-     &    Kkiter
-      USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
+     &    Kkiter, Model, Kper_mfo, GSFLOW_flag
+      USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday 
       IMPLICIT NONE
       INTRINSIC :: MIN
       INTEGER :: IBDRET, IC1, IC2, IR1, IR2, IL1, IL2, IDIR, ii
@@ -1120,6 +1101,29 @@ C
         WRITE (Logunt, 9002) Nowyear, Nowmonth, Nowday, KKPER,
      &                       KKSTP, Timestep, KKITER, Maxgziter
       ENDIF
+!
+! moved from time_advance 12/19/2018
+      KSTP = KSTP + 1
+      KKSTP = KSTP
+! Need to increment time for MODSIM-MODFLOW simulations
+      IF ( Model==12 ) THEN
+        IF ( KSTP>=NSTP(Kper_mfo) ) THEN
+          Kper_mfo = Kper_mfo + 1
+          KSTP = 1
+        ENDIF
+      END IF
+      IF ( Steady_state.EQ.1 ) THEN
+        Kkper_new = 1
+        Kper_mfo = 2
+      ELSEIF ( GSFLOW_flag==1 ) THEN
+        Kkper_new = GET_KPER()
+      ELSE
+        Kkper_new = Kper_mfo
+      ENDIF
+      IF ( Kkper_new.NE.KKPER ) THEN
+        KPER = Kkper_new
+        KKPER = Kkper_new
+      END IF
 
  9002 FORMAT('Date:', I5, 2('/',I2.2), '; Stress:', I3, '; Step:', I6,
      &       '; Simulation step:', I5, /, 18X, 'MF iterations:', I9,
