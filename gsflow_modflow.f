@@ -531,6 +531,8 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
             IF(IUNIT(65).GT.0) CALL GWF2SWI2AD(KKSTP,KKPER,IGRID)  !SWI2
             IF( IUNIT(44).GT.0 ) CALL GWF2SFR7AD(IUNIT(44),IUNIT(22),
      2                                           KKSTP,KKPER,IGRID)
+            IF(IUNIT(66).GT.0 .AND. ISSFLG(KPER)==0 ) 
+     1                            CALL GWF2AG7AD(IUNIT(66),KKPER)
           END IF
           IF(IUNIT(50).GT.0) THEN
             IF (IUNIT(1).GT.0) THEN
@@ -561,8 +563,6 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
 !          ENDIF     
           IF(IUNIT(64).GT.0) CALL GWF2SWR7AD(KKPER,KKSTP,
      2                                       IGRID,IUNIT(54))  !SWR - JDH
-          IF(IUNIT(66).GT.0 .AND. ISSFLG(KPER)==0 ) 
-     1                            CALL GWF2AG7AD(IUNIT(66),KKPER)
 
           IF ( Model.EQ.2 .OR. Model==12 ) THEN !rsr, ?? format 26 is not used, should it be
 C
