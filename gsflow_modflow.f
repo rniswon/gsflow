@@ -1545,7 +1545,7 @@ C
             IF ( gsfrun()/=0 ) STOP 'ERROR, steady state failed'
             Steady_state = 0
  !           TOTIM = plen !RGN 9/4/2018 TOTIM needs to stay in MF time units
-            TOTIM = PERLEN(i)  !RGN 9/4/2018 TOTIM needs to stay in MF time units
+            TOTIM = TOTIM + PERLEN(i)  !RGN 9/4/2018 TOTIM needs to stay in MF time units
             IF ( ICNVG==0 ) THEN
               PRINT 222, KKITER
               WRITE ( Logunt, 222 ) KKITER
