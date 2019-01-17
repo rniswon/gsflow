@@ -487,7 +487,7 @@ C
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
 C1------USE package modules.
       USE GLOBAL
-      USE GWFBASMODULE
+      USE GWFBASMODULE, ONLY:TOTIM,DELT,HDRY,MSUM
       USE GWFHUFMODULE, ONLY:IOHUFHDS,IOHUFFLWS
       USE GWFEVTMODULE, ONLY:NEVTOP
       USE GWFRCHMODULE, ONLY:NRCHOP
@@ -1544,8 +1544,9 @@ C
             Steady_state = 1
             IF ( gsfrun()/=0 ) STOP 'ERROR, steady state failed'
             Steady_state = 0
+! The next 2 lines are redundant with BAS7AD routine that increments TOTIM
  !           TOTIM = plen !RGN 9/4/2018 TOTIM needs to stay in MF time units
-            TOTIM = TOTIM + PERLEN(i)  !RGN 9/4/2018 TOTIM needs to stay in MF time units
+ !           TOTIM = TOTIM + PERLEN(i)  !RGN 9/4/2018 TOTIM needs to stay in MF time units
             IF ( ICNVG==0 ) THEN
               PRINT 222, KKITER
               WRITE ( Logunt, 222 ) KKITER
