@@ -460,6 +460,7 @@
       SUBROUTINE setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
       USE PRMS_MODULE
       USE GLOBAL, ONLY: NSTP, NPER
+      USE GSFMODFLOW, ONLY: KPER,KSTP
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_OCBUDGET, MFNWT_TIMEADVANCE
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
@@ -614,6 +615,8 @@
           ENDIF
           mf_timestep = mf_timestep + 1
           mf_nowtime = mf_nowtime + 1
+          kper = Kper_mfo
+          kstp = mf_timestep
         ENDDO
         CALL MFNWT_CLEAN()
         STOP
