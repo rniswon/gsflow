@@ -491,13 +491,15 @@ C
 C7------SIMULATE EACH STRESS PERIOD.
       IF ( KSTP == 0 ) KSTP = 1
       IF ( AFR ) THEN
-        IF ( KKPER > 1 ) CALL MFNWT_RDSTRESS(KKPER) ! second time in run, read stress period
-        IF ( ISSFLG(KKPER).EQ.1 ) STOP
-     &       'ERROR, cannot run steady state after first stress period.'
+        IF ( KPER > 1 ) THEN  ! this was kkper but it cant be because kkper has not been incremented yet. 
+            CALL MFNWT_RDSTRESS(KPER) ! second time in run, read stress period
+            IF ( ISSFLG(KKPER).EQ.1 ) STOP
+     &       'ERROR, cannot run steady state after first stress period.'   !moved into if condition. only applies if kkper>1
+        END IF
         IF ( ISSFLG(1).EQ.1 ) Delt_save = DELT
         IF ( DELT.NE.Delt_save ) STOP 'Error, cannot change DELT'
       ENDIF
-      iss = ISSFLG(KKPER)
+      iss = ISSFLG(KPER)
       gsflag = 0
       IF ( GSFLOW_flag==1 .AND. iss==0 ) gsflag = 1
       IF ( Init_vars_from_file>0 ) THEN
