@@ -86,7 +86,6 @@
       INTEGER :: i, iret, nc
 !***********************************************************************
       call_modules = 1
-
       Process = Arg
 
       IF ( Process(:3)=='run' ) THEN
@@ -440,7 +439,6 @@
 
 ! for GSFLOW simulations
       ELSEIF ( Model==0 ) THEN
-
         IF ( Process_flag==0 ) THEN
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)

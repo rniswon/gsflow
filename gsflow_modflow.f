@@ -138,6 +138,7 @@ C1------USE package modules.
 ! Local Variables
       INTEGER :: MAXUNIT, NC
 !     INTEGER :: kkper_new
+      logical :: LOP  !delete
 C
       CHARACTER*80 HEADNG(2)
       CHARACTER*200 FNAME
