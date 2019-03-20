@@ -1700,7 +1700,7 @@ C
      &    Modflow_skip_time_step
       USE PRMS_MODULE, ONLY: Init_vars_from_file, Kkiter, Model,
      &    Starttime, Start_year, Start_month, Start_day, Logunt,
-     &    Print_debug
+     &    Print_debug, kper_mfo
       USE GWFBASMODULE, ONLY: TOTIM
       USE OBSBASMODULE, ONLY: OBSTART,ITS
       IMPLICIT NONE
@@ -1843,7 +1843,9 @@ C
               CALL GWF2BAS7OC(KSTP,KPER,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
             END DO
           ENDDO
+          KPER = KPER + 1 ! advance to next stress period after skipped periods
         ENDIF
+        Kper_mfo = KPER
         KPERSTART = KPER
         TOTIM = TOTIM + Modflow_skip_time/Mft_to_days ! TOTIM includes SS time as set above, rsr
       ELSEIF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) THEN
