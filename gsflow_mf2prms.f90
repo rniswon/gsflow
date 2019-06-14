@@ -16,8 +16,8 @@
       USE PRMS_BASIN, ONLY: HRU_PERV
       USE GWFBASMODULE, ONLY:DELT
       USE GWFAGMODULE, ONLY: NUMIRRWELSP,IRRWELVAR,NUMCELLS,WELLIRRPRMS,  &
-                              NUMIRRDIVERSIONSP,IRRSEG,DVRCH,DIVERSIONIRRPRMS,UZFROW,  &
-                              IRRROW
+                              NUMIRRDIVERSIONSP,IRRSEG,DVRCH,DIVERSIONIRRPRMS,IRRROW_GW,  &
+                              IRRROW_GW
       IMPLICIT NONE
 ! Functions
       EXTERNAL print_module
@@ -48,7 +48,7 @@
             IRWL = IRRWELVAR(J)
             NMCL = NUMCELLS(IRWL)
             DO K = 1, NMCL
-              ihru = UZFROW(K,IRWL)
+              ihru = IRRROW_GW(K,IRWL)
               soilzone_gain(ihru) = soilzone_gain(ihru) + WELLIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(IHRU)
             END DO
           END DO
@@ -59,7 +59,7 @@
             SGNM = IRRSEG(J)
             NMCL = DVRCH(SGNM)
             DO K=1,NMCL        
-              ihru = IRRROW(K,SGNM)
+              ihru = IRRROW_GW(K,SGNM)
               soilzone_gain(ihru) = soilzone_gain(ihru) + DIVERSIONIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(ihru)
             END DO
           END DO

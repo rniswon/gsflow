@@ -242,10 +242,6 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
         PRINT *, 'FMP Package not supported'
         ierr = 1
       ENDIF
-      !IF ( IUNIT(66)>0 ) THEN   !this is now Ag Package
-      !  PRINT *, 'GFB Package not supported'
-      !  ierr = 1
-      !ENDIF
 
 ! Packages available in NWT but not in GSFLOW
       IF ( Model==0 ) THEN
@@ -380,7 +376,6 @@ c      IF(IUNIT(14).GT.0) CALL LMG7AR(IUNIT(14),MXITER,IGRID)
       IF(IUNIT(65).GT.0) CALL GWF2SWI2AR(IUNIT(65),
      2                        IUNIT(1),IUNIT(23),IUNIT(37),IUNIT(62),
      3                        IGRID)   !SWI2  - JDH
-!     IF(IUNIT(66).GT.0) CALL GWF2GFB7AR(IUNIT(66),IGRID)
       IF(IUNIT(43).GT.0) CALL GWF2HYD7BAS7AR(IUNIT(43),IGRID)
       IF(IUNIT(43).GT.0 .AND. IUNIT(19).GT.0)
      1                   CALL GWF2HYD7IBS7AR(IUNIT(43),IGRID)
@@ -909,7 +904,7 @@ C7C4----CALCULATE BUDGET TERMS. SAVE CELL-BY-CELL FLOW TERMS.
 !         IF(IUNIT(66).GT.0) CALL GWF2GFB7BD(KKSTP,KKPER,IGRID) 
           IF(IUNIT(65).GT.0) CALL GWF2SWI2BD(KKSTP,KKPER,IGRID)  !SWI2 - JDH
           IF(IUNIT(66).GT.0 .AND. ISSFLG(KPER)==0) 
-     +                       CALL GWF2AG7BD(KKSTP,KKPER,IUNIT(63))
+     1                       CALL GWF2AG7BD(KKSTP,KKPER,IUNIT(63))
 CLMT
 CLMT----CALL LINK-MT3DMS SUBROUTINES TO SAVE FLOW-TRANSPORT LINK FILE
 CLMT----FOR USE BY MT3DMS FOR TRANSPORT SIMULATION
