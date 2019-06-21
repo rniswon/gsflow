@@ -15,6 +15,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="..\..\..\mmf.git\alloc_space.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -185,5 +188,10 @@
     <ClInclude Include="..\..\..\mmf.git\structs.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\mmf.git\Makefile">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

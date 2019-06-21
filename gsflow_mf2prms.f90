@@ -17,7 +17,7 @@
       USE GWFBASMODULE, ONLY:DELT
       USE GWFAGMODULE, ONLY: NUMIRRWELSP,IRRWELVAR,NUMCELLS,WELLIRRPRMS,  &
                               NUMIRRDIVERSIONSP,IRRSEG,DVRCH,DIVERSIONIRRPRMS,IRRROW_GW,  &
-                              IRRROW_GW
+                              IRRROW_SW
       IMPLICIT NONE
 ! Functions
       EXTERNAL print_module
@@ -59,7 +59,7 @@
             SGNM = IRRSEG(J)
             NMCL = DVRCH(SGNM)
             DO K=1,NMCL        
-              ihru = IRRROW_GW(K,SGNM)
+              ihru = IRRROW_SW(K,SGNM)
               soilzone_gain(ihru) = soilzone_gain(ihru) + DIVERSIONIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(ihru)
             END DO
           END DO
