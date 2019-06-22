@@ -13,11 +13,11 @@
       USE GWFUZFMODULE, ONLY: SEEPOUT
       USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id, soilzone_gain
       USE GLOBAL,       ONLY:IUNIT
-      USE PRMS_BASIN, ONLY: Hru_perv
+      USE PRMS_BASIN, ONLY: HRU_PERV
       USE GWFBASMODULE, ONLY:DELT
       USE GWFAGMODULE, ONLY: NUMIRRWELSP,IRRWELVAR,NUMCELLS,WELLIRRPRMS,  &
-                              NUMIRRDIVERSIONSP,IRRSEG,DVRCH,DIVERSIONIRRPRMS,UZFROW,  &
-                              IRRROW
+                              NUMIRRDIVERSIONSP,IRRSEG,DVRCH,DIVERSIONIRRPRMS,IRRROW_GW,  &
+                              IRRROW_SW
       IMPLICIT NONE
 ! Functions
       EXTERNAL print_module
@@ -30,7 +30,7 @@
       CHARACTER(LEN=80), SAVE :: Version_gsflow_mf2prms
 !***********************************************************************
       gsflow_mf2prms = 0
-
+      mf_q2prms_inch = 0.0
       IF ( Process(:3)=='run' ) THEN
         DO i = 1, Nhrucell
           IF ( Hrucheck(Gvr_hru_id(i))==1 ) &
@@ -48,7 +48,7 @@
             IRWL = IRRWELVAR(J)
             NMCL = NUMCELLS(IRWL)
             DO K = 1, NMCL
-              ihru = UZFROW(K,IRWL)
+              ihru = IRRROW_GW(K,IRWL)
               soilzone_gain(ihru) = soilzone_gain(ihru) + WELLIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(IHRU)
             END DO
           END DO
@@ -59,14 +59,14 @@
             SGNM = IRRSEG(J)
             NMCL = DVRCH(SGNM)
             DO K=1,NMCL        
-              ihru = IRRROW(K,SGNM)
+              ihru = IRRROW_SW(K,SGNM)
               soilzone_gain(ihru) = soilzone_gain(ihru) + DIVERSIONIRRPRMS(k,j)*mf_q2prms_inch/HRU_PERV(ihru)
             END DO
           END DO
         END IF
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2018-09-05 14:06:00Z'
+        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2017-11-15 09:58:00Z'
         CALL print_module(Version_gsflow_mf2prms, 'GSFLOW MODFLOW to PRMS      ', 90)
 !        MODNAME = 'gsflow_mf2prms'
       ENDIF
