@@ -565,8 +565,6 @@ C  For now, just to move forward, I'm stuffing it into an IF statement.
 !          ENDIF     
           IF(IUNIT(64).GT.0) CALL GWF2SWR7AD(KKPER,KKSTP,
      2                                       IGRID,IUNIT(54))  !SWR - JDH
-          IF(IUNIT(66).GT.0 .AND. ISSFLG(KPER)==0 ) 
-     1                            CALL GWF2AG7AD(IUNIT(66),KKPER)                           
           IF ( Model.EQ.2 ) THEN !rsr, ?? format 26 is not used, should it be
 C
 C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
