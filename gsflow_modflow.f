@@ -1716,7 +1716,7 @@ C
       EXTERNAL :: RESTART1READ
       INTEGER, EXTERNAL :: compute_julday, control_integer_array
 ! Local Variables
-      INTEGER :: i, j
+      INTEGER :: i, j, nstress, n
       DOUBLE PRECISION :: seconds, start_jul, mfstrt_jul, plen, time
       DOUBLE PRECISION :: kstpskip
 !***********************************************************************
@@ -1835,16 +1835,18 @@ C
           KPER = 1
           IF ( ISSFLG(1)==0 ) CALL MFNWT_RDSTRESS(KPER)
         ELSE
-          DO i = 1, Modflow_skip_stress - ISSFLG(1)   !RGN because SP1 already read if SS during first period.
+          nstress = Modflow_skip_stress - ISSFLG(1)
+          DO i = 1, nstress   !RGN because SP1 already read if SS during first period.
             KPER = KPER + 1 ! set to next stress period
             IF ( ISSFLG(i) == 0 ) CALL MFNWT_RDSTRESS(KPER)
-            DO KSTP = 1, NSTP(KPER)
+            n = NSTP(KPER)
+            IF ( i==nstress ) n = Modflow_time_in_stress
+            DO KSTP = 1, n
               CALL GWF2BAS7OC(KSTP,KPER,1,IUNIT(12),1)  !RGN 4/4/2018 skip through OC file
             END DO
           ENDDO
-          KPER = KPER + 1 ! advance to next stress period after skipped periods
+!        print *, nstress, n, Modflow_time_in_stress, Modflow_skip_stress
         ENDIF
-        Kper_mfo = KPER
         KPERSTART = KPER
         TOTIM = TOTIM + Modflow_skip_time/Mft_to_days ! TOTIM includes SS time as set above, rsr
       ELSEIF ( Init_vars_from_file==0 .AND. ISSFLG(1)/=1) THEN
