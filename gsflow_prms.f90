@@ -68,7 +68,7 @@
         ENDIF
       ELSEIF ( Process_flag==1 ) THEN
         Arg = 'decl'
-        PRMS_versn = 'gsflow_prms.f90 2018-10-10 14:52:00Z'
+        PRMS_versn = 'gsflow_prms.f90 2019-09-25 16:51:00Z'
 
         ! PRMS is active, GSFLOW, PRMS, MODSIM-PRMS
         IF ( PRMS_flag==1 ) THEN
@@ -340,6 +340,7 @@
 
           call_modules = gsflow_prms2mf()
           IF ( call_modules/=0 ) CALL module_error('gsflow_prms2mf', Arg, call_modules)
+
           call_modules = gsflow_mf2prms()
           IF ( call_modules/=0 ) CALL module_error('gsflow_mf2prms', Arg, call_modules)
         ENDIF
@@ -370,12 +371,10 @@
         IF ( Process_flag==0 .AND. .NOT.MS_GSF_converge ) RETURN
       ENDIF
 
-
-
-        IF ( MapOutON_OFF>0 ) THEN
-          call_modules = map_results()
-          IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
-        ENDIF
+      IF ( MapOutON_OFF>0 ) THEN
+        call_modules = map_results()
+        IF ( call_modules/=0 ) CALL module_error('map_results', Arg, call_modules)
+      ENDIF
 
       IF ( Subbasin_flag==1 ) THEN
         call_modules = subbasin()
@@ -459,7 +458,7 @@
 !***********************************************************************
       SUBROUTINE setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
       USE PRMS_MODULE
-      USE GLOBAL, ONLY: NSTP, NPER
+      USE GLOBAL, ONLY: NSTP, NPER, ISSFLG
       USE GSFMODFLOW, ONLY: KPER,KSTP
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_OCBUDGET, MFNWT_TIMEADVANCE
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
@@ -551,7 +550,7 @@
       ELSEIF ( Model_mode(:7)=='CONVERT' ) THEN ! can be CONVERT4 or CONVERT5 or CONVERT (=CONVERT5)
         Model = 25
       ELSEIF ( Model_mode(:13)=='DOCUMENTATION' ) THEN
-        Model = 99
+        Model = DOCUMENTATION
       ELSE
         PRINT '(/,2A)', 'ERROR, invalid model_mode value: ', Model_mode
         STOP
@@ -598,26 +597,33 @@
         Kper_mfo = 1
         mf_timestep = 1
         mf_nowtime = startday
+        Process_flag = 1
         test = gsfdecl()
         IF ( test/=0 ) CALL module_error(MODNAME, 'declare', test)
+        Process_flag = 2
         CALL MFNWT_INIT(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
         PRINT *, ' '
         WRITE (Logunt, '(1X)')
         IF ( Model==MODSIM_MODFLOW ) RETURN
-        DO WHILE ( Kper_mfo<=Nper )
-          IF ( mf_nowtime>endday ) EXIT
-          CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
-          CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
-          CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
-          IF ( mf_timestep==NSTP(Kper_mfo) ) THEN
-            Kper_mfo = Kper_mfo + 1
-            mf_timestep = 0
-          ENDIF
-          mf_timestep = mf_timestep + 1
-          mf_nowtime = mf_nowtime + 1
-          kper = Kper_mfo
-          kstp = mf_timestep
-        ENDDO
+        If ( ISSFLG(Kper_mfo) == 1 .and. nper == 1) then
+        else
+          Process_flag = 0
+          DO WHILE ( Kper_mfo<=Nper )
+            IF ( mf_nowtime>endday ) EXIT
+            CALL MFNWT_TIMEADVANCE(AFR)    ! ADVANCE TIME STEP
+            CALL MFNWT_RUN(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)            ! ITERATE TO SOLVE GW-SW SOLUTION FOR SS
+            CALL MFNWT_OCBUDGET()          ! CALCULATE BUDGET
+            IF ( mf_timestep==NSTP(Kper_mfo) ) THEN
+                Kper_mfo = Kper_mfo + 1
+                mf_timestep = 0
+            END IF
+            mf_timestep = mf_timestep + 1
+            mf_nowtime = mf_nowtime + 1
+            kper = Kper_mfo
+            kstp = mf_timestep
+          ENDDO
+        end if
+        Process_flag = 3
         CALL MFNWT_CLEAN()
         STOP
       ELSEIF ( Model==MODSIM ) THEN
@@ -1408,8 +1414,8 @@
       ! Functions
       INTRINSIC TRIM
       ! Local Variables
-      INTEGER :: nhru_test, dprst_test, nsegment_test, temp_test, et_test, ierr
-      INTEGER :: cascade_test, cascdgw_test, nhrucell_test, nlake_test, transp_test
+      INTEGER :: nhru_test, dprst_test, nsegment_test, temp_test, et_test, ierr, time_step
+      INTEGER :: cascade_test, cascdgw_test, nhrucell_test, nlake_test, transp_test, start_time(6), end_time(6)
       CHARACTER(LEN=MAXCONTROL_LENGTH) :: model_test
       CHARACTER(LEN=11) :: module_name
 !***********************************************************************
@@ -1417,12 +1423,18 @@
         WRITE ( Restart_outunit ) MODNAME
         WRITE ( Restart_outunit ) Timestep, Nhru, Dprst_flag, Nsegment, Temp_flag, Et_flag, &
      &          Cascade_flag, Cascadegw_flag, Nhrucell, Nlake, Transp_flag, Model_mode
+        WRITE ( Restart_outunit ) Starttime, Endtime
       ELSE
         ierr = 0
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
-        READ ( Restart_inunit ) Timestep, nhru_test, dprst_test, nsegment_test, temp_test, et_test, &
+        READ ( Restart_inunit ) time_step, nhru_test, dprst_test, nsegment_test, temp_test, et_test, &
      &         cascade_test, cascdgw_test, nhrucell_test, nlake_test, transp_test, model_test
+        READ ( Restart_inunit ) start_time, end_time
+        IF ( Print_debug>-2 ) PRINT 4, EQULS, 'Simulation time period of Restart File:', &
+     &       start_time(1), start_time(2), start_time(3), ' -', end_time(1), end_time(2), end_time(3), &
+     &       'Last time step of simulation: ', time_step, EQULS
+    4   FORMAT (/, A, /, 2(A, I5, 2('/',I2.2)), /, A, I0, /, A, /)
         IF ( TRIM(Model_mode)/=TRIM(model_test) ) THEN
           PRINT *, 'ERROR, Initial Conditions File saved for model_mode=', model_test
           PRINT *, '       Current model has model_mode=', Model_mode, ' they must be equal'
@@ -1538,8 +1550,7 @@
      &       'Maximum number of iterations soilzone states are computed', &
      &       'Maximum number of iterations soilzone states are computed', &
      &       'none')/=0 ) CALL read_error(1, 'mxsziter')
-        ALLOCATE ( Gvr_cell_pct(Nhrucell), Soilzone_gain(Nhru) )
-        Soilzone_gain = 0.0
+        ALLOCATE ( Gvr_cell_pct(Nhrucell) )
         IF ( Nhru/=Nhrucell ) THEN
           IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real', &
      &         '0.0', '0.0', '1.0', &
@@ -1557,6 +1568,10 @@
      &       'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
       ENDIF
       IF ( MODSIM_flag==1 ) ALLOCATE ( Lake_In_Out_vol(Nlake) )
+!
+! Allocate variable for adding irrigation water to HRU from AG Package
+        ALLOCATE ( Hru_ag_irr(Nhru) )
+        Hru_ag_irr = 0.0
 
       Kkiter = 1 ! set for PRMS-only mode
       Have_lakes = 0 ! set for modes when MODFLOW is not active
