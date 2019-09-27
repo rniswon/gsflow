@@ -476,37 +476,52 @@ c     USE LMGMODULE
       USE DE4MODULE
 !gsf  USE GMGMODULE
 !gsf  USE PCGN
-      USE GWFNWTMODULE, ONLY:ITREAL
+      USE GWFNWTMODULE, ONLY:ITREAL, ICNVGFLG
       IMPLICIT NONE
       INTEGER I
       LOGICAL, INTENT(IN) :: AFR
       INCLUDE 'openspec.inc'
 ! FUNCTIONS AND SUBROUTINES
-      INTEGER, EXTERNAL :: soilzone
+      INTEGER, EXTERNAL :: soilzone, GET_KPER
+      INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsfclean
+      EXTERNAL READ_STRESS
       INTRINSIC MIN
 ! Local Variables
-      INTEGER :: iss, iprt
+      INTEGER :: retval, II, KITER, IBDRET, iss
+      INTEGER :: IC1, IC2, IR1, IR2, IL1, IL2, IDIR, iprt
+      INTEGER :: ITREAL2
+      REAL :: BUDPERC
 !***********************************************************************
 C
 C7------SIMULATE EACH STRESS PERIOD.
-      IF ( KSTP == 0 ) KSTP = 1
-      IF ( AFR ) THEN
-        IF ( KPER > 1 ) THEN  ! this was kkper but it cant be because kkper has not been incremented yet. 
-            CALL MFNWT_RDSTRESS(KPER) ! second time in run, read stress period
-            IF ( ISSFLG(KKPER).EQ.1 ) STOP
-     &       'ERROR, cannot run steady state after first stress period.'   !moved into if condition. only applies if kkper>1
-        END IF
-        IF ( ISSFLG(1).EQ.1 ) Delt_save = DELT
-        IF ( DELT.NE.Delt_save ) STOP 'Error, cannot change DELT'
-      ENDIF
-      iss = ISSFLG(KPER)
-      gsflag = 0
-      IF ( GSFLOW_flag==1 .AND. iss==0 ) gsflag = 1
-      IF ( Init_vars_from_file>0 ) THEN
-        IF ( KPER>Modflow_skip_stress+1 ) KSTP = 0
+      IF ( Steady_state.EQ.1 ) THEN
+        Kkper_new = 1
+        Kper_mfo = 2
+      ELSEIF ( Model==0 ) THEN
+        Kkper_new = GET_KPER()
       ELSE
- !         KSTP = 0   !messing up Wes' modflow only model
-      END IF
+        Kkper_new = Kper_mfo
+      ENDIF
+
+      IF ( Kkper_new.NE.KKPER ) THEN
+        KPER = Kkper_new
+        KKPER = Kkper_new
+        IF ( Init_vars_from_file>0 ) THEN
+          IF ( KPER>Modflow_skip_stress+1 ) KSTP = 0
+        ELSE
+          KSTP = 0
+        END IF
+        CALL READ_STRESS() ! second time in run, read restart
+        IF ( Model .NE. 2 ) THEN    !RGN added check for MF only mode 2/21/19
+          IF ( ISSFLG(KKPER).EQ.1 ) STOP
+     &       'ERROR, cannot run steady state after first stress period.'
+          IF ( ISSFLG(1).EQ.1 ) Delt_save = DELT
+          IF ( DELT.NE.Delt_save ) STOP 'Error, cannot change DELT'
+        END IF
+      ENDIF
+      iss = ISSFLG(KKPER)
+      gsflag = 0
+      IF ( Model.EQ.0 .AND. iss==0 ) gsflag = 1
 C
 C7C-----SIMULATE EACH TIME STEP.
 !gsf    DO 90 KSTP = 1, NSTP(KPER) ! maybe a problem, need loop for MFNWT and probably MODSIM
