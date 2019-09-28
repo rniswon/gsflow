@@ -451,9 +451,8 @@ c     USE LMGMODULE
       LOGICAL, INTENT(IN) :: AFR
       INCLUDE 'openspec.inc'
 ! FUNCTIONS AND SUBROUTINES
-      INTEGER, EXTERNAL :: soilzone, GET_KPER
+      INTEGER, EXTERNAL :: soilzone
       INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsfclean
-      EXTERNAL READ_STRESS
       INTRINSIC MIN
 ! Local Variables
       INTEGER :: retval, II, KITER, IBDRET, iss
@@ -480,7 +479,7 @@ C7------SIMULATE EACH STRESS PERIOD.
         ELSE
           KSTP = 0
         END IF
-        CALL READ_STRESS() ! second time in run, read restart
+        CALL MFNWT_RDSTRESS(kper) ! second time in run, read restart
         IF ( Model .NE. 2 ) THEN    !RGN added check for MF only mode 2/21/19
           IF ( ISSFLG(KKPER).EQ.1 ) STOP
      &       'ERROR, cannot run steady state after first stress period.'
