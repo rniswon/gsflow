@@ -1,5 +1,5 @@
 !***********************************************************************
-! Defines the computational sequence, valid modules, and dimensions
+!     GSFLOW modules
 !***********************************************************************
       MODULE PRMS_MODULE
       IMPLICIT NONE
@@ -8,12 +8,11 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 10/10/2018'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 09/30/2019'
+      CHARACTER(LEN=8), SAVE :: Process, Arg
       !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
       INTEGER, PARAMETER :: GSFLOW = 0, PRMS = 1, MODFLOW = 2, MODSIM_GSFLOW = 10
-      INTEGER, PARAMETER :: MODSIM_PRMS = 11, MODSIM_MODFLOW = 12, MODSIM = 13
-      INTEGER, PARAMETER :: DOCUMENTATION = 99
-      CHARACTER(LEN=8), SAVE :: Process, Arg
+      INTEGER, PARAMETER :: MODSIM_PRMS = 11, MODSIM_MODFLOW = 12, MODSIM = 13, DOCUMENTATION = 99
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
       INTEGER, SAVE :: Nhru, Nssr, Ngw, Nsub, Nhrucell, Nlake, Ngwcell, Nlake_hrus
@@ -28,21 +27,22 @@
       INTEGER, SAVE :: Inputerror_flag, Timestep
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
       INTEGER, SAVE :: Stream_temp_flag, Strmtemp_humidity_flag, PRMS4_flag
-      INTEGER, SAVE :: Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF
-      INTEGER, SAVE :: Grid_flag, Logunt, First_timestep
-      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag, Number_timesteps, Diversion2soil_flag
+      INTEGER, SAVE :: Grid_flag, Logunt
+      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
       INTEGER, SAVE :: Dynamic_flag, Water_use_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Prms_warmup
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
-      INTEGER, SAVE :: mf_timestep, startday, endday, mf_nowtime
-      CHARACTER(LEN=80), SAVE :: Version_read_control_file, Version_read_parameter_file
+      INTEGER, SAVE :: mf_timestep, startday, endday, mf_nowtime, Number_timesteps
+      INTEGER, SAVE :: Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF, Diversion2soil_flag
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
       INTEGER, SAVE :: Kkiter, Have_lakes, MODSIM_flag
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Lake_In_Out_vol(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_ag_irr(:)    !Ag irrigation added to HRU
+      CHARACTER(LEN=80), SAVE :: Version_read_control_file, Version_read_parameter_file
 !   Declared Parameters
       INTEGER, SAVE :: Mxsziter
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
-      REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:), Soilzone_gain(:)
+      REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
 ! Precip_flag (1=precip_1sta; 2=precip_laps; 3=precip_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
 ! Temp_flag (1=temp_1sta; 2=temp_laps; 3=temp_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru; 8=temp_sta
 ! Control parameters
@@ -63,9 +63,6 @@
       INTEGER, SAVE :: Gwr_transferON_OFF, External_transferON_OFF, Segment_transferON_OFF, Lake_transferON_OFF
       END MODULE PRMS_MODULE
 
-!***********************************************************************
-!     GSFLOW module
-!***********************************************************************
       MODULE GSFMODFLOW
 !   Local Variables
       INTEGER, PARAMETER :: ITDIM = 80
@@ -79,7 +76,7 @@
       REAL, SAVE :: Delt_save
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Stress_dates(:)
       INTEGER, SAVE :: Modflow_skip_stress, Kkper_new, Modflow_skip_time_step
-      DOUBLE PRECISION, SAVE :: Modflow_time_in_stress, Modflow_skip_time
+      DOUBLE PRECISION, SAVE :: Modflow_time_in_stress,Modflow_skip_time
       DOUBLE PRECISION, SAVE :: Mft_to_sec, Totalarea_mf
       DOUBLE PRECISION, SAVE :: Mfl2_to_acre, Mfl3_to_ft3, Sfr_conv
       DOUBLE PRECISION, SAVE :: Acre_inches_to_mfl3, Mfl3t_to_cfs

@@ -414,7 +414,7 @@
 !     USE GLOBAL, ONLY: IOUT
       USE GWFUZFMODULE, ONLY: IUZFBND, NWAVST, PETRATE, IGSFLOW, FINF
       USE GWFLAKMODULE, ONLY: RNF, EVAPLK, PRCPLK, NLAKES
-      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Have_lakes, Water_use_flag
+      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Have_lakes
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO, Hru_frac_perv
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
       USE PRMS_FLOWVARS, ONLY: Hru_actet, Soil_moist_max, Soil_moist
