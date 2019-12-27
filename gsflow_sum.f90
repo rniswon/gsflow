@@ -108,7 +108,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = 'gsflow_sum.f90 2018-02-12 16:10:00Z'
+      Version_gsflow_sum = 'gsflow_sum.f90 2019-10-31 13:26:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -532,7 +532,6 @@
       SatDisch2Stream_Q = 0.0D0
       UnsatStream_S = 0.0D0
       SatDisch2Lake_Q = 0.0D0
-      Lake2Sat_Q = 0.0D0
       Basinslowflow = 0.0D0
       Infil2Soil_Q = 0.0D0
       Basinrain = 0.0D0
@@ -848,9 +847,8 @@
       Rate_uzstor = Unsat_dS + UnsatStream_dS
       Cum_uzstor = Cum_uzstor + Rate_uzstor*DELT
 
-      Rate_satstor = Sat_dS
-      Cum_satstor = Cum_satstor + Rate_satstor
-
+      Rate_satstor = Sat_dS/DELT    !RGN 5/6/2019
+      Cum_satstor = Cum_satstor + Sat_dS  !RGN 5/6/2019
       Rate_delstore = Rate_surfstor + Rate_soilstor + Rate_satstor + &
      &                Rate_uzstor + Rate_lakestor + STRMDELSTOR_RATE
 
@@ -861,7 +859,7 @@
         Rate_delstore = Rate_delstore + Basin_dprst_volop + Basin_dprst_volcl ! need rate
       ENDIF
 
-      Cum_delstore = Cum_delstore + Rate_delstore*DELT
+      Cum_delstore = Cum_delstore + Rate_delstore*delt   !RGN 5/6/2019
 
       Rpt_count = Rpt_count + 1
       IF ( Rpt_count==Rpt_days ) THEN  !rpt_days default = 7
@@ -924,7 +922,7 @@
 
       IF ( control_integer(Rpt_days, 'rpt_days')/=0 ) CALL read_error(5, 'rpt_days')
       IF ( Print_debug>-1 ) PRINT '(/,A,I4)', 'Water Budget print frequency is:', Rpt_days
-      WRITE (Logunt, '(/,A,I4)') 'Water Budget print frequency is:', Rpt_days
+      IF ( Print_debug>-2 ) WRITE (Logunt, '(/,A,I4)') 'Water Budget print frequency is:', Rpt_days
       IF ( control_string(Gsflow_output_file, 'gsflow_output_file')/=0 ) CALL read_error(5, 'gsflow_output_file')
       IF ( Gsflow_output_file(:1)==' ' .OR. Gsflow_output_file(:1)==CHAR(0) ) Gsflow_output_file = 'gsflow.out'
 
@@ -932,11 +930,11 @@
       IF ( ios/=0 ) STOP
       nc = numchars(Gsflow_output_file)
       IF ( Print_debug>-1 ) PRINT 9001, 'Writing GSFLOW Water Budget File: ', Gsflow_output_file(:nc)
-      WRITE ( Logunt, 9001 ) 'Writing GSFLOW Water Budget File: ', Gsflow_output_file(:nc)
+      IF ( Print_debug>-2 ) WRITE ( Logunt, 9001 ) 'Writing GSFLOW Water Budget File: ', Gsflow_output_file(:nc)
       IF ( Gsf_rpt==1 ) THEN
         nc = numchars(Csv_output_file)
         IF ( Print_debug>-1 ) PRINT 9001, 'Writing GSFLOW CSV File: ', Csv_output_file(:nc)
-        WRITE ( Logunt, 9001 ) 'Writing GSFLOW CSV File: ', Csv_output_file(:nc)
+        IF ( Print_debug>-2 ) WRITE ( Logunt, 9001 ) 'Writing GSFLOW CSV File: ', Csv_output_file(:nc)
         CALL GSF_HEADERS()
       ENDIF
 
@@ -1026,7 +1024,7 @@
       text9 = '    SATURATED ZONE'
       text10 ='             LAKES'
       text11 ='           STREAMS'
-      WRITE (Gsf_unt, 9001) Nowmonth, Nowday, Nowyear, Nstep, Kkper, Kkstp, KKITER
+      WRITE (Gsf_unt, 9001) Nowmonth, Nowday, Nowyear, Kkstp, Kkper, Nstep, KKITER
 !
 !1------PRINT CUMULATIVE VOLUMES AND RATES FOR INFLOW.
       WRITE (Gsf_unt, 9002)
@@ -1253,9 +1251,9 @@
       IF ( In_out==0 ) THEN
         WRITE ( Restart_outunit ) MODNAME
         WRITE ( Restart_outunit ) Rate_soilstor, Rate_uzstor, Basingwstor, &
-     &          Rate_satstor, Basingvr2sm, Rate_pweqv, Lake_dS, &
+     &          Rate_satstor, Basingvr2sm, Rate_pweqv, Lake_dS, Rate_lakin, Rate_lakot, Rate_lakestor, &
      &          SnowPweqv_S, Ave_SoilDrainage2Unsat_Q, Infil2Soil_Q, Basinsoilstor, Cap_S, &
-     &          CapDrainage2Sat_Q, StreamOut_Q, SatDisch2Stream_Q
+     &          CapDrainage2Sat_Q, StreamOut_Q, SatDisch2Stream_Q, Rate_Dprst_S
         WRITE ( Restart_outunit ) Precip_Q, CapET_Q, ImpervEvap_Q, PotGravDrn2Unsat_Q, Sat2Grav_Q, Lake2Sat_Q, &
      &          Canopy_S, Imperv_S, Interflow2Stream_Q, Sroff2Stream_Q, Obs_strmflow, UnsatDrainageExcess_Q, UnsatET_Q, &
      &          SatET_Q, Uzf_et, RechargeUnsat2Sat_Q, Basinseepout, SoilDrainage2Unsat_Q, Unsat_dS, Basinrain, &
@@ -1271,9 +1269,9 @@
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
         READ ( Restart_inunit ) Rate_soilstor, Rate_uzstor, Basingwstor, &
-     &         Rate_satstor, Basingvr2sm, Rate_pweqv, Lake_dS, &
+     &         Rate_satstor, Basingvr2sm, Rate_pweqv, Lake_dS, Rate_lakin, Rate_lakot, Rate_lakestor, &
      &         SnowPweqv_S, Ave_SoilDrainage2Unsat_Q, Infil2Soil_Q, Basinsoilstor, Cap_S, &
-     &         CapDrainage2Sat_Q, StreamOut_Q, SatDisch2Stream_Q
+     &         CapDrainage2Sat_Q, StreamOut_Q, SatDisch2Stream_Q, Rate_Dprst_S
         READ ( Restart_inunit ) Precip_Q, CapET_Q, ImpervEvap_Q, PotGravDrn2Unsat_Q, Sat2Grav_Q, Lake2Sat_Q, &
      &         Canopy_S, Imperv_S, Interflow2Stream_Q, Sroff2Stream_Q, Obs_strmflow, UnsatDrainageExcess_Q, UnsatET_Q, &
      &         SatET_Q, Uzf_et, RechargeUnsat2Sat_Q, Basinseepout, SoilDrainage2Unsat_Q, Unsat_dS, Basinrain, &

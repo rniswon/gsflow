@@ -4,8 +4,8 @@
 
 include ../makelist
 TARGET		= $(BINDIR)/gsflow
-MF2K5LIB	= $(LIBDIR)/libmf2k5.a
-LIBS 		= -L$(LIBDIR) -lmf2k5 -lprmsiv -lmmf $(FLIBS)
+MFNWTLIB	= $(LIBDIR)/libmfnwt.a
+LIBS 		= -L$(LIBDIR) -lmfnwt -lprms -lmmf $(FLIBS)
 
 ###################################################
 
@@ -17,18 +17,18 @@ MODOBJS =	\
 		gsflow_budget.o \
 		gsflow_sum.o
 
-MFMODULES = global.mod gwfbasmodule.mod pcgmodule.mod sipmodule.mod de4module.mod gwfsfrmodule.mod gwfuzfmodule.mod gwflakmodule.mod
+MFMODULES = global.mod gwfbasmodule.mod pcgmodule.mod sipmodule.mod de4module.mod gwfsfrmodule.mod gwfuzfmodule.mod gwflakmodule.mod gwfevtmodule.mod gwfrchmodule.mod obsbasmodule.mod
 
-MFMODDEPN = $(MODFLOWDIR)/global.mod $(MODFLOWDIR)/gwfbasmodule.mod $(MODFLOWDIR)/pcgmodule.mod $(MODFLOWDIR)/sipmodule.mod $(MODFLOWDIR)/de4module.mod $(MODFLOWDIR)/gwfsfrmodule.mod $(MODFLOWDIR)/gwfuzfmodule.mod $(MODFLOWDIR)/gwflakmodule.mod
+MFMODDEPN = $(MODFLOWDIR)/global.mod $(MODFLOWDIR)/gwfbasmodule.mod $(MODFLOWDIR)/pcgmodule.mod $(MODFLOWDIR)/sipmodule.mod $(MODFLOWDIR)/de4module.mod $(MODFLOWDIR)/gwfsfrmodule.mod $(MODFLOWDIR)/gwfuzfmodule.mod $(MODFLOWDIR)/gwflakmodule.mod $(MODFLOWDIR)/gwfevtmodule.mod $(MODFLOWDIR)/gwfrchmodule.mod $(MODFLOWDIR)/obsbasmodule.mod
 
 ####################################################
 # Rules for targets
 ####################################################
 all: $(TARGET)
 
-$(TARGET): $(MF2K5LIB) $(PRMSLIB) $(MODOBJS) $(LIBDIR)/libmmf.a
+$(TARGET): $(MFNWTLIB) $(PRMSLIB) $(MODOBJS) $(LIBDIR)/libmmf.a
 	$(RM) $(TARGET)
-	$(CC) $(LDFLAGS) -o $(TARGET) $(MODOBJS) $(LIBS)
+	$(FC) $(LDFLAGS) -o $(TARGET) $(MODOBJS) $(LIBS)
 
 clean:
 	$(RM) $(TARGET)
@@ -42,8 +42,9 @@ openspec.inc:
 	$(RM) openspec.inc
 	$(CP) openspec_linux.inc openspec.inc
 
-global.mod: $(MODFLOWDIR)/global.mod
+global.mod: 
 	$(RM) global.mod
+	$(CD) $(MODFLOWDIR);make global.mod
 	$(LN) $(MODFLOWDIR)/global.mod global.mod
 
 gwfbasmodule.mod: $(MODFLOWDIR)/gwfbasmodule.mod
@@ -62,6 +63,10 @@ gwfnwtmodule.mod: $(MODFLOWDIR)/gwfnwtmodule.mod
 	$(RM) gwfnwtmodule.mod
 	$(LN) $(MODFLOWDIR)/gwfnwtmodule.mod gwfnwtmodule.mod
 
+gwfagmodule.mod: $(MODFLOWDIR)/gwfagmodule.mod
+	$(RM) gwfagmodule.mod
+	$(LN) $(MODFLOWDIR)/gwfagmodule.mod gwfagmodule.mod
+
 gwflpfmodule.mod: $(MODFLOWDIR)/gwflpfmodule.mod
 	$(RM) gwflpfmodule.mod
 	$(LN) $(MODFLOWDIR)/gwflpfmodule.mod gwflpfmodule.mod
@@ -76,7 +81,20 @@ gwflakmodule.mod: $(MODFLOWDIR)/gwflakmodule.mod
 
 pcgmodule.mod: $(MODFLOWDIR)/pcgmodule.mod
 	$(RM) pcgmodule.mod
+	$(CD) $(MODFLOWDIR);make pcgmodule.mod
 	$(LN) $(MODFLOWDIR)/pcgmodule.mod pcgmodule.mod
+
+gwfevtmodule.mod: $(MODFLOWDIR)/gwfevtmodule.mod
+	$(RM) gwfevtmodule.mod
+	$(LN) $(MODFLOWDIR)/gwfevtmodule.mod gwfevtmodule.mod
+
+gwfrchmodule.mod: $(MODFLOWDIR)/gwfrchmodule.mod
+	$(RM) gwfrchmodule.mod
+	$(LN) $(MODFLOWDIR)/gwfrchmodule.mod gwfrchmodule.mod
+
+obsbasmodule.mod: $(MODFLOWDIR)/obsbasmodule.mod
+	$(RM) obsbasmodule.mod
+	$(LN) $(MODFLOWDIR)/obsbasmodule.mod obsbasmodule.mod
 
 sipmodule.mod: $(MODFLOWDIR)/sipmodule.mod
 	$(RM) sipmodule.mod
@@ -140,10 +158,10 @@ gsfmf2prms.mod: gsflow_mf2prms.o
 gsfmodflow.mod: gsflow_modflow.o
 prms_module.mod: gsflow_prms.o
 
-gsflow_prms2mf.o: gsflow_prms2mf.f90 global.mod gwfuzfmodule.mod gwfsfrmodule.mod gwflakmodule.mod prms_obs.mod prms_climatevars.mod prms_flowvars.mod gwfnwtmodule.mod prms_srunoff.mod prms_soilzone.mod gsfmodflow.mod prms_basin.mod
+gsflow_prms2mf.o: gsflow_prms2mf.f90 global.mod gwfuzfmodule.mod gwfsfrmodule.mod gwflakmodule.mod prms_obs.mod prms_climatevars.mod prms_flowvars.mod gwfnwtmodule.mod prms_srunoff.mod prms_soilzone.mod gsfmodflow.mod prms_basin.mod gwfagmodule.mod
 	$(FC) -c $(FFLAGS) gsflow_prms2mf.f90
 
-gsflow_modflow.o: gsflow_modflow.f openspec.inc prms_module.mod $(MFMODDEPN) global.mod gwfbasmodule.mod gwfsfrmodule.mod gwflakmodule.mod gwfuzfmodule.mod gwfhufmodule.mod gwfbcfmodule.mod gwfnwtmodule.mod prms_set_time.mod pcgmodule.mod sipmodule.mod de4module.mod prms_basin.mod
+gsflow_modflow.o: gsflow_modflow.f openspec.inc prms_module.mod $(MFMODDEPN) global.mod gwfbasmodule.mod gwfsfrmodule.mod gwflakmodule.mod gwfuzfmodule.mod gwfhufmodule.mod gwfbcfmodule.mod gwfnwtmodule.mod prms_set_time.mod pcgmodule.mod sipmodule.mod de4module.mod prms_basin.mod gwfevtmodule.mod gwfrchmodule.mod obsbasmodule.mod
 	$(FC) -c $(FFLAGS) gsflow_modflow.f
 
 gsflow_prms.o: gsflow_prms.f90 global.mod

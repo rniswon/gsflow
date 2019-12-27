@@ -9,7 +9,7 @@
       INTEGER, SAVE :: NTRAIL_CHK, Nlayp1
       ! Number of stream reaches in each stream segment
       INTEGER, SAVE, ALLOCATABLE :: Numreach_segment(:)
-      REAL, SAVE, ALLOCATABLE :: Excess(:), Soil_water_deficit(:, :)
+      REAL, SAVE, ALLOCATABLE :: Excess(:)
       DOUBLE PRECISION, SAVE :: Totalarea
       CHARACTER(LEN=14), SAVE :: MODNAME
 !   Declared Variables
@@ -65,7 +65,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2018-02-09 16:56:00Z'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2019-10-30 14:24:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -159,7 +159,7 @@
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area
       USE PRMS_SOILZONE, ONLY: Gvr_hru_id, Gvr_hru_pct_adjusted
-      USE GLOBAL, ONLY: NLAY, NROW, NCOL, IUNIT
+      USE GLOBAL, ONLY: NLAY, NROW, NCOL
       USE GWFUZFMODULE, ONLY: IUZFBND
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
@@ -198,8 +198,10 @@
         ierr = 1
       ENDIF
 
-      WRITE (Logunt, '(/, A,I4,/)') 'mxsziter =', Mxsziter
-      WRITE (Logunt, '(A,D15.7)') 'Tolerance check for gvr_hru_pct:', PCT_CHK
+      IF ( Print_debug>-2 ) THEN
+        WRITE (Logunt, '(/, A,I4,/)') 'mxsziter =', Mxsziter
+        WRITE (Logunt, '(A,D15.7)') 'Tolerance check for gvr_hru_pct:', PCT_CHK
+      ENDIF
 
       IF ( Nhru/=Nhrucell ) THEN
         IF ( getparam('prms2mf', 'gvr_hru_pct', Nhrucell, 'real', Gvr_hru_pct)/=0 ) CALL read_error(2, 'gvr_hru_pct')
@@ -269,7 +271,7 @@
 !      DO i = 1, Nsegment
 !        IF ( nseg_rch(i)/=Numreach_segment(i) ) PRINT *, 'Problem with number of reaches in a segment', i,
 !    &        nseg_rch(i), Numreach_segment(i)
-!        IF ( ABS(seg_area(i)-1.0D0)>PCT_CHK ) WRITE (Logunt, *) &
+!        IF ( ABS(seg_area(i)-1.0D0)>PCT_CHK .AND. Print_debug>-2 ) WRITE (Logunt, *) &
 !    &        'Possible issue with segment area percentages', i, seg_area(i)
 !       ENDDO
 
@@ -321,11 +323,6 @@
       ENDDO
       IF ( ierr==1 ) STOP
 
-      IF ( IUNIT(66)>0 ) THEN
-        ALLOCATE ( Soil_water_deficit(Ncol,Nrow) )
-        Soil_water_deficit = 0.0
-      ENDIF
-
       IF ( Nhru/=Nhrucell ) THEN
 ! way to adjust gvr_hru_pct, rsr
 !        WRITE ( 840, 9002 ) 'gvr_hru_pct 12', 'nhrucell', Nhrucell
@@ -350,12 +347,14 @@
           IF ( pct<0.99D0 ) THEN
             ierr = 1
             PRINT *, 'ERROR, portion of HRU not included in mapping to cells', i, pct
-            WRITE ( Logunt, * ) 'ERROR, Portion of HRU not included in mapping to cells', i, pct
+            IF ( Print_debug>-2 ) WRITE ( Logunt, * ) &
+     &           'ERROR, Portion of HRU not included in mapping to cells', i, pct
           ELSEIF ( pct>1.00001D0 ) THEN
             IF ( pct>1.0001D0 ) THEN
               ierr = 1
               PRINT *, 'ERROR, extra portion of HRU included in mapping to cells', i, pct
-              WRITE ( Logunt, * ) 'ERROR, extra portion of HRU included in mapping to cells', i, pct
+              IF ( Print_debug>-2 ) WRITE ( Logunt, * ) &
+     &             'ERROR, extra portion of HRU included in mapping to cells', i, pct
             ENDIF
           ELSEIF ( pct<0.0D0 ) THEN
             PRINT *, 'ERROR, HRU to cell mapping is < 0.0', i, pct
@@ -380,7 +379,7 @@
       IF ( ierr==1 ) STOP
 
       Totalarea = Totalarea*Basin_area_inv
-      WRITE ( Logunt, 9003 ) (Totalarea-1.0D0)*100.0D0
+      IF ( Print_debug>-2 ) WRITE ( Logunt, 9003 ) (Totalarea-1.0D0)*100.0D0
       IF ( Print_debug>-1 ) PRINT 9003, (Totalarea-1.0D0)*100.0D0
 
       IF ( Nhru/=Nhrucell ) DEALLOCATE ( hru_pct, newpct, temp_pct )
@@ -410,14 +409,14 @@
       USE GSFPRMS2MF
       USE GSFMODFLOW, ONLY: Gvr2cell_conv, Acre_inches_to_mfl3, &
      &    Inch_to_mfl_t, Gwc_row, Gwc_col, Mft_to_days
-      USE GLOBAL, ONLY: IBOUND, IUNIT
+      USE GLOBAL, ONLY: IBOUND
 !     USE GLOBAL, ONLY: IOUT
       USE GWFUZFMODULE, ONLY: IUZFBND, NWAVST, PETRATE, IGSFLOW, FINF
       USE GWFLAKMODULE, ONLY: RNF, EVAPLK, PRCPLK, NLAKES
       USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id, Have_lakes
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO, Hru_frac_perv
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
-      USE PRMS_FLOWVARS, ONLY: Hru_actet, Soil_moist_max, Soil_moist
+      USE PRMS_FLOWVARS, ONLY: Hru_actet
       USE PRMS_SRUNOFF, ONLY: Hortonian_lakes
       USE PRMS_SOILZONE, ONLY: Sm2gw_grav, Lakein_sz, Hrucheck, Gvr_hru_id, Unused_potet, Gvr_hru_pct_adjusted
       IMPLICIT NONE
@@ -505,12 +504,6 @@
           Unused_potet(ihru) = Unused_potet(ihru) - Unused_potet(ihru)*Gvr_hru_pct_adjusted(j)
           IF ( Unused_potet(ihru)<0.0 ) Unused_potet(ihru) = 0.0
         ENDIF
-!
-! soil water deficit
-!
-        IF ( IUNIT(66)>0 ) Soil_water_deficit(icol, irow) = Soil_water_deficit(icol, irow) + &
-     &                                          (Soil_moist_max(ihru)-Soil_moist(ihru))*Hru_frac_perv(ihru)*Gvr2cell_conv(j)
-
       ENDDO
  
 !-----------------------------------------------------------------------

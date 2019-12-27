@@ -8,7 +8,7 @@
       CHARACTER(LEN=68), PARAMETER :: &
      &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 09/30/2019'
+      CHARACTER(LEN=27), PARAMETER :: PRMS_VERSION = 'Version 5.MODSIM 12/05/2019'
       CHARACTER(LEN=8), SAVE :: Process, Arg
       !     Model (0=GSFLOW; 1=PRMS; 2=MODFLOW; 10=MODSIM-GSFLOW; 11=MODSIM-PRMS; 12=MODSIM-MODFLOW; 13=MODSIM)
       INTEGER, PARAMETER :: GSFLOW = 0, PRMS = 1, MODFLOW = 2, MODSIM_GSFLOW = 10
@@ -23,22 +23,23 @@
       INTEGER, SAVE :: Climate_temp_flag, Climate_precip_flag, Climate_potet_flag, Climate_transp_flag
       INTEGER, SAVE :: Lake_route_flag, Nratetbl, Strmflow_flag, Stream_order_flag
       INTEGER, SAVE :: Temp_flag, Precip_flag, Climate_hru_flag, Climate_swrad_flag
-      INTEGER, SAVE :: Precip_combined_flag, Temp_combined_flag
+      INTEGER, SAVE :: Precip_combined_flag, Temp_combined_flag, Muskingum_flag
       INTEGER, SAVE :: Inputerror_flag, Timestep
       INTEGER, SAVE :: Humidity_cbh_flag, Windspeed_cbh_flag
-      INTEGER, SAVE :: Stream_temp_flag, Strmtemp_humidity_flag, PRMS4_flag
       INTEGER, SAVE :: Grid_flag, Logunt
-      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag
+      INTEGER, SAVE :: Kper_mfo, Kkstp_mfo, PRMS_flag, GSFLOW_flag, PRMS4_flag
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
       INTEGER, SAVE :: Dynamic_flag, Water_use_flag, Nwateruse, Nexternal, Nconsumed, Npoigages, Prms_warmup
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
+      INTEGER, SAVE :: Frozen_flag, Diversion2soil_flag, Snarea_curve_flag
       INTEGER, SAVE :: mf_timestep, startday, endday, mf_nowtime, Number_timesteps
-      INTEGER, SAVE :: Snow_cbh_flag, Gwflow_cbh_flag, Frozen_flag, statsON_OFF, Diversion2soil_flag
+      INTEGER, SAVE :: Snow_cbh_flag, Gwflow_cbh_flag, statsON_OFF, Have_lakes, MODSIM_flag
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
-      INTEGER, SAVE :: Kkiter, Have_lakes, MODSIM_flag
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Lake_In_Out_vol(:)
-      REAL, SAVE, ALLOCATABLE :: Hru_ag_irr(:)    !Ag irrigation added to HRU
       CHARACTER(LEN=80), SAVE :: Version_read_control_file, Version_read_parameter_file
+!   Declared Variables
+      INTEGER, SAVE :: Kkiter
+      REAL, SAVE, ALLOCATABLE :: Hru_ag_irr(:)    !Ag irrigation added to HRU
 !   Declared Parameters
       INTEGER, SAVE :: Mxsziter
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
@@ -49,6 +50,8 @@
       INTEGER, SAVE :: Print_debug, MapOutON_OFF, CsvON_OFF, Dprst_flag, Subbasin_flag, Parameter_check_flag
       INTEGER, SAVE :: Init_vars_from_file, Save_vars_to_file, Orad_flag, Cascade_flag, Cascadegw_flag
       INTEGER, SAVE :: NhruOutON_OFF, Gwr_swale_flag, NsubOutON_OFF, BasinOutON_OFF, NsegmentOutON_OFF
+      INTEGER, SAVE :: Stream_temp_flag, Strmtemp_humidity_flag, Stream_temp_shade_flag
+	  INTEGER, SAVE :: Snarea_curve_flag, Soilzone_aet_flag
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Model_output_file, Var_init_file, Var_save_file
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Csv_output_file, Model_control_file, Param_file
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: mappingFileName, xyFileName
