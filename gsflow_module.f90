@@ -14,13 +14,14 @@
    &    strmflow_noroute_module, strmflow_muskingum_mann_module, &
    &    strmflow_muskingum_module, precip_1sta_module, precip_laps_module, &
    &    climate_hru_module, precip_map_module, temp_1sta_module, temp_laps_module, temp_sta_module, &
-   &    smidx_module, carea_module, ddsolrad_module, ccsolrad_module, SAVE_INIT, READ_INIT
+   &    smidx_module, carea_module, ddsolrad_module, ccsolrad_module, SAVE_INIT, READ_INIT, &
+   &    MODSIM_MODFLOW, MODSIM_PRMS, MODSIM, MODSIM_GSFLOW
       IMPLICIT NONE
       character(LEN=*), parameter :: &
      &          EQULS = '===================================================================='
       character(len=*), parameter :: MODDESC = 'PRMS Computation Order'
       character(len=11), parameter :: MODNAME = 'gsflow_prms'
-      character(len=*), parameter :: GSFLOW_versn = '2.3.0 01/29/2021'
+      character(len=*), parameter :: GSFLOW_versn = '2.3.0 02/16/2021'
       character(len=*), parameter :: PRMS_versn = '2021-01-28'
       character(len=*), parameter :: PRMS_VERSION = 'Version 5.MODSIM 02/09/2021'
       character(len=*), parameter :: Version_read_control_file = '2021-02-09'
@@ -88,9 +89,7 @@
       END MODULE PRMS_MODULE
 
       MODULE GSFMODFLOW
-      USE PRMS_CONSTANTS, ONLY: DEBUG_minimum, DEBUG_less, ACTIVE, OFF, &
-     &    MODFLOW, GSFLOW, ERROR_modflow, ERROR_time, MAXFILE_LENGTH, READ_INIT
-      USE PRMS_MODULE, ONLY: Print_debug, Model, GSFLOW_flag
+      USE PRMS_CONSTANTS, ONLY: MAXFILE_LENGTH
       IMPLICIT NONE
 !   Local Variables
       character(len=*), parameter :: MODDESC = 'GSFLOW MODFLOW main'

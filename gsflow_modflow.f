@@ -19,7 +19,8 @@ C     ******************************************************************
 !     ------------------------------------------------------------------
       USE PRMS_CONSTANTS, ONLY: DEBUG_minimum, DEBUG_less, ACTIVE
       USE GSFMODFLOW
-      USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Nhru, Print_debug
+      USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Nhru, Print_debug,
+     &    GSFLOW_flag
       IMPLICIT NONE
       ! Functions
       EXTERNAL :: declvar_real
@@ -65,7 +66,8 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GSFMODFLOW
       USE PRMS_CONSTANTS, ONLY: DOCUMENTATION, MODFLOW, MODSIM_MODFLOW,
-     &    GSFLOW, ACTIVE, OFF, DEBUG_minimum, DEBUG_less
+     &    GSFLOW, ACTIVE, OFF, DEBUG_minimum, DEBUG_less, ERROR_modflow,
+     &    READ_INIT
       USE PRMS_MODULE, ONLY: Model, Mxsziter, Print_debug,
      &    EQULS, Init_vars_from_file, Kper_mfo, GSFLOW_flag,
      &    Have_lakes, NLAKES_MF, Ag_package_active
@@ -87,11 +89,8 @@ C1------USE package modules.
      &                                   LAKEVOL(Nlakeshold)
 ! Functions
       INTRINSIC DBLE
-      INTEGER, EXTERNAL :: numchars, GET_KPER
-      EXTERNAL :: SET_STRESS_DATES, print_module, SETMFTIME
-      EXTERNAL :: SETCONVFACTORS, check_gvr_cell_pct
-      EXTERNAL :: gsflow_modflow_restart, set_cell_values, error_stop
-      EXTERNAL :: read_error
+      INTEGER, EXTERNAL :: numchars
+      EXTERNAL :: print_module, error_stop, read_error
 ! Local Variables
       INTEGER :: MAXUNIT, NC
 C
@@ -150,7 +149,7 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
       END IF
 
       ierr = 0
-! Packages not available in NWT or GSFLOW
+! Packages not available in NWT or GSFLOW, ??? what about MODSIM-GSFLOW ???
       IF ( IUNIT(14)>0 ) THEN
         PRINT *, 'lmg Package not supported'
         ierr = 1
@@ -394,7 +393,7 @@ C
       IF ( ISSFLG(1).EQ.1 ) DELT = 1.0/Mft_to_days
 C
       KKPER = KPER
-      IF ( Model==MODFLOW ) THEN
+      IF ( Model==MODFLOW ) THEN ! ??? what about MODSIM-MODFLOW ???
         Kkper_new = GET_KPER()
         Kper_mfo = Kkper_new
       ENDIF
@@ -415,7 +414,7 @@ C
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
       USE PRMS_CONSTANTS, ONLY: DEBUG_less, MODFLOW, GSFLOW, ACTIVE,
-     &    OFF,ERROR_MODFLOW
+     &    OFF, ERROR_MODFLOW, ERROR_time
       USE PRMS_MODULE, ONLY: Model, Kper_mfo, Print_debug, Kkiter,
      &    Timestep, Init_vars_from_file, Mxsziter,
      &    PRMS_land_iteration_flag, Process
@@ -442,10 +441,9 @@ c     USE LMGMODULE
       INTEGER I
       INCLUDE 'openspec.inc'
 ! FUNCTIONS AND SUBROUTINES
-      INTEGER, EXTERNAL :: soilzone, GET_KPER
-      INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms
+      INTEGER, EXTERNAL :: soilzone, gsflow_prms2mf, gsflow_mf2prms
       EXTERNAL :: MODSIM2SFR, SFR2MODSIM, LAK2MODSIM
-      EXTERNAL :: MFNWT_RDSTRESS, PRMS_land_modules
+      EXTERNAL :: PRMS_land_modules
       INTRINSIC MIN
 ! Local Variables
       INTEGER :: retval, KITER, iss, iprt
@@ -540,7 +538,7 @@ C7C1----CALCULATE TIME STEP LENGTH. SET HOLD=HNEW.
      2                                       IGRID,IUNIT(54))  !SWR - JDH
           IF(IUNIT(66).GT.0) CALL GWF2AG7AD(IUNIT(66),KKPER)
 
-          IF ( Model==MODFLOW ) THEN
+          IF ( Model==MODFLOW ) THEN ! ??? what about MODSIM-MODFLOW ???
 C
 C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
             iprt = 0
@@ -755,12 +753,12 @@ C
  9001 FORMAT ('ERROR in ', A, ' module, arg = run.',
      &        ' Called from MFNWT_RUN.', /, 'Return val =', I2)
 
-      IF (Model>9 .AND. iss==0) THEN
+      IF (Model>=10 .AND. iss==0) THEN
         IF(IUNIT(44).GT.0) CALL SFR2MODSIM(EXCHANGE, Diversions, 
      1                             Idivert, Nsegshold, Timestep,KITER)
       ENDIF
 C
-      IF (Model>9 .AND. iss==0) THEN
+      IF (Model>=10 .AND. iss==0) THEN
         IF(IUNIT(44).GT.0) CALL LAK2MODSIM(DELTAVOL, LAKEVOL, 
      1                              Diversions, Nsegshold)
       ENDIF
@@ -804,6 +802,7 @@ C     ************************************************************************
 C      
       !DEC$ ATTRIBUTES DLLEXPORT :: MFNWT_OCBUDGET
 C
+      USE PRMS_CONSTANTS, ONLY: ACTIVE, DEBUG_LESS, MODFLOW, OFF
       USE GLOBAL
       USE GWFBASMODULE
       USE GWFHUFMODULE, ONLY:IOHUFHDS,IOHUFFLWS
@@ -1049,12 +1048,13 @@ C
 !        SPECIFICATIONS:
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
-      USE PRMS_CONSTANTS, ONLY: SAVE_INIT
-      USE PRMS_MODULE, ONLY: Timestep, Save_vars_to_file
+      USE PRMS_CONSTANTS, ONLY: SAVE_INIT, ACTIVE, DEBUG_less, MODFLOW
+      USE PRMS_MODULE, ONLY: Timestep, Save_vars_to_file, GSFLOW_flag,
+     &    Print_debug, Model
       USE GLOBAL, ONLY: IOUT, IUNIT, NIUNIT
       USE GWFNWTMODULE, ONLY:LINMETH
       IMPLICIT NONE
-      EXTERNAL :: RESTART1WRITE, gsflow_modflow_restart
+      EXTERNAL :: RESTART1WRITE
 !***********************************************************************
 C
 C8------END OF SIMULATION
@@ -1505,25 +1505,24 @@ C
       INTEGER FUNCTION GET_KPER()
       USE GLOBAL, ONLY: NPER
       USE GSFMODFLOW, ONLY: Stress_dates, KPER
-      USE PRMS_MODULE, ONLY: Starttime, Start_year, Start_month,
-     &                       Start_day
+      USE PRMS_MODULE, ONLY: Start_year, Start_month, Start_day
+      USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday
       IMPLICIT NONE
       INTRINSIC DBLE
-      DOUBLE PRECISION, EXTERNAL :: nowjt, getjulday
+      INTEGER, EXTERNAL :: compute_julday
 ! Local Variables
       DOUBLE PRECISION :: now
       INTEGER :: KPERTEST
 !     ------------------------------------------------------------------
       GET_KPER = -1
-      now = nowjt()
+      now = compute_julday(Nowyear, Nowmonth, Nowday)
       KPERTEST = 1
       IF ( KPER > KPERTEST ) KPERTEST = KPER
 !
 !     If called from init, then "now" isn't set yet.
 !     Set "now" to model start date.
-      IF ( now.LE.1.0D0 )
-     &     now = getjulday(Start_month, Start_day, Start_year,
-     &                  Starttime(4), Starttime(5), Starttime(6))
+      IF ( now.LE.1.0D0 ) now =
+     &     DBLE( compute_julday(Start_year, Start_month, Start_day) )
       IF ( now<Stress_dates(KPERTEST) )
      &     STOP 'ERROR, now<stress period time'
       IF ( now>Stress_dates(NPER) ) THEN
@@ -1562,8 +1561,8 @@ C
      &                                   DELTAVOL(Nlakeshold),
      &                                   LAKEVOL(Nlakeshold)
       ! Functions
-      EXTERNAL :: RESTART1READ, error_stop
       INTRINSIC :: INT, DBLE
+      EXTERNAL :: RESTART1READ, error_stop
       INTEGER, EXTERNAL :: compute_julday, control_integer_array
 ! Local Variables
       INTEGER :: i, n, nstress

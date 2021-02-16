@@ -113,7 +113,6 @@
 		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\lmt8_NWT.f"/>
 		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\mach_mod.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\map_results.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT\src\mhc7.f"/>
 		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\mhc7.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\mmf_utils.f90"/>
 		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\modules.f90"/>

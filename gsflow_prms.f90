@@ -6,7 +6,6 @@
       
       !DEC$ ATTRIBUTES DLLEXPORT :: gsflow_prms
       
-      USE PRMS_CONSTANTS, ONLY: MODSIM_MODFLOW, MODSIM_PRMS, MODSIM, MODSIM_GSFLOW, MODSIM
       USE PRMS_MODULE
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_CLEAN, MFNWT_OCBUDGET, MFNWT_INIT
       USE GWFSFRMODULE, ONLY: NSS
@@ -593,7 +592,6 @@
 !     declare the dimensions
 !***********************************************************************
       SUBROUTINE setdims(AFR, Diversions, Idivert, EXCHANGE, DELTAVOL, LAKEVOL, Nsegshold, Nlakeshold)
-      USE PRMS_CONSTANTS, ONLY: MODSIM, MODSIM_GSFLOW, MODSIM_MODFLOW, MODSIM_PRMS
       USE PRMS_MODULE
       USE GLOBAL, ONLY: NSTP, NPER, ISSFLG
       USE MF_DLL, ONLY: gsfdecl, MFNWT_RUN, MFNWT_INIT, MFNWT_CLEAN, MFNWT_OCBUDGET
@@ -608,7 +606,7 @@
      &                                   DELTAVOL(Nlakeshold),  &
      &                                   LAKEVOL(Nlakeshold)
 ! Functions
-      INTEGER, EXTERNAL :: decldim, declfix, control_integer_array, control_file_name
+      INTEGER, EXTERNAL :: decldim, declfix, control_integer_array !, control_file_name
       INTEGER, EXTERNAL :: control_string, control_integer, compute_julday
       EXTERNAL :: read_error, PRMS_open_output_file, PRMS_open_input_file, check_module_names, module_error
       EXTERNAL :: read_control_file, setup_dimens, read_parameter_file_dimens, get_control_arguments
@@ -782,7 +780,7 @@
         CALL PRMS_open_output_file(PRMS_output_unit, Model_output_file, 'model_output_file', 0, iret)
         IF ( iret/=0 ) Inputerror_flag = 1
       ENDIF
-      IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
+!      IF ( control_file_name(Model_control_file)/=0 ) CALL read_error(5, 'control_file_name')
       IF ( control_string(Param_file, 'param_file')/=0 ) CALL read_error(5, 'param_file')
 
       ! Check for restart files
