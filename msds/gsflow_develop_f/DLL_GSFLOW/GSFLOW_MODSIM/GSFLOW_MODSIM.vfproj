@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject ProjectType="typeDynamicLibrary" ProjectCreator="Intel Fortran" Keyword="Dll" Version="11.0" ProjectIdGuid="{6437F820-C92A-44E9-8974-B65F67F63EA8}">
 	<Platforms>
-		<Platform Name="Win32"/></Platforms>
+		<Platform Name="Win32"/>
+		<Platform Name="x64"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" ConfigurationType="typeDynamicLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" EnableRecursion="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" EnableRecursion="true" WarnIgnoreLOC="true" SuppressUsageMessages="true" ExternalNameInterpretation="extNameLowerCase" ExternalNameUnderscore="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemWindows" LinkDLL="true"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -18,6 +19,26 @@
 				<Tool Name="VFLinkerTool" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Debug|x64" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" EnableRecursion="true" WarnUnusedVariables="true" WarnIgnoreLOC="true" SuppressUsageMessages="true" ExternalNameInterpretation="extNameLowerCase" ExternalNameUnderscore="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|x64" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL"/>
+				<Tool Name="VFLinkerTool" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
 				<Tool Name="VFCustomBuildTool"/>
 				<Tool Name="VFPreLinkEventTool"/>
 				<Tool Name="VFPreBuildEventTool"/>
@@ -36,9 +57,10 @@
 		<File RelativePath="..\..\..\..\..\prms.git\climateflow.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\convert_params.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\ddsolrad.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\de47_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\de47_NWT.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\dynamic_param_read.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\frost_date.f90"/>
+		<File RelativePath="..\..\..\..\..\prms.git\glacr_melt.f90"/>
 		<File RelativePath="..\..\..\..\gsflow_budget.f90"/>
 		<File RelativePath="..\..\..\..\gsflow_mf2prms.f90"/>
 		<File RelativePath="..\..\..\..\gsflow_modflow.f"/>
@@ -47,74 +69,74 @@
 		<File RelativePath="..\..\..\..\gsflow_prms2mf.f90"/>
 		<File RelativePath="..\..\..\..\gsflow_prms2modsim.f90"/>
 		<File RelativePath="..\..\..\..\gsflow_sum.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2ag1_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2bas7_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2bcf7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2chd7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2drn7_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2drt7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2ets7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2evt7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2fhb7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2gag7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2ghb7_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2hfb7_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2huf7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2hydmod7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2ibs7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2lak7_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2lpf7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2mnw17_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2mnw27_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2mnw2i7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2rch7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2res7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2riv7_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2sfr7_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2str7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2sub7_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2swi27.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2swr7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2swr7util.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2swt7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2upw1.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2uzf1_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwf2wel7_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwflakmodule_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2ag1_NWT_ponds.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2bas7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2bcf7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2chd7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2drn7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2drt7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2ets7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2evt7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2fhb7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2gag7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2ghb7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2hfb7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2huf7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2hydmod7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2ibs7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2lak7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2lpf7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2mnw17_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2mnw27_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2mnw2i7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2rch7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2res7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2riv7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2sfr7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2str7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2sub7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2swi27.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2swr7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2swr7util.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2swt7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2upw1.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2uzf1_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwf2wel7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwflakmodule_NWT.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\gwflow.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwfsfrmodule_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\gwfuzfmodule_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\hufutl7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwfsfrmodule_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\gwfuzfmodule_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\hufutl7.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\ide_dist.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\intcp.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\Irestart.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\lmt8_NWT.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\mach_mod.f90"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\Irestart.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\lmt8_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\mach_mod.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\map_results.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\mhc7.f"/>
+		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT\src\mhc7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\mhc7.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\mmf_utils.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\modules.f90"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\modules.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\muskingum.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\muskingum_lake.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\nhru_summary.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\nogmg.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\nsegment_summary.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\nsub_summary.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\NWT1_gmres.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\NWT1_ilupc_mod.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\NWT1_module.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\NWT1_solver.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\NWT1_xmd.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\NWT1_xmdlib.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\NWT1_gmres.f90"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\NWT1_ilupc_mod.f90"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\NWT1_module.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\NWT1_solver.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\NWT1_xmd.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\NWT1_xmdlib.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\obs.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\obs2bas7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\obs2chd7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\obs2drn7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\obs2ghb7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\obs2riv7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\obs2str7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\parutl7.f"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\pcg7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\obs2bas7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\obs2chd7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\obs2drn7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\obs2ghb7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\obs2riv7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\obs2str7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\parutl7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\pcg7_NWT.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\potet_hamon.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\potet_hs.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\potet_jh.f90"/>
@@ -124,7 +146,8 @@
 		<File RelativePath="..\..\..\..\..\prms.git\potet_pt.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\precip_1sta_laps.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\precip_dist2.f90"/>
-		<File RelativePath="..\..\..\..\..\prms.git\precip_temp_grid.f90"/>
+		<File RelativePath="..\..\..\..\..\prms.git\precip_map.f90"/>
+		<File RelativePath="..\..\..\..\..\prms.git\prms_constants.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\prms_summary.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\prms_time.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\read_control_file.f90"/>
@@ -132,7 +155,7 @@
 		<File RelativePath="..\..\..\..\..\prms.git\read_parameter_file.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\routing.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\setup_param.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\sip7_NWT.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\sip7_NWT.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\snowcomp.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\soilzone.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\soltab.f90"/>
@@ -143,10 +166,11 @@
 		<File RelativePath="..\..\..\..\..\prms.git\subbasin.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\temp_1sta_laps.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\temp_dist2.f90"/>
+		<File RelativePath="..\..\..\..\..\prms.git\temp_map.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\transp_frost.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\transp_tindex.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\utils_prms.f90"/>
-		<File RelativePath="..\..\..\..\..\mfnwt\MODFLOW-NWT_1.1.4\src\utl7.f"/>
+		<File RelativePath="..\..\..\..\..\..\..\gsflow_v2.git\GSFLOW\src\modflow\utl7.f"/>
 		<File RelativePath="..\..\..\..\..\prms.git\water_balance.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\water_use_read.f90"/>
 		<File RelativePath="..\..\..\..\..\prms.git\write_climate_hru.f90"/>

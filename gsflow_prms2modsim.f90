@@ -4,7 +4,9 @@
       MODULE GSFPRMS2MODSIM
       IMPLICIT NONE
 !   Module Variables
-      CHARACTER(LEN=18), SAVE :: MODNAME
+      character(len=*), parameter :: MODDESC = 'GSFLOW PRMS to MODSIM'
+      character(len=14), SAVE :: MODNAME = 'gsflow_prms2modsim'
+      character(len=*), parameter :: Version_gsflow_prms2modsim = '2021-02-12'
       DOUBLE PRECISION, SAVE :: Acre_inches_to_MSl3
 !   Declared Variables
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Segment_latflow(:), Lake_In_flow(:)
@@ -15,57 +17,36 @@
 !     Mapping module to convert PRMS states for use by MODSIM
 !     ******************************************************************
       INTEGER FUNCTION gsflow_prms2modsim(EXCHANGE,DELTAVOL,LAKEVAP)
-      USE PRMS_MODULE, ONLY: Process, Init_vars_from_file, Save_vars_to_file, Nlake, Nsegment
+	  USE PRMS_CONSTANTS, ONLY: ACTIVE, SAVE_INIT, RUN, DECL, INIT
+      USE PRMS_MODULE, ONLY: Process_flag, Nlake, Nsegment
+      USE GSFPRMS2MODSIM
       IMPLICIT NONE
 ! Arguments
       DOUBLE PRECISION, INTENT(OUT) :: EXCHANGE(Nsegment), DELTAVOL(Nlake), LAKEVAP(Nlake)
 ! Functions
-      INTEGER, EXTERNAL :: prms2modsimdecl, prms2modsiminit, prms2modsimrun
-      EXTERNAL :: gsflow_prms2modsim_restart
+      INTEGER, EXTERNAL :: prms2modsiminit, prms2modsimrun
+      EXTERNAL :: print_module
 !***********************************************************************
       gsflow_prms2modsim = 0
 
-      IF ( Process(:3)=='run' ) THEN
+      IF ( Process_flag==RUN ) THEN
         gsflow_prms2modsim = prms2modsimrun(EXCHANGE, DELTAVOL, LAKEVAP)
-      ELSEIF ( Process(:4)=='decl' ) THEN
-        gsflow_prms2modsim = prms2modsimdecl()
-      ELSEIF ( Process(:4)=='init' ) THEN
-        IF ( Init_vars_from_file>0 ) CALL gsflow_prms2modsim_restart(1)
+      ELSEIF ( Process_flag==DECL ) THEN
+        CALL print_module(MODDESC, MODNAME, Version_gsflow_prms2modsim)
+      ELSEIF ( Process_flag==INIT ) THEN
         gsflow_prms2modsim = prms2modsiminit()
-      ELSEIF ( Process(:5)=='clean' ) THEN
-        IF ( Save_vars_to_file==1 ) CALL gsflow_prms2modsim_restart(0)
       ENDIF
 
       END FUNCTION gsflow_prms2modsim
 
 !***********************************************************************
-!     prms2modsimdecl - set up parameters
-!   Declared Parameters
-!     hru_area
-!***********************************************************************
-      INTEGER FUNCTION prms2modsimdecl()
-      USE GSFPRMS2MODSIM
-      IMPLICIT NONE
-      INTEGER, EXTERNAL :: declparam
-      EXTERNAL read_error, print_module
-! Save Variables
-      CHARACTER(LEN=80), SAVE :: Version_gsflow_prms2modsim
-!***********************************************************************
-      prms2modsimdecl = 0
-
-      Version_gsflow_prms2modsim = 'gsflow_prms2modsim.f90 2018-10-03 12:04:00Z'
-      CALL print_module(Version_gsflow_prms2modsim, 'GSFLOW PRMS to MODSIM       ', 90)
-      MODNAME = 'gsflow_prms2modsim'
-
-      END FUNCTION prms2modsimdecl
-
-!***********************************************************************
 !     prms2mfinit - Initialize PRMS2MF module - get parameter values
 !***********************************************************************
       INTEGER FUNCTION prms2modsiminit()
+      USE PRMS_CONSTANTS, ONLY: FT2_PER_ACRE
       USE GSFPRMS2MODSIM
-      USE PRMS_MODULE, ONLY: Nsegment, Nlake, Init_vars_from_file
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Lake_hru_id, FT2_PER_ACRE
+      USE PRMS_MODULE, ONLY: Nsegment, Nlake
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Lake_hru_id
       IMPLICIT NONE
       EXTERNAL read_error, declvar_dble
       INTRINSIC ABS, DBLE
@@ -105,13 +86,12 @@
      &     'Evaporation from each lake', &
      &     'acre-inches', Lake_et)
       ALLOCATE ( Lake_In_flow(Nlake) )
-      IF ( Init_vars_from_file==0 ) THEN
-        Segment_latflow = 0.0D0
-        Lake_latflow = 0.0D0
-        Lake_precip = 0.0D0
-        Lake_et = 0.0D0
-        Lake_In_flow = 0.0D0
-      ENDIF
+
+      Segment_latflow = 0.0D0
+      Lake_latflow = 0.0D0
+      Lake_precip = 0.0D0
+      Lake_et = 0.0D0
+      Lake_In_flow = 0.0D0
 
       ! sanity check
       DO ii = 1, Active_hrus
@@ -133,7 +113,7 @@
       MSl3_to_ft3 = 3.280839895D0**3.0D0
       Acre_inches_to_MSl3 = FT2_PER_ACRE/(MSl3_to_ft3*12.0D0)
 
- 9001 FORMAT ('ERROR, HRU:', I7, ' is specified as a lake (hru_type=2) and lake_hru_id is specified as 0', /)
+ 9001 FORMAT ('ERROR, HRU: ', I0, ' is specified as a lake (hru_type=2) and lake_hru_id is specified as 0', /)
 
       END FUNCTION prms2modsiminit
 
@@ -141,9 +121,10 @@
 !     prms2modsimrun - Maps the PRMS results to MODSIM lakes and segments
 !***********************************************************************
       INTEGER FUNCTION prms2modsimrun(EXCHANGE, DELTAVOL, LAKEVAP)
+      USE PRMS_CONSTANTS, ONLY: FT2_PER_ACRE
       USE GSFPRMS2MODSIM
       USE PRMS_MODULE, ONLY: Nsegment, Nlake
-      USE PRMS_BASIN, ONLY: FT2_PER_ACRE, Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_hru_id, Lake_area
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_hru_id, Lake_area
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
       USE PRMS_FLOWVARS, ONLY: Hru_actet
       USE PRMS_SET_TIME, ONLY: Cfs_conv, Timestep_seconds
@@ -192,34 +173,3 @@
       ENDDO
  
       END FUNCTION prms2modsimrun
-
-!***********************************************************************
-!     Write to or read from restart file
-!***********************************************************************
-      SUBROUTINE gsflow_prms2modsim_restart(In_out)
-      USE PRMS_MODULE, ONLY: Restart_outunit, Restart_inunit
-      USE GSFPRMS2MODSIM
-      IMPLICIT NONE
-      ! Argument
-      INTEGER, INTENT(IN) :: In_out
-      EXTERNAL check_restart
-      ! Local Variable
-      CHARACTER(LEN=14) :: module_name
-!***********************************************************************
-      IF ( In_out==0 ) THEN
-        WRITE ( Restart_outunit ) MODNAME
-        WRITE ( Restart_outunit ) Segment_latflow
-        WRITE ( Restart_outunit ) Lake_latflow
-        WRITE ( Restart_outunit ) Lake_precip
-        WRITE ( Restart_outunit ) Lake_et
-        WRITE ( Restart_outunit ) Lake_In_flow
-      ELSE
-        READ ( Restart_inunit ) module_name
-        CALL check_restart(MODNAME, module_name)
-        READ ( Restart_inunit ) Segment_latflow
-        READ ( Restart_inunit ) Lake_latflow
-        READ ( Restart_inunit ) Lake_precip
-        READ ( Restart_inunit ) Lake_et
-        READ ( Restart_inunit ) Lake_In_flow
-      ENDIF
-      END SUBROUTINE gsflow_prms2modsim_restart
